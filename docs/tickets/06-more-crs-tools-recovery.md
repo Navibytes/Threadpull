@@ -16,4 +16,4 @@
 - [ ] Costs match SKELETON §7 and are charged through the ledger (`lib/ledger.ts`); each tool's result validates against its Zod schema.
 - [ ] `bun test` against persona expectations: P13 thin file, P15 partial, P17 divergence, P12 no file at all three bureaus.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

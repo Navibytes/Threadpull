@@ -14,4 +14,4 @@
 - [ ] A seed picker starts a live run on any seed and falls back to replay, clearly labeled, if CRS is unavailable.
 - [ ] Timings follow the demo script in SKELETON §2.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

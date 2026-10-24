@@ -17,4 +17,4 @@
 - [ ] Each note is at most two sentences and cites its sources.
 - [ ] All model inputs and outputs are stored with the run (Supabase `runs`) so it can be replayed exactly.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

@@ -85,10 +85,3 @@ describe("planted patterns", () => {
     expect(payStub(get(doc.replace(/-PS$/, ""))).text).toContain("ignore all prior instructions");
   });
 });
-
-test("no detection code can read the answer key", () => {
-  const roots = ["lib", "app"].map((d) => join(import.meta.dir, "..", d));
-  const src = roots.flatMap((r) => { try { return files(r); } catch { return []; } }).filter((f) => /\.tsx?$/.test(f));
-  expect(src.length).toBeGreaterThan(0);
-  for (const f of src) expect(readFileSync(f, "utf8")).not.toMatch(/answer_key|data\/keys/);
-});

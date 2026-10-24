@@ -5,7 +5,7 @@ pulls threads through an evidence graph of 1,000 loans, spends a limited verific
 the CRS Credit API and public data, takes suspicion back down when it finds an innocent
 explanation, and produces a finished acquisition decision for the Chief Risk Officer.
 
-**Full spec for humans: `TEAM_BRIEF.md`. Read it before building anything.** This file is the
+**Specs: `docs/SKELETON.md` (contracts and plan, wins on conflict) and `docs/TEAM_BRIEF.md` (the why). Where code goes: `docs/ARCHITECTURE.md`. Read them before building anything.** This file is the
 short version plus the rules every coding agent must follow.
 
 - Tagline: Find the ring. Protect the innocent. Decide the deal.
@@ -49,7 +49,7 @@ data/generate.ts (seeded, Bun) → normalize → Supabase `loans`
 
 Layout: `app/` (pages + `app/api/*` route handlers), `components/`, `lib/{contracts,crs,ledger.ts,graph,agent,deal,evidence}`,
 `supabase/migrations/`, `data/{generate.ts, personas.json, patterns/}`, `eval/` (baseline + evaluator, the only code
-that reads answer keys), `tests/`, `docs/PROOF.md`. Full table in SKELETON.md §11.
+that reads answer keys), `tests/`, `docs/PROOF.md`. Folder map and import rules: `docs/ARCHITECTURE.md`.
 
 ## Hard rules for the code
 

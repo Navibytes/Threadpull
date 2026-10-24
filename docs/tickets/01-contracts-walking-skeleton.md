@@ -20,4 +20,4 @@
 
 **Notes:** This is the integration spine: keep it boring. No styling beyond what's needed to see cards and threads.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

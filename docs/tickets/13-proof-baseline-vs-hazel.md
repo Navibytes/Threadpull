@@ -16,4 +16,4 @@
 - [ ] PROOF.md's results table is generated from those results, with simulated calls labeled.
 - [ ] No hand-edited numbers anywhere.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

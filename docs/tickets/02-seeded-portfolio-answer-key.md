@@ -19,4 +19,4 @@
 - [ ] A Supabase migration for `loans`; the seed script upserts normalized loans; `GET /api/loans` returns them with a current status.
 - [ ] `bun test` covers determinism, exact persona fields, every planted pattern and answer-key isolation (no file under `lib/` or `app/` reads `data/keys`).
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

@@ -17,4 +17,4 @@
 - [ ] Visual identity with Tailwind + shadcn/ui: cream paper, cork, walnut type, terracotta thread, sage resolved; Hazel is a small avatar.
 - [ ] A debug overlay shows the event sequence number behind every animation.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

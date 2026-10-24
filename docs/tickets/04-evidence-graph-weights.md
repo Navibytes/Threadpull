@@ -17,4 +17,4 @@
 - [ ] A priority score (a ranking, not a probability) puts the ring's lead in the top 5 on seed 13 without any code that names personas or planted patterns.
 - [ ] `bun test` unit tests cover 1/n weighting, the household fade, origin grouping and the no-location rule.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

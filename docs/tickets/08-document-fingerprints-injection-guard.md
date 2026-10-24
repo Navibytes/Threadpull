@@ -14,4 +14,4 @@
 - [ ] Claude Haiku extracts pay-stub fields into a fixed Zod schema only (AI SDK structured output); instruction-like text produces an `attack_detected` event.
 - [ ] `bun test`: the injected pay stub does not change any status; the recycled template links the ring loans.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

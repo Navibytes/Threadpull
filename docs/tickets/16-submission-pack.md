@@ -16,4 +16,4 @@
 - [ ] Secret scan: no `.env*` or keys (CRS, Anthropic, Supabase service role) anywhere in git history; the repo is public.
 - [ ] All teammates are added to the Devpost project.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

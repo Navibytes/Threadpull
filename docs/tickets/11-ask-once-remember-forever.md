@@ -16,4 +16,4 @@
 - [ ] P16's fraud alert produces a question to the CRO.
 - [ ] Rules persist across runs in the Supabase `rules` table (Zod-validated), with a reset for demos.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

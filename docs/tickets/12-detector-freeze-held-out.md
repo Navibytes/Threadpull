@@ -16,4 +16,4 @@
 
 **Notes:** C is the right owner because C writes no detection code.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

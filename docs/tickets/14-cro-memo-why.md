@@ -13,4 +13,4 @@
 - [ ] The why endpoint answers with cited event sequence numbers and refuses when no events exist for the loan.
 - [ ] Wording follows the never-claim list: never "fraudster" or "innocent", never a priority score called a probability.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.

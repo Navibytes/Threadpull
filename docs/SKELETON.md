@@ -6,7 +6,7 @@ This file is the single source of truth for building. It merges the team's Proje
 
 - Repo: https://github.com/Navibytes/Threadpull (private until submission; keep secrets out from the first commit anyway, because it goes public on Sunday)
 - Event: Cal Hacks 13.0. Devpost deadline **Sun Oct 25, 08:50 PT**; we submit by **08:00**. Judging Sun 10:30–12:30, whole team at the table.
-- Tickets: `.scratch/threadpull/issues/` (one file per ticket) and one plan per person in `.scratch/threadpull/people/`.
+- Tickets: `docs/tickets/` (one file per ticket) and one plan per person in `docs/team/`. Folder map and import rules: `docs/ARCHITECTURE.md`.
 
 ---
 
@@ -240,22 +240,7 @@ data/generate.ts (seeded, Bun) → data/seed-db.ts → Supabase `loans` (normali
 
 Model ids: `claude-sonnet-5-5` for Hazel's steps and the CRO memo. Haiku: the newest released id we can confirm is `claude-haiku-4-5-20251001`; swap it in one place (`lib/agent/models.ts`) if a newer Haiku is available.
 
-```
-app/            Next.js App Router: drawer, corkboard, CRO screen; app/api/* route handlers
-components/     shadcn/ui, corkboard (React Flow + Motion), notebook, CRO panels
-lib/contracts/  Zod schemas: loan, tool result, event, rule (shared by server and client)
-lib/crs/        CRS client, persona guard, response cache
-lib/ledger.ts   acorn budget
-lib/graph/      graphology evidence graph, weights, priority score
-lib/agent/      Hazel loop, tools, prompts, models
-lib/deal/       verdicts, pricing, drafts
-lib/evidence/   explanation checks, document fingerprints, injection guard
-supabase/       migrations (loans, events, runs, rules, questions, dispositions), RLS
-data/           generator, personas.json, pattern specs (outputs and answer keys gitignored)
-eval/           baseline agent and evaluator (the only code that reads answer keys)
-tests/          bun test: personas, weights, injection, recovery, baseline
-docs/           PROOF.md, Devpost text
-```
+Folder layout, ownership and import rules: **`docs/ARCHITECTURE.md`** (the single place that defines where code goes).
 
 Commands: `bun install` · `bun run dev` · `bun test` · `bun run data` (generate + seed Supabase) · `bun run demo`.
 

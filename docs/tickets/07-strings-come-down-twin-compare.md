@@ -16,4 +16,4 @@
 - [ ] On seed 13: the apartment twins split, the hospital pair is explained, the household phone fades, and no ring member is explained away.
 - [ ] No detection logic names a persona, the twins or a planted pattern.
 
-Spec: SKELETON.md (contracts, rules and the 24-hour plan).
+Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.
