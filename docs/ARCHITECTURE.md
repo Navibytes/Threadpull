@@ -54,7 +54,7 @@ lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event ○, rule ○   C (loan, tool-result: A)
   ingest/                ✅ normalize the messy tape; load reference lookups               A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
-  crs/                   ✅ persona guard, client + cache, crs_identity_check; other CRS tools ○   B
+  crs/                   ✅ persona guard, client + cache, identity check, credit report, Fraud Finder, reverse phone   B
   ledger.ts              ✅ acorn budget; its onSpend hook is where `budget_spent` is written   B
   event-rows.ts          ✅ budget_spent and recovery event rows from the ledger and the CRS client (pure; C may fold into events/)   B
   graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
@@ -78,7 +78,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-recorded, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
