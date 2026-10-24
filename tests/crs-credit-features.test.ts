@@ -7,10 +7,11 @@ type Tl = { au?: boolean; derog?: boolean };
 const file = (o: { open?: string; addrs?: number; tl?: Tl[]; inq?: string[]; score?: string | null; reason?: string } = {}) =>
   CreditResponseSchema.parse({
     creditFiles: [{
-      creditFileDetail: { creditFileInfileDate: o.open ?? "2015-01-01", creditFileResultStatusType: "FileReturned" },
+      // the sandbox's infile date is canned and the same for many people: it must never be read as the age of the file
+      creditFileDetail: { creditFileInfileDate: "2001-01-01", creditFileResultStatusType: "FileReturned" },
       addresses: Array.from({ length: o.addrs ?? 1 }, (_, i) => ({ addressLine1: `${i} MAIN ST`, postalCode: "12345-0000" })),
     }],
-    tradelines: (o.tl ?? []).map((t) => ({ accountOwnershipType: t.au ? "AuthorizedUser" : "Individual", derogatoryDataIndicator: !!t.derog })),
+    tradelines: (o.tl ?? []).map((t) => ({ accountOwnershipType: t.au ? "AuthorizedUser" : "Individual", accountOpenedDate: o.open ?? "2015-01-01", derogatoryDataIndicator: !!t.derog })),
     inquiries: (o.inq ?? []).map((inquiryDate) => ({ inquiryDate })),
     scores: [{ scoreValue: o.score === undefined ? "700" : o.score, noScoreReasonType: o.reason }],
   });
@@ -24,9 +25,9 @@ const merge = (responses: Parameters<typeof bureauView>[1][], dateOfBirth?: stri
   mergeBureaus(responses.map((r, i) => bureauView(BUREAUS[i], r, ASOF)), { asOf: ASOF, dateOfBirth });
 
 describe("one bureau", () => {
-  test("a returned file gives its score, tradelines and open date", () => {
+  test("a returned file gives its score, tradelines and oldest tradeline", () => {
     const v = bureauView("transunion", file({ score: "790", open: "2010-05-01", tl: [{}, {}, {}] }), ASOF);
-    expect(v).toMatchObject({ status: "file_returned", score: 790, file_open_date: "2010-05-01", tradelines: 3, derogatory: 0 });
+    expect(v).toMatchObject({ status: "file_returned", score: 790, oldest_tradeline_date: "2010-05-01", tradelines: 3, derogatory: 0 });
   });
   test("no score keeps the reason", () => {
     const v = bureauView("equifax", file({ score: null, reason: "NotScoredInsufficientCredit" }), ASOF);
@@ -90,6 +91,16 @@ describe("thick file, thin life features", () => {
   test("addresses are counted once across bureaus", () => {
     const m = merge([file({ addrs: 2 }), file({ addrs: 1 }), noHit]);
     expect(m.features.addresses_on_file).toBe(2);
+  });
+  test("no address history is unknown (null), not zero addresses", () => {
+    expect(merge([file({ addrs: 0 }), file({ addrs: 0 }), noHit]).features.addresses_on_file).toBeNull();
+  });
+  test("file age comes from the oldest tradeline, never the canned infile date", () => {
+    const m = merge([file({ open: "2026-04-24", tl: [{}] }), noHit, noHit]);
+    expect(m.features.file_age_months).toBe(6); // the fixture's infile date is 2001, which would give 300+
+  });
+  test("a file with no tradelines has no file age", () => {
+    expect(merge([file({ tl: [] }), noHit, noHit]).features.file_age_months).toBeNull();
   });
   test("authorized-user share is pooled over the files returned", () => {
     const m = merge([file({ tl: [{ au: true }, { au: true }, {}, {}] }), noHit, noHit]);

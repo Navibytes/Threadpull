@@ -36,9 +36,9 @@ const ok = (body: unknown) => json(body, 200, { RequestID: "req-1" });
 
 // CRS Standard Format, only the fields the tool reads.
 const file = (o: { tl?: { derog?: boolean }[]; inq?: string[]; pulled?: string } = {}) => ({
-  responseDetail: { dateOrdered: o.pulled ?? "2026-10-24T12:00:00Z" },
-  creditFiles: [{ creditFileDetail: { creditFileInfileDate: "2015-01-01", creditFileResultStatusType: "FileReturned" }, addresses: [{ addressLine1: "1 MAIN ST", postalCode: "12345" }] }],
-  tradelines: (o.tl ?? [{}]).map((t) => ({ accountOwnershipType: "Individual", derogatoryDataIndicator: !!t.derog })),
+  responseDetail: { dateRequested: o.pulled ?? "2026-10-24T12:00:00Z" }, // the sandbox names the pull date dateRequested
+  creditFiles: [{ creditFileDetail: { creditFileResultStatusType: "FileReturned" }, addresses: [{ addressLine1: "1 MAIN ST", postalCode: "12345" }] }],
+  tradelines: (o.tl ?? [{}]).map((t) => ({ accountOwnershipType: "Individual", accountOpenedDate: "2015-01-01", derogatoryDataIndicator: !!t.derog })),
   inquiries: (o.inq ?? []).map((inquiryDate) => ({ inquiryDate })),
   scores: [{ scoreValue: "700" }],
 });

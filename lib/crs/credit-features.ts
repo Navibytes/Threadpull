@@ -13,16 +13,16 @@ export const CreditResponseSchema = z
     creditFiles: Rows(
       z
         .object({
-          creditFileDetail: z.object({ creditFileInfileDate: z.string().nullish(), creditFileResultStatusType: z.string().nullish() }).loose().nullish(),
+          creditFileDetail: z.object({ creditFileResultStatusType: z.string().nullish() }).loose().nullish(),
           addresses: Rows(z.object({ addressLine1: z.string().nullish(), postalCode: z.string().nullish() }).loose()),
         })
         .loose(),
     ),
-    tradelines: Rows(z.object({ accountOwnershipType: z.string().nullish(), derogatoryDataIndicator: z.boolean().nullish() }).loose()),
+    tradelines: Rows(z.object({ accountOwnershipType: z.string().nullish(), accountOpenedDate: z.string().nullish(), derogatoryDataIndicator: z.boolean().nullish() }).loose()),
     inquiries: Rows(z.object({ inquiryDate: z.string().nullish() }).loose()),
     publicRecords: Rows(z.object({}).loose()),
     scores: Rows(z.object({ scoreValue: z.union([z.string(), z.number()]).nullish(), noScoreReasonType: z.string().nullish() }).loose()),
-    responseDetail: z.object({ dateOrdered: z.string().nullish() }).loose().nullish(),
+    responseDetail: z.object({ dateRequested: z.string().nullish(), dateOrdered: z.string().nullish() }).loose().nullish(),
   })
   .loose();
 export type CreditResponse = z.infer<typeof CreditResponseSchema>;
@@ -35,7 +35,7 @@ export type BureauView = {
   status: BureauStatus;
   score: number | null;
   no_score_reason: string | null;
-  file_open_date: string | null;
+  oldest_tradeline_date: string | null; // how long this bureau shows credit history; the file's own infile date is a canned date in the sandbox
   addresses: string[]; // "street|zip", for counting distinct addresses across bureaus
   tradelines: number;
   authorized_user_tradelines: number;
@@ -77,7 +77,7 @@ export function bureauView(bureau: Bureau, raw: CreditResponse, asOf: number): B
     status,
     score,
     no_score_reason: raw.scores?.find((s) => s.noScoreReasonType)?.noScoreReasonType ?? null,
-    file_open_date: file?.creditFileDetail?.creditFileInfileDate ?? null,
+    oldest_tradeline_date: tradelines.flatMap((t) => (day(t.accountOpenedDate) === null ? [] : [t.accountOpenedDate as string])).sort()[0] ?? null,
     addresses: (file?.addresses ?? []).map((a) => `${a.addressLine1 ?? ""}|${(a.postalCode ?? "").slice(0, 5)}`),
     tradelines: tradelines.length,
     authorized_user_tradelines: tradelines.filter((t) => t.accountOwnershipType === "AuthorizedUser").length,
@@ -88,9 +88,9 @@ export function bureauView(bureau: Bureau, raw: CreditResponse, asOf: number): B
 }
 
 export type CreditFeatures = {
-  file_age_months: number | null; // oldest bureau file, from its infile date
+  file_age_months: number | null; // the oldest tradeline any bureau shows; null when there is none
   borrower_age_years: number | null;
-  addresses_on_file: number; // distinct across bureaus
+  addresses_on_file: number | null; // distinct across bureaus; null when the bureaus sent no address history (the sandbox sends none)
   tradeline_depth: number; // most tradelines any one bureau shows
   authorized_user_share: number | null; // authorized-user tradelines / all tradelines, over the bureaus that returned a file
   inquiries_60d: number; // most any one bureau shows
@@ -112,7 +112,8 @@ export function mergeBureaus(bureaus: BureauView[], opts: { asOf: number; dateOf
   const filePresenceDiffers = files.length > 0 && files.length < answered.length;
   const derogatoryDiffers = files.length > 1 && files.some((b) => b.derogatory > 0) && files.some((b) => b.derogatory === 0);
 
-  const opened = files.map((b) => day(b.file_open_date)).filter((t): t is number => t !== null);
+  const opened = files.map((b) => day(b.oldest_tradeline_date)).filter((t): t is number => t !== null);
+  const addresses = new Set(files.flatMap((b) => b.addresses));
   const dob = day(opts.dateOfBirth);
   const tradelines = files.reduce((n, b) => n + b.tradelines, 0);
   const authorizedUser = files.reduce((n, b) => n + b.authorized_user_tradelines, 0);
@@ -126,7 +127,7 @@ export function mergeBureaus(bureaus: BureauView[], opts: { asOf: number; dateOf
     features: {
       file_age_months: opened.length ? Math.round((opts.asOf - Math.min(...opened)) / (DAY_MS * 30.4375)) : null,
       borrower_age_years: dob === null ? null : Math.floor((opts.asOf - dob) / (DAY_MS * 365.25)),
-      addresses_on_file: new Set(files.flatMap((b) => b.addresses)).size,
+      addresses_on_file: addresses.size || null,
       tradeline_depth: Math.max(0, ...files.map((b) => b.tradelines)),
       authorized_user_share: tradelines ? authorizedUser / tradelines : null,
       inquiries_60d: Math.max(0, ...files.map((b) => b.inquiries_60d)),

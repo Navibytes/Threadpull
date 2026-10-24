@@ -43,7 +43,9 @@ export function crsCreditReport(
     if (pulls.every((p) => "error" in p)) return toolError(TOOL, pulls.map((p) => ("error" in p ? p.error : "")).join("; "));
 
     // Inquiries are counted back from the day the report was pulled, so a cached pull gives the same answer on a later day.
-    const pulledAt = pulls.flatMap((p) => ("body" in p ? [Date.parse(p.body.responseDetail?.dateOrdered ?? "")] : [])).find((t) => !Number.isNaN(t));
+    const pulledAt = pulls
+      .flatMap((p) => ("body" in p ? [Date.parse(p.body.responseDetail?.dateRequested ?? p.body.responseDetail?.dateOrdered ?? "")] : []))
+      .find((t) => !Number.isNaN(t));
     const asOf = pulledAt ?? now;
     const views = pulls.map((p) =>
       "body" in p ? bureauView(p.bureau, p.body, asOf) : { ...bureauView(p.bureau, CreditResponseSchema.parse({}), asOf), errors: [p.error] },
