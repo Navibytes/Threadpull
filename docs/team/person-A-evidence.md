@@ -6,11 +6,11 @@
 
 **Your tickets, in order:**
 
-| Ticket | Title | Target | Blocked by |
-| --- | --- | --- | --- |
-| 02 | Seeded portfolio and answer key | Sat 12:00 | None |
-| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 |
-| 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 |
+| Ticket | Title | Target | Blocked by | Status |
+| --- | --- | --- | --- | --- |
+| 02 | Seeded portfolio and answer key | Sat 12:00 | None | ✅ done |
+| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | next: evidence logic first |
+| 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 | next: evidence logic first |
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
 
