@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { HAZEL_POSES, type HazelPose } from "@/lib/events";
 
-// Original artwork in public/hazel/ (1219 × 1290 PNG, transparent background).
+// Hazel's artwork in public/hazel/ (1219 × 1290 PNG, transparent background).
 const SRC: Record<HazelPose, string> = {
   idle: "/hazel/hazel-idle.png",
   thinking: "/hazel/hazel-thinking.png",
