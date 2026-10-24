@@ -37,7 +37,7 @@ A bank is about to buy 1,000 auto loans from a smaller dealer. Hazel, our invest
 
 | Time | On screen | Proves |
 | --- | --- | --- |
-| 0:00–0:20 | Lead loan #37 gets a **live** CRS identity check: TU **2202**, SSN issued before the date of birth. One-line hook: a bank is about to buy 1,000 loans. | CRS is live and central |
+| 0:00–0:20 | Lead loan #37 gets a **live** CRS identity check: TU **2201** (SSN not associated with this name), **2202** (date of birth doesn't match the file), **2101** (address doesn't match). A real SSN under a made-up identity. One-line hook: a bank is about to buy 1,000 loans. | CRS is live and central |
 | 0:20–1:20 | Hazel picks checks, spends acorns, hits one dead end; the ring of six appears on the corkboard (shared phone, recycled pay-stub template, one dealer). | Budget-aware investigation |
 | 1:20–1:50 | **Twin Compare**: two lookalike borrowers split at one piece of evidence; Hazel takes one string down, citing the check. | Visible restraint |
 | 1:50–2:30 | CRO screen: balance under review, dealer concentration, drafted buyback demand; an ask-once question was answered earlier and the rule R-001 cleared a second lookalike by itself. Approve an exclusion. | A decision, not a list; ask once |
@@ -161,7 +161,7 @@ Acorn costs are design choices; the real unit is shown beside each. Default budg
 
 Every tool returns `{ok, result, sources: [source_ref], cost: {acorns, unit}, simulated: bool}`. The backend refuses calls over budget, unknown tools, and CRS calls for background loans.
 
-**Synthetic-identity signals:** TU 2201 / 2202 / 2301 are hard; "thick file, thin life" (good score but few addresses, recent file, shallow or borrowed tradelines, inquiry burst) and Fraud Finder contact signals are soft; late SSN issuance is weak alone (immigrants get SSNs as adults).
+**Synthetic-identity signals:** TU 2201 (SSN not associated with name) / 2202 (DOB doesn't match file) / 2301 (deceased) are hard. Verified live on 2026-10-24: P13 and P12 → 2201 + 2202 + 2101; P14 → 2301 + 2101; P16 → 2401; P01, P15 → no messages. The sandbox returns the same SSN-issuance block ("ISSUED_AFTER_21", 2001, KY), `riskIndicator` MEDIUM and KMSG07 for every persona, including clean ones: never use them as signals. TU alone gives P13 and P12 the same codes; Fraud Finder and the credit report tell them apart. Other signals: "thick file, thin life" (good score but few addresses, recent file, shallow or borrowed tradelines, inquiry burst) and Fraud Finder contact signals are soft; late SSN issuance is weak alone (immigrants get SSNs as adults).
 
 ---
 
@@ -263,7 +263,7 @@ H0 = Sat 09:00 PT. Submission target H23 (Sun 08:00); hard deadline Sun 08:50.
 
 | Hours | Clock | Milestone | Done when |
 | --- | --- | --- | --- |
-| H0–H3 | 09:00–12:00 | Contracts frozen (Zod); Next.js + Supabase skeleton; generator; first live CRS call | An events row appears on the board via Realtime; seed 13 in Supabase; P13 returns 2202 live |
+| H0–H3 | 09:00–12:00 | Contracts frozen (Zod); Next.js + Supabase skeleton; generator; first live CRS call | An events row appears on the board via Realtime; seed 13 in Supabase; P13 returns 2201 + 2202 + 2101 live (verified) |
 | H3–H6 | 12:00–15:00 | Graph and weights; more CRS tools | Lead's neighbors with weights; credit report and Fraud Finder tools work |
 | H6–H12 | 15:00–21:00 | Hazel loop, tools, budget, events, statuses; board live; strings come down | **H12 checkpoint (21:00): one full rough run: generator → graph → live CRS → one withdrawn thread → CRO screen** |
 | H12–H16 | 21:00–01:00 | CRO screen and deal engine; ask-once; document fingerprints; injection guard | Approve an exclusion; R-001 clears a lookalike |

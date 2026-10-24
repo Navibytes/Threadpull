@@ -31,7 +31,7 @@ Threadpull is an AI fraud investigator for banks buying auto-loan portfolios. It
 **Sponsor feedback (Slack, Sat morning):** Tarik, who appears to be from the CRS team, said the idea "fits the API really well," that B2B is fine on a sponsored API track, and that a clear problem with a dollar figure is a plus. He pointed at exactly the products we use: the credit report (score, tradelines, inquiries, file open date, address history in one call), TransUnion identity verification, and AtData Fraud Finder. Our teammate's Slack post made the synthetic-identity idea public, so our edge has to be the ring, withdrawing suspicion, the budget and ask-once rules, not synthetic-identity detection alone.
 
 **The moment (the demo and the video open with it):**
-1. Loan #37 is pulled. A live CRS call returns TransUnion code 2202: SSN issued before the borrower's date of birth. Synthetic identity.
+1. Loan #37 is pulled. A live CRS call returns TransUnion codes 2201 (the SSN isn't associated with this name), 2202 (the date of birth doesn't match the file) and 2101 (the address doesn't match). A real SSN under a made-up identity.
 2. Red threads spread: the same phone number and a recycled pay-stub template link it to 4 more loans, all from Dealer #3. A ring.
 3. Two other borrowers share an address. Hazel spends one check: it's a 200-unit apartment building. The thread falls away and the card turns green.
 4. The budget meter: the ring was found for $X of checks, versus $Y to check everything.
@@ -114,7 +114,7 @@ The backend, not the LLM, enforces the budget, records every result and its sour
 
 | Signal | Source | Strength |
 | --- | --- | --- |
-| TU 2201 SSN issued to another name, 2202 SSN issue date inconsistent with DOB, 2301 deceased | CRS TU identity | Hard |
+| TU 2201 SSN not associated with the name, 2202 date of birth doesn't match the file, 2301 SSN belongs to a deceased person (verified live; the sandbox's SSN-issuance and risk-level fields are the same for every persona, so they are not signals) | CRS TU identity | Hard |
 | Credit file much younger than the borrower; 6+ inquiries in 60 days on a thin file | CRS credit report | Soft |
 | "Thick file, thin life": high score but few addresses on file, shallow or borrowed tradelines (authorized-user piggybacking), file opened recently | CRS credit report (`creditFiles[]` addresses and file date, `tradelines[]`) | Soft, strong combined with identity signals |
 | SSN issued late relative to age | TU identity / credit file | Weak alone (immigrants get SSNs as adults); counts only combined with other signals |
@@ -217,7 +217,7 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 
 ## 12. Today's plan
 
-- [ ] 10:00–11:30 Repo + skeleton. One live TU identity call for P13 returns 2202. Generator writes the 1,000-loan tape and answer key.
+- [ ] 10:00–11:30 Repo + skeleton. One live TU identity call for P13 returns 2201 + 2202 + 2101 (done, verified). Generator writes the 1,000-loan tape and answer key.
 - [ ] 11:30–14:00 Graph + rarity; all tools wired with costs; Hazel's loop runs end to end in the terminal and writes rows to the `events` table.
 - [ ] 14:00–17:00 Corkboard renders events live (Supabase Realtime); de-escalation works on the apartment and hospital cases; CRO screen with outputs.
 - [ ] 17:00–19:00 Ask-once rule R-001; baselines and metrics on both seeds; replay mode.

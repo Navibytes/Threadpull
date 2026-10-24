@@ -9,7 +9,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] Video of at most 3 minutes opens with the live 2202 result; a backup video of a real run is recorded.
+- [ ] Video of at most 3 minutes opens with the live TU result on loan #37 (2201 + 2202 + 2101); a backup video of a real run is recorded.
 - [ ] README covers setup, where CRS is used, how Claude is used, real vs simulated, known limits, and the team.
 - [ ] PROOF.md comes from ticket 13.
 - [ ] Devpost text includes the seat line and the opening line, and selects the Hyphenate, CRS, Microsoft and Anthropic tracks.

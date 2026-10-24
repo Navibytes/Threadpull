@@ -19,7 +19,8 @@
 
 1. Get the CRS sandbox credentials (calhacks.crscreditapi.com or the CRS booth) and put them in `.env.local` only (no `NEXT_PUBLIC_` prefix).
 1. Log in once by hand and keep the token; never loop on a failed login.
-1. Make the P13 identity call and confirm code 2202 before writing any other code. Build bodies from `data/personas.json` matched by SSN.
+1. Done by A (2026-10-24): login works and the P13 identity call returns 2201 + 2202 + 2101. Verified codes: P12 = P13; P14 2301 + 2101; P16 2401; P01, P15 none. The SSN-issuance, `riskIndicator` and KMSG07 fields are identical for every persona, so ignore them.
+1. Wrap that call in `lib/crs/` first, then build on it. Build bodies from `data/personas.json` matched by SSN.
 
 **While you're blocked:** Between 15:00 and 21:00, once 06 is done: start the deal engine math (10) against the generated portfolio so the CRO screen only needs wiring when 05 lands.
 

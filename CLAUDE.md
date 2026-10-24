@@ -31,7 +31,8 @@ consumer/multimodal/hardware; treat an overall placing as a bonus.
 
 ## The moment (demo and video open with it)
 
-1. Loan #37 (P13): live CRS TU identity → `2202` SSN issued before DOB. Synthetic identity.
+1. Loan #37 (P13): live CRS TU identity → `2201` SSN not associated with this name, `2202` date of birth doesn't
+   match the file, `2101` address doesn't match. A real SSN under a made-up identity.
 2. Threads spread via a shared rare phone and a recycled pay-stub template → 4 more loans, Dealer #3.
 3. P08 + a neighbour share an address → one `check_address` → 212-unit apartment building → thread falls.
 4. Budget meter: ring found for $X vs ~$21,500 to check everything (real measured numbers only).
@@ -77,7 +78,7 @@ that reads answer keys), `tests/`, `docs/PROOF.md`. Folder map and import rules:
 
 ## Synthetic-identity signals (from the CRS credit report, TU identity, Fraud Finder)
 
-- TU identity messages: 2201 SSN to another name, 2202 SSN issue date inconsistent with DOB, 2301
+- TU identity messages: 2201 SSN not associated with the name, 2202 date of birth doesn't match the file, 2301
   deceased (hard signals).
 - "Thick file, thin life": good score but few addresses in `creditFiles[]`, recent file open date,
   shallow or borrowed tradelines in `tradelines[]`, inquiry burst in `inquiries[]` (soft).
@@ -134,7 +135,10 @@ CRS employments) $0.20 · `ask_human(question, to, confidence, reason)` free but
 - Credit reports return HTTP 200 for no file / frozen / deceased: check `errorMessages` first.
 - SSN/DOB formats: credit + TU identity `666701001` / `YYYY-MM-DD`; criminal/eviction `666-70-1001` / `MM-DD-YYYY`.
 - TU identity `POST /transunion/identity-manager-verification/basic`; messages empty = verified;
-  2201 SSN to another name, 2202 synthetic, 2301 deceased, 2401 fraud alert, 2101 address mismatch.
+  2201 SSN not associated with name, 2202 DOB doesn't match file, 2301 deceased, 2401 fraud alert (step-up),
+  2101 address mismatch. Verified live on 2026-10-24: P13 and P12 → 2201 + 2202 + 2101; P14 → 2301 + 2101; P16 → 2401; P01, P15 → no messages. The sandbox returns the same SSN-issuance block ("ISSUED_AFTER_21", 2001, KY), `riskIndicator` MEDIUM and KMSG07 for every persona, including clean ones: never use them as signals.
+  TU alone can't tell P13 from P12; Fraud Finder (P13: email 3 days old, VoIP) and the credit report (P13 thin
+  file vs P12 no file) separate them.
 - Fraud Finder `POST /fraud-finder/fraud-finder`, field `ipAddress` not `ip`; reverse phone
   `POST /accurate-append/reverse`; PitchPoint `POST /pp/fcrablj/data`.
 - Save the `RequestID` header from every call. Identical requests are cached (expected).
