@@ -1,0 +1,389 @@
+{
+  "endpoint": "credit_efx",
+  "persona": "P13",
+  "path": "/equifax/credit-report/standard/efx-prequal-vantage4",
+  "status": 200,
+  "request_id": "34c7fb8f-7c9f-4ce7-a4c4-68dbcfa65c09",
+  "request": {
+    "firstName": "KAYLA",
+    "lastName": "BRENNAN",
+    "ssn": "666701013",
+    "addresses": [
+      {
+        "addressLine1": "9021 KINGSTON PIKE",
+        "city": "KNOXVILLE",
+        "state": "TN",
+        "postalCode": "37923",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "KAYLA",
+      "lastName": "BRENNAN",
+      "ssn": "666701013",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "9021 KINGSTON PIKE",
+          "city": "KNOXVILLE",
+          "state": "TN",
+          "postalCode": "37923"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": false,
+      "experian": false,
+      "equifax": true
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:12:02.062663Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [
+      {
+        "borrowerSourceType": "Borrower",
+        "sourceType": "Equifax",
+        "responseAlertMessageCategoryType": "FACTARiskScoreValue",
+        "responseAlertMessageText": "FACTA: Risk Score Value - The borrower's Risk Score Value was negatively affected by the presence of credit inquiry records on their credit file"
+      }
+    ],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileInfileDate": "2013-06-12",
+          "creditFileResultStatusType": "FileReturned",
+          "sourceType": "Equifax"
+        },
+        "aliases": [
+          {
+            "firstName": "KAYLA",
+            "lastName": "BRENNAN",
+            "middleName": "D"
+          }
+        ],
+        "ssns": [],
+        "employments": [
+          {
+            "employerName": "ASULEBCFL",
+            "employmentStatusType": "Current",
+            "employmentPositionDescription": "FHGXVJDQFPXBDFYL"
+          },
+          {
+            "employerName": "GLZIZKGCINQFZB",
+            "employmentStatusType": "Previous"
+          }
+        ]
+      }
+    ],
+    "inquiries": [
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-19",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-22",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-25",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-28",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-31",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-03",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-06",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-09",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      },
+      {
+        "creditorName": "EQUIFAX TEST DATA",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-12",
+        "businessType": "Finance",
+        "subscriberCode": "999FA05015",
+        "sourceType": "Equifax"
+      }
+    ],
+    "tradelines": [
+      {
+        "accountIdentifier": "CALHACKS-CARD-1",
+        "accountOpenedDate": "2025-08-01",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "2500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "800",
+        "lastActivityDate": "2026-08-20",
+        "monthsReviewedCount": "14",
+        "creditorName": "NEW HORIZON BANK",
+        "subscriberCode": "999BB44497",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "300",
+        "businessType": "Finance",
+        "loanType": "CreditCard",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "Equifax"
+      },
+      {
+        "accountIdentifier": "CALHACKS-AU-1",
+        "accountOpenedDate": "2025-08-15",
+        "accountOwnershipType": "AuthorizedUser",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "3500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "1200",
+        "lastActivityDate": "2026-08-20",
+        "monthsReviewedCount": "14",
+        "creditorName": "PREMIER CARD SERVICES",
+        "subscriberCode": "999BB44497",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "600",
+        "businessType": "Finance",
+        "loanType": "CreditCard",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "Equifax"
+      },
+      {
+        "accountIdentifier": "CALHACKS-AU-2",
+        "accountOpenedDate": "2025-09-01",
+        "accountOwnershipType": "AuthorizedUser",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "1500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "350",
+        "lastActivityDate": "2026-08-20",
+        "monthsReviewedCount": "13",
+        "creditorName": "DEPT STORE CHARGE",
+        "subscriberCode": "999BB44497",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "0",
+        "businessType": "Finance",
+        "loanType": "ChargeAccount",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "Equifax"
+      }
+    ],
+    "publicRecords": [],
+    "scores": [
+      {
+        "borrowerSourceType": "Borrower",
+        "modelName": "Vantage 4.0",
+        "modelNameType": "05402",
+        "sourceType": "Equifax",
+        "factaInquiriesIndicator": true,
+        "scoreValue": "640",
+        "scoreRankPercentileValue": "23",
+        "scoreMaximumValue": "850",
+        "scoreMinimumValue": "300",
+        "scoreFactors": [
+          {
+            "scoreFactorCode": "68",
+            "scoreFactorText": "LACK OF REAL ESTATE SECURED LOAN INFORMATION"
+          },
+          {
+            "scoreFactorCode": "38",
+            "scoreFactorText": "LACK OF BANKCARD ACCOUNT INFORMATION"
+          },
+          {
+            "scoreFactorCode": "7",
+            "scoreFactorText": "TOO MANY DELINQUENT OR DEROGATORY ACCOUNTS"
+          },
+          {
+            "scoreFactorCode": "57",
+            "scoreFactorText": "NO OPEN INSTALLMENT ACCOUNTS IN YOUR CREDIT FILE"
+          }
+        ]
+      },
+      {
+        "borrowerSourceType": "Borrower",
+        "modelName": "02958",
+        "modelNameType": "FICO SCORE 5",
+        "sourceType": "Equifax",
+        "factaInquiriesIndicator": true,
+        "scoreValue": "640",
+        "scoreFactors": [
+          {
+            "scoreFactorCode": "38",
+            "scoreFactorText": "SERIOUS DELINQUENCY AND PUBLIC RECORD OR COLLECTION FILED"
+          },
+          {
+            "scoreFactorCode": "18",
+            "scoreFactorText": "NUMBER OF ACCOUNTS WITH DELINQUENCY"
+          },
+          {
+            "scoreFactorCode": "14",
+            "scoreFactorText": "LENGTH OF TIME ACCOUNTS HAVE BEEN ESTABLISHED"
+          },
+          {
+            "scoreFactorCode": "16",
+            "scoreFactorText": "LACK OF RECENT REVOLVING ACCOUNT INFORMATION"
+          }
+        ]
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {
+        "mortgageTradesCount": "0",
+        "mortgageBalanceTotal": "0",
+        "mortgageHighCreditTotal": "0",
+        "mortgagePaymentsTotal": "0",
+        "mortgagePastDueTotal": "0",
+        "autoTradesCount": "0",
+        "autoBalanceTotal": "0",
+        "autoHighCreditTotal": "0",
+        "autoPaymentsTotal": "0",
+        "autoPastDueTotal": "0",
+        "educationTradesCount": "0",
+        "educationBalanceTotal": "0",
+        "educationHighCreditTotal": "0",
+        "educationPaymentsTotal": "0",
+        "educationPastDueTotal": "0",
+        "openTradesCount": "0",
+        "openBalanceTotal": "0",
+        "openHighCreditTotal": "0",
+        "openPaymentsTotal": "0",
+        "openPastDueTotal": "0",
+        "revolvingTradesCount": "3",
+        "revolvingBalanceTotal": "900",
+        "revolvingHighCreditTotal": "7500",
+        "revolvingPaymentsTotal": "0",
+        "revolvingPastDueTotal": "0",
+        "unknownTradesCount": "0",
+        "unknownBalanceTotal": "0",
+        "unknownHighCreditTotal": "0",
+        "unknownPaymentsTotal": "0",
+        "unknownPastDueTotal": "0",
+        "installmentOtherTradesCount": "0",
+        "installmentOtherBalanceTotal": "0",
+        "installmentOtherHighCreditTotal": "0",
+        "installmentOtherPaymentsTotal": "0",
+        "installmentOtherPastDueTotal": "0",
+        "applicableMortgagePaymentsTotal": "0",
+        "applicableAutoPaymentsTotal": "0",
+        "applicableEducationPaymentsTotal": "0",
+        "applicableOpenPaymentsTotal": "0",
+        "applicableRevolvingPaymentsTotal": "0",
+        "applicableUnknownPaymentsTotal": "0",
+        "applicableInstallmentPaymentsTotal": "0",
+        "applicableInstallmentOtherPaymentsTotal": "0",
+        "applicableMortgageHighCreditTotal": "0",
+        "applicableAutoHighCreditTotal": "0",
+        "applicableEducationHighCreditTotal": "0",
+        "applicableOpenHighCreditTotal": "0",
+        "applicableRevolvingHighCreditTotal": "7500",
+        "applicableUnknownHighCreditTotal": "0",
+        "applicableInstallmentHighCreditTotal": "0",
+        "applicableInstallmentOtherHighCreditTotal": "0",
+        "tradesCount": "3",
+        "balanceTotal": "900",
+        "applicablePaymentsTotal": "0",
+        "applicableHighCreditTotal": "7500",
+        "highCreditTotal": "7500",
+        "paymentsTotal": "0",
+        "pastDueTotal": "0",
+        "securedDebtBalanceTotal": "0",
+        "unsecuredDebtBalanceTotal": "900",
+        "oldestTradelineDate": "2025-08-01",
+        "oldestTradelineCreditorName": "NEW HORIZON BANK",
+        "revolvingCreditUtilization": "12",
+        "totalDebtHighCreditRatio": "12"
+      },
+      "derogatorySummary": {
+        "chargeOffsCount": "0",
+        "collectionsCount": "0",
+        "bankruptciesCount": "0",
+        "publicRecordsCount": "0",
+        "satisfactoryTradelineCount": "3",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "inquiriesCount": "9",
+        "mostRecentLateDate": "",
+        "disputesCount": "0",
+        "currentAdverseTradelineCount": "0",
+        "priorAdverseTradelineCount": "0",
+        "otherCount": "0",
+        "securedDebtBalanceTotal": "0",
+        "unsecuredDebtBalanceTotal": "900"
+      }
+    }
+  }
+}

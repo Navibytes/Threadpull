@@ -1,0 +1,88 @@
+{
+  "endpoint": "credit_tu",
+  "persona": "P15",
+  "path": "/transunion/credit-report/standard/tu-prequal-fico9",
+  "status": 200,
+  "request_id": "f86b8b1a-bcfe-4a27-8630-e4ea0099ee80",
+  "request": {
+    "firstName": "NICOLE",
+    "lastName": "FARRAGUT",
+    "ssn": "666701015",
+    "addresses": [
+      {
+        "addressLine1": "7700 NE 72ND AVE",
+        "city": "PORTLAND",
+        "state": "OR",
+        "postalCode": "97218",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "NICOLE",
+      "lastName": "FARRAGUT",
+      "ssn": "666701015",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "7700 NE 72ND AVE",
+          "city": "PORTLAND",
+          "state": "OR",
+          "postalCode": "97218"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": true,
+      "experian": false,
+      "equifax": false
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:11:59.140031Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [
+      {
+        "borrowerSourceType": "Borrower",
+        "sourceType": "TransUnion",
+        "responseAlertMessageCategoryType": "SSNVerification",
+        "responseAlertMessageText": "SSN Alert: NO SSN ON FILE"
+      }
+    ],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileResultStatusType": "NoFileReturnedCreditFreeze",
+          "sourceType": "TransUnion"
+        }
+      }
+    ],
+    "scores": [
+      {
+        "borrowerSourceType": "Borrower",
+        "modelName": "FICO® Score 9",
+        "modelNameType": "00W18",
+        "sourceType": "TransUnion",
+        "scoreMaximumValue": "850",
+        "scoreMinimumValue": "300"
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {},
+      "derogatorySummary": {}
+    }
+  }
+}

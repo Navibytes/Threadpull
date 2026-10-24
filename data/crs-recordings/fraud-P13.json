@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P13",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "281176dc-937e-4f64-a5ab-7de5349b9270",
+  "request": {
+    "firstName": "KAYLA",
+    "lastName": "BRENNAN",
+    "phoneNumber": "5550101013",
+    "email": "kb.9921x@example.com",
+    "ipAddress": "198.51.100.13",
+    "address": {
+      "addressLine1": "9021 KINGSTON PIKE",
+      "city": "KNOXVILLE",
+      "state": "TN",
+      "postalCode": "37923"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2026-10-15",
+      "longevity": 1,
+      "velocity": 9,
+      "popularity": 1
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 88,
+      "tumbling_risk": 1,
+      "query_id": "calhacks-P13-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "34.05",
+        "longitude": "-118.24"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "> 1000 miles"
+      },
+      "phone": {
+        "line_type": "voip",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": true,
+        "owner": {
+          "first_name_match": "no_match",
+          "last_name_match": "no_match",
+          "street_match": "no_match",
+          "city_match": "no_match",
+          "zip_match": "no_match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "kb.9921x@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}

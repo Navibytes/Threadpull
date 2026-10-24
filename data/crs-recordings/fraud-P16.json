@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P16",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "63b89756-af02-4893-8d21-5318f5170242",
+  "request": {
+    "firstName": "SAMUEL",
+    "lastName": "OYELARAN",
+    "phoneNumber": "5550101016",
+    "email": "samuel.oyelaran@example.com",
+    "ipAddress": "203.0.113.26",
+    "address": {
+      "addressLine1": "1200 BRICKELL BAY DR APT 2203",
+      "city": "MIAMI",
+      "state": "FL",
+      "postalCode": "33131"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2020-06-12",
+      "longevity": 7,
+      "velocity": 3,
+      "popularity": 5
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 50,
+      "tumbling_risk": 0,
+      "query_id": "calhacks-P16-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "25.76",
+        "longitude": "-80.19"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "5 miles"
+      },
+      "phone": {
+        "line_type": "mobile",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "match",
+          "last_name_match": "match",
+          "street_match": "match",
+          "city_match": "match",
+          "zip_match": "match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "samuel.oyelaran@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}

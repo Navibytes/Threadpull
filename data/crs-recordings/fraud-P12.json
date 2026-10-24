@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P12",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "7bfbc240-dae0-425a-823c-1e2609dc2e8d",
+  "request": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "phoneNumber": "5550101012",
+    "email": "v.anand.1968@example.com",
+    "ipAddress": "198.51.100.12",
+    "address": {
+      "addressLine1": "55 WATER ST FL 20",
+      "city": "NEW YORK",
+      "state": "NY",
+      "postalCode": "10041"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2024-10-01",
+      "longevity": 3,
+      "velocity": 6,
+      "popularity": 2
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 85,
+      "tumbling_risk": 1,
+      "query_id": "calhacks-P12-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "51.51",
+        "longitude": "-0.13"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "> 1000 miles"
+      },
+      "phone": {
+        "line_type": "mobile",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "no_match",
+          "last_name_match": "no_match",
+          "street_match": "no_match",
+          "city_match": "no_match",
+          "zip_match": "no_match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "v.anand.1968@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}

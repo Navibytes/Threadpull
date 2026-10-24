@@ -1,0 +1,80 @@
+{
+  "endpoint": "credit_efx",
+  "persona": "P12",
+  "path": "/equifax/credit-report/standard/efx-prequal-vantage4",
+  "status": 200,
+  "request_id": "734b2b63-d69b-4198-8d20-6201f9d7839a",
+  "request": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "ssn": "666701012",
+    "addresses": [
+      {
+        "addressLine1": "55 WATER ST FL 20",
+        "city": "NEW YORK",
+        "state": "NY",
+        "postalCode": "10041",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "VICTOR",
+      "lastName": "ANAND",
+      "ssn": "666701012",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "55 WATER ST FL 20",
+          "city": "NEW YORK",
+          "state": "NY",
+          "postalCode": "10041"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": false,
+      "experian": false,
+      "equifax": true
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:12:01.453037Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [
+      {
+        "borrowerSourceType": "Borrower",
+        "sourceType": "Equifax",
+        "responseAlertMessageCategoryType": "DemographicsVerification",
+        "responseAlertMessageServiceType": "EquifaxIdentityScanAlert",
+        "responseAlertMessageCode": "S",
+        "responseAlertMessageText": "ID Scan: S - IDENTITY SCAN DID NOT DETECT ANY ALERTS"
+      }
+    ],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileResultStatusType": "NoFileReturnedNoHit",
+          "sourceType": "Equifax"
+        }
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {},
+      "derogatorySummary": {}
+    }
+  }
+}

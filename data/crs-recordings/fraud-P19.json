@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P19",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "1322bc9f-2c07-4375-b166-0d140c2a6b1e",
+  "request": {
+    "firstName": "GRACE",
+    "lastName": "NAKAMURA",
+    "phoneNumber": "5550101019",
+    "email": "grace.nakamura@example.com",
+    "ipAddress": "203.0.113.29",
+    "address": {
+      "addressLine1": "1850 SOLANO AVE",
+      "city": "BERKELEY",
+      "state": "CA",
+      "postalCode": "94707"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2012-09-16",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 7
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 9,
+      "tumbling_risk": 0,
+      "query_id": "calhacks-P19-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "37.89",
+        "longitude": "-122.28"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "5 miles"
+      },
+      "phone": {
+        "line_type": "mobile",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "match",
+          "last_name_match": "match",
+          "street_match": "match",
+          "city_match": "match",
+          "zip_match": "match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "grace.nakamura@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}
