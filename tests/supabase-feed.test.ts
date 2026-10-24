@@ -1,5 +1,5 @@
-// The live feed against a fake Supabase client: history in seq order, Realtime inserts appended,
-// gaps caught up from the table, duplicates and bad rows dropped. The real round trip is in docs/board-proof.md.
+// The live feed against a fake Supabase client: history in seq order, Realtime inserts appended, rows that
+// arrive ahead of a missing seq held back, permanent gaps reported. The real round trip is in docs/board-proof.md.
 import { describe, expect, test } from "bun:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PREVIEW_EVENTS, reduceEvents, supabaseFeed, type RunEvent } from "@/lib/events";
@@ -16,6 +16,7 @@ const row = (seq: number, extra: Partial<RunEvent> = {}): RunEvent => ({
 
 function fakeClient(table: RunEvent[]) {
   let onInsert: (p: { new: unknown }) => void = () => {};
+  let onSystem: (p: unknown) => void = () => {};
   let onStatus: (s: string) => void = () => {};
   const queries: number[] = [];
   const client = {
@@ -34,79 +35,138 @@ function fakeClient(table: RunEvent[]) {
     },
     channel: () => {
       const ch = {
-        on: (_t: string, _f: unknown, cb: typeof onInsert) => ((onInsert = cb), ch),
+        on: (type: string, _f: unknown, cb: (p: { new: unknown }) => void) => {
+          if (type === "postgres_changes") onInsert = cb;
+          else onSystem = cb as (p: unknown) => void;
+          return ch;
+        },
         subscribe: (cb: typeof onStatus) => ((onStatus = cb), ch),
       };
       return ch;
     },
     removeChannel: async () => "ok",
   } as unknown as SupabaseClient;
-  return { client, queries, insert: (r: unknown) => onInsert({ new: r }), status: (s: string) => onStatus(s) };
+  return {
+    client,
+    queries,
+    insert: (r: unknown) => onInsert({ new: r }),
+    status: (s: string) => onStatus(s),
+    ready: () => onSystem({ extension: "postgres_changes", status: "ok" }),
+  };
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function follow(table: RunEvent[], gapWaitMs = 20) {
+  const db = fakeClient(table);
+  const got: number[] = [];
+  const errors: string[] = [];
+  const stop = supabaseFeed(db.client, RUN, gapWaitMs).subscribe(
+    (rows) => got.push(...rows.map((r) => r.seq)),
+    (m) => errors.push(m),
+  );
+  return { db, got, errors, stop };
+}
 
 describe("supabase feed", () => {
   test("reads history only after the subscription is live, in seq order", async () => {
-    const db = fakeClient([row(3), row(1), row(2)]);
-    const got: number[] = [];
-    supabaseFeed(db.client, RUN).subscribe((rows) => got.push(...rows.map((r) => r.seq)));
+    const f = follow([row(3), row(1), row(2)]);
     await flush();
-    expect(got).toEqual([]);
-    db.status("SUBSCRIBED");
+    expect(f.got).toEqual([]);
+    f.db.status("SUBSCRIBED");
     await flush();
-    expect(got).toEqual([1, 2, 3]);
+    expect(f.got).toEqual([1, 2, 3]);
+    f.stop();
   });
 
   test("appends the next Realtime insert without another query", async () => {
-    const table = [row(1)];
-    const db = fakeClient(table);
-    const got: number[] = [];
-    supabaseFeed(db.client, RUN).subscribe((rows) => got.push(...rows.map((r) => r.seq)));
-    db.status("SUBSCRIBED");
+    const f = follow([row(1)]);
+    f.db.status("SUBSCRIBED");
     await flush();
-    db.insert(row(2));
-    expect(got).toEqual([1, 2]);
-    expect(db.queries).toEqual([0]);
+    f.db.insert(row(2));
+    expect(f.got).toEqual([1, 2]);
+    expect(f.db.queries).toEqual([0]);
+    f.stop();
   });
 
-  test("a seq gap is filled from the table before the later row is shown", async () => {
+  test("a row inserted before the Postgres listener is ready is read once it is", async () => {
     const table = [row(1)];
-    const db = fakeClient(table);
-    const got: number[] = [];
-    supabaseFeed(db.client, RUN).subscribe((rows) => got.push(...rows.map((r) => r.seq)));
-    db.status("SUBSCRIBED");
+    const f = follow(table);
+    f.db.status("SUBSCRIBED");
+    await flush();
+    table.push(row(2)); // committed in the window Realtime didn't see
+    f.db.ready();
+    await flush();
+    expect(f.got).toEqual([1, 2]);
+    f.stop();
+  });
+
+  test("a row that arrives ahead of a missing seq waits for it", async () => {
+    const f = follow([row(1)], 1000);
+    f.db.status("SUBSCRIBED");
+    await flush();
+    f.db.insert(row(3)); // seq 2 isn't committed yet
+    expect(f.got).toEqual([1]);
+    f.db.insert(row(2));
+    expect(f.got).toEqual([1, 2, 3]);
+    f.db.insert(row(2)); // late duplicate
+    expect(f.got).toEqual([1, 2, 3]);
+    f.stop();
+  });
+
+  test("a gap Realtime missed is filled from the table", async () => {
+    const table = [row(1)];
+    const f = follow(table);
+    f.db.status("SUBSCRIBED");
     await flush();
     table.push(row(2), row(3));
-    db.insert(row(3)); // 2 hasn't arrived over Realtime yet
-    await flush();
-    db.insert(row(2)); // late duplicate
-    expect(got).toEqual([1, 2, 3]);
+    f.db.insert(row(3)); // Realtime never delivers 2
+    await wait(40);
+    expect(f.got).toEqual([1, 2, 3]);
+    expect(f.errors).toEqual([]);
+    f.stop();
   });
 
-  test("a row inserted while history loads is neither lost nor duplicated", async () => {
-    const table = [row(1), row(2)];
+  test("a permanent gap is reported and later rows are still shown in order", async () => {
+    const f = follow([row(1), row(3), row(4)]);
+    f.db.status("SUBSCRIBED");
+    await wait(40);
+    expect(f.got).toEqual([1, 3, 4]);
+    expect(f.errors[0]).toContain("seq 2 is missing");
+    f.stop();
+  });
+
+  test("a row given up on that arrives late rebuilds the board in seq order", async () => {
+    const table = [row(1), row(3)];
     const db = fakeClient(table);
-    const got: number[] = [];
-    supabaseFeed(db.client, RUN).subscribe((rows) => got.push(...rows.map((r) => r.seq)));
+    let rows: RunEvent[] = [];
+    let resets = 0;
+    const stop = supabaseFeed(db.client, RUN, 20).subscribe(
+      (r) => rows.push(...r),
+      () => {},
+      () => ((rows = []), resets++),
+    );
     db.status("SUBSCRIBED");
-    table.push(row(3));
-    db.insert(row(3)); // arrives before the history query resolves
-    await flush();
-    await flush();
-    expect(got).toEqual([1, 2, 3]);
+    await wait(40); // gap at 2 given up on: 1, 3 shown
+    expect(rows.map((r) => r.seq)).toEqual([1, 3]);
+    table.push(row(2));
+    db.insert(row(2)); // the missing row finally commits
+    await wait(40);
+    expect(resets).toBe(1);
+    expect(rows.map((r) => r.seq)).toEqual([1, 2, 3]);
+    expect(reduceEvents(rows)).toEqual(reduceEvents(table));
+    stop();
   });
 
   test("rows that break the contract are reported, not drawn", async () => {
-    const db = fakeClient([row(1)]);
-    const got: number[] = [];
-    const errors: string[] = [];
-    supabaseFeed(db.client, RUN).subscribe((rows) => got.push(...rows.map((r) => r.seq)), (m) => errors.push(m));
-    db.status("SUBSCRIBED");
+    const f = follow([row(1)]);
+    f.db.status("SUBSCRIBED");
     await flush();
-    db.insert({ ...row(2), type: "not_a_type" });
-    expect(got).toEqual([1]);
-    expect(errors[0]).toContain("seq 2");
+    f.db.insert({ ...row(2), type: "not_a_type" });
+    expect(f.got).toEqual([1]);
+    expect(f.errors[0]).toContain("seq 2");
+    f.stop();
   });
 
   test("a refresh (new subscription) rebuilds the same board", async () => {
@@ -115,10 +175,11 @@ describe("supabase feed", () => {
     for (let i = 0; i < 2; i++) {
       const db = fakeClient(table);
       const rows: RunEvent[] = [];
-      supabaseFeed(db.client, RUN).subscribe((r) => rows.push(...r));
+      const stop = supabaseFeed(db.client, RUN).subscribe((r) => rows.push(...r));
       db.status("SUBSCRIBED");
       await flush();
       boards.push(reduceEvents(rows));
+      stop();
     }
     expect(boards[1]).toEqual(boards[0]);
     expect(boards[0].threads).toHaveLength(3);

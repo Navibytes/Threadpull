@@ -14,6 +14,10 @@ export function useRunEvents(feed: RunEventFeed): { board: BoardState; errors: s
     return feed.subscribe(
       (rows) => setBoard((b) => reduceEvents(rows, b)),
       (message) => setErrors((e) => (e.includes(message) ? e : [...e.slice(-4), message])),
+      () => {
+        setBoard(emptyBoard);
+        setErrors([]);
+      },
     );
   }, [feed]);
   return { board, errors };

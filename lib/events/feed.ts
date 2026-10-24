@@ -8,8 +8,14 @@ export type FeedMode = "preview" | "replay" | "live";
 export interface RunEventFeed {
   mode: FeedMode;
   runId: string;
-  // Calls onEvents with batches of rows in seq order and onError with readable problems; returns an unsubscribe.
-  subscribe(onEvents: (events: RunEvent[]) => void, onError?: (message: string) => void): () => void;
+  // Calls onEvents with batches of rows in seq order, onError with readable problems, and onReset when the
+  // board must be rebuilt from scratch (the rows that follow start again at the run's first seq).
+  // Returns an unsubscribe.
+  subscribe(
+    onEvents: (events: RunEvent[]) => void,
+    onError?: (message: string) => void,
+    onReset?: () => void,
+  ): () => void;
 }
 
 const bySeq = (a: RunEvent, b: RunEvent) => a.seq - b.seq;

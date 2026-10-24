@@ -9,7 +9,7 @@ import {
   useNodesState,
   type OnSelectionChangeParams,
 } from "@xyflow/react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { BoardState } from "@/lib/events";
 import { IndexCardNode, type IndexCardNodeType } from "./index-card-node";
 import { cardPosition } from "./layout";
@@ -25,12 +25,14 @@ const edgeTypes = { yarn: YarnEdge };
 export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s: Selection) => void }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
+  const moved = useRef(new Set<string>()); // cards the viewer dragged keep their spot; the rest follow the layout
 
   useEffect(() => {
     setNodes((prev) =>
       board.cards.map((card, i) => {
         const old = prev.find((n) => n.id === card.id);
-        return { ...old, id: card.id, type: "indexCard", position: old?.position ?? cardPosition(i), data: { card } };
+        const position = old && moved.current.has(card.id) ? old.position : cardPosition(i);
+        return { ...old, id: card.id, type: "indexCard", position, data: { card } };
       }),
     );
   }, [board.cards, setNodes]);
@@ -67,6 +69,7 @@ export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onSelectionChange={handleSelection}
+      onNodeDragStop={(_, node) => moved.current.add(node.id)}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       nodesConnectable={false}
