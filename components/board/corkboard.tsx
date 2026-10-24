@@ -1,0 +1,86 @@
+"use client";
+
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  type OnSelectionChangeParams,
+} from "@xyflow/react";
+import { useCallback, useEffect } from "react";
+import type { BoardState } from "@/lib/events";
+import { IndexCardNode, type IndexCardNodeType } from "./index-card-node";
+import { cardPosition } from "./layout";
+import { YarnEdge, type YarnEdgeType } from "./yarn-edge";
+
+export type Selection = { kind: "card" | "thread"; id: string } | null;
+
+const nodeTypes = { indexCard: IndexCardNode };
+const edgeTypes = { yarn: YarnEdge };
+
+// Draws BoardState only. Cards can be dragged and the view panned or zoomed, but nothing here adds,
+// removes or restyles evidence: that comes from event rows through the reducer.
+export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s: Selection) => void }) {
+  const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
+
+  useEffect(() => {
+    setNodes((prev) =>
+      board.cards.map((card, i) => {
+        const old = prev.find((n) => n.id === card.id);
+        return { ...old, id: card.id, type: "indexCard", position: old?.position ?? cardPosition(i), data: { card } };
+      }),
+    );
+  }, [board.cards, setNodes]);
+
+  useEffect(() => {
+    setEdges((prev) =>
+      board.threads.map((thread) => {
+        const old = prev.find((e) => e.id === thread.id);
+        return {
+          ...old,
+          id: thread.id,
+          type: "yarn",
+          source: thread.a,
+          target: thread.b,
+          sourceHandle: "pin-out",
+          targetHandle: "pin-in",
+          zIndex: 1, // yarn runs over the cards, pin to pin
+          data: { thread },
+        };
+      }),
+    );
+  }, [board.threads, setEdges]);
+
+  const handleSelection = useCallback(
+    ({ nodes, edges }: OnSelectionChangeParams) =>
+      onSelect(nodes[0] ? { kind: "card", id: nodes[0].id } : edges[0] ? { kind: "thread", id: edges[0].id } : null),
+    [onSelect],
+  );
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onSelectionChange={handleSelection}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      nodesConnectable={false}
+      elevateNodesOnSelect={false} // keep the yarn above a selected card
+      deleteKeyCode={null}
+      fitView
+      fitViewOptions={{ padding: 0.4, maxZoom: 1.2 }}
+      minZoom={0.3}
+      maxZoom={2}
+      style={{ background: "transparent" }}
+      aria-label="Corkboard: evidence cards and the threads between them"
+    >
+      <Background variant={BackgroundVariant.Dots} gap={22} size={1.4} color="rgb(74 55 40 / 0.16)" />
+      <Controls showInteractive={false} position="bottom-left" />
+    </ReactFlow>
+  );
+}
