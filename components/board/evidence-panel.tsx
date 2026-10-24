@@ -13,7 +13,7 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
     <aside
       aria-label="Evidence details"
       aria-live="polite"
-      className="w-[22rem] shrink-0 overflow-y-auto rounded-lg border border-walnut/10 bg-paper p-5 shadow-[0_2px_10px_rgb(74_55_40/0.12)]"
+      className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-walnut/10 bg-paper p-5 shadow-[0_2px_10px_rgb(74_55_40/0.12)]"
     >
       <h2 className="font-display text-xl font-semibold">Evidence</h2>
       {card && <CardDetails card={card} mode={mode} />}

@@ -19,5 +19,6 @@
 | 4 | ~~Source kinds beyond crs/row~~ | **Settled** by `tool-result.ts` (seven kinds); the event contract reuses it | — |
 | 5 | ~~Budget unit~~ | **Settled** on main: acorns, 60 per run (SKELETON §7, CLAUDE.md, `TOOL_SPECS`); `budget {spent, limit}` is in acorns | — |
 | 6 | Is `seq` contiguous per run (1, 2, 3, …)? The board's live feed relies on it to detect gaps (it still works without it, with extra reads) | assumed contiguous | D |
+| 7 | Hazel's notebook shows "What I saw" from `note`. "Why it matters" and "What's next" have no field, so they show "Not recorded in this event." Add optional `why` and `next` strings to the row (or to `result`)? | not read; shown as not recorded | D (agent writes notes) |
 
 Until 2 is agreed, the board draws `lead_opened` and `link_found`. `status_changed` and `clue_explained` rows are kept in the log but don't change the board yet.

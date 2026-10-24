@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { browserClient } from "@/lib/db/browser";
 import { previewFeed, supabaseFeed } from "@/lib/events";
+import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { Corkboard, type Selection } from "./corkboard";
 import { EvidencePanel } from "./evidence-panel";
 import { ModeBadge } from "./mode-badge";
@@ -53,7 +54,10 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             ))}
           </div>
         </section>
-        <EvidencePanel board={board} selection={selection} mode={feed.mode} />
+        <div className="flex min-h-0 w-[22rem] shrink-0 flex-col gap-4">
+          <HazelNotebook board={board} mode={feed.mode} />
+          <EvidencePanel board={board} selection={selection} mode={feed.mode} />
+        </div>
       </main>
     </div>
   );
