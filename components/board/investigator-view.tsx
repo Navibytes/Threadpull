@@ -1,17 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { previewFeed } from "@/lib/events";
+import { browserClient } from "@/lib/db/browser";
+import { previewFeed, supabaseFeed } from "@/lib/events";
 import { Corkboard, type Selection } from "./corkboard";
 import { EvidencePanel } from "./evidence-panel";
 import { ModeBadge } from "./mode-badge";
 import { useRunEvents } from "./use-run-events";
 
-export function InvestigatorView() {
-  // The only data source today is the PREVIEW fixture. Replay/live feeds plug in here.
-  const feed = useMemo(() => previewFeed(), []);
-  const board = useRunEvents(feed);
+// With ?run=<run_id> and Supabase configured, the board follows that run's event rows (history, then
+// Realtime). Otherwise it shows the PREVIEW fixture, and says why.
+export function InvestigatorView({ runId }: { runId?: string }) {
+  const client = useMemo(() => (runId ? browserClient() : null), [runId]);
+  const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
+  const { board, errors } = useRunEvents(feed);
   const [selection, setSelection] = useState<Selection>(null);
+
+  const notices = [
+    ...(runId && !client
+      ? [`Supabase isn't configured (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY), so run ${runId} can't be shown.`]
+      : []),
+    ...errors,
+  ];
 
   return (
     <div className="flex h-dvh flex-col">
@@ -26,11 +36,22 @@ export function InvestigatorView() {
       <main className="flex min-h-0 flex-1 gap-4 p-4">
         <section aria-label="Corkboard" className="cork relative min-w-0 flex-1 overflow-hidden rounded-lg">
           <Corkboard board={board} onSelect={setSelection} />
-          {feed.mode === "preview" && (
-            <p className="pointer-events-none absolute left-5 top-5 rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">
-              PREVIEW · synthetic fixture · not a live or recorded investigation
-            </p>
-          )}
+          <div className="pointer-events-none absolute left-5 top-5 max-w-[70%] space-y-2">
+            {feed.mode === "preview" && (
+              <p className="w-fit rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">
+                PREVIEW · synthetic fixture · not a live or recorded investigation
+              </p>
+            )}
+            {notices.map((n) => (
+              <p
+                key={n}
+                role="status"
+                className="w-fit rounded border border-terracotta bg-paper/95 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm"
+              >
+                {n}
+              </p>
+            ))}
+          </div>
         </section>
         <EvidencePanel board={board} selection={selection} mode={feed.mode} />
       </main>

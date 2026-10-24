@@ -1,5 +1,5 @@
 // The board's only data input. A feed delivers a run's rows in seq order: history first, then new rows.
-// Preview reads the fixture; replay and live (Supabase history + Realtime) will implement the same shape.
+// Preview reads the hand-written fixture; live reads Supabase (supabase-feed.ts); replay will follow.
 import { PREVIEW_EVENTS, PREVIEW_RUN_ID } from "./preview-run";
 import type { RunEvent } from "./types";
 
@@ -8,8 +8,8 @@ export type FeedMode = "preview" | "replay" | "live";
 export interface RunEventFeed {
   mode: FeedMode;
   runId: string;
-  // Calls onEvents with batches of rows; returns an unsubscribe.
-  subscribe(onEvents: (events: RunEvent[]) => void): () => void;
+  // Calls onEvents with batches of rows in seq order and onError with readable problems; returns an unsubscribe.
+  subscribe(onEvents: (events: RunEvent[]) => void, onError?: (message: string) => void): () => void;
 }
 
 const bySeq = (a: RunEvent, b: RunEvent) => a.seq - b.seq;

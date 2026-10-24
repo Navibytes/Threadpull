@@ -1,8 +1,8 @@
 "use client";
 
-import { threadWidth, type BoardCard, type BoardState, type BoardThread, type FeedMode } from "@/lib/events";
+import { crsRequestIds, threadWidth, type BoardCard, type BoardState, type BoardThread, type FeedMode } from "@/lib/events";
 import type { Selection } from "./corkboard";
-import { crsRequestIds, SourceList } from "./source-list";
+import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
 
 export function EvidencePanel({ board, selection, mode }: { board: BoardState; selection: Selection; mode: FeedMode }) {

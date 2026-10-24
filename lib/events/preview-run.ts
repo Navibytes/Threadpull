@@ -5,6 +5,9 @@ import type { RunEvent } from "./types";
 
 export const PREVIEW_RUN_ID = "preview-000";
 
+// §8 requires a budget on every row; nothing is spent in a preview. Limit = SKELETON §7 default (60 acorns).
+const budget = { spent: 0, limit: 60 };
+
 export const PREVIEW_EVENTS: RunEvent[] = [
   {
     run_id: PREVIEW_RUN_ID,
@@ -16,7 +19,7 @@ export const PREVIEW_EVENTS: RunEvent[] = [
     result: { mode: "preview" },
     sources: [],
     note: "Preview run: two synthetic applications, no investigation.",
-    budget: null,
+    budget,
     simulated: true,
   },
   {
@@ -29,7 +32,7 @@ export const PREVIEW_EVENTS: RunEvent[] = [
     result: { loan_id: "PV-01" },
     sources: [{ kind: "row", loan_id: "PV-01", field: "applicant_info" }],
     note: "Synthetic preview application pinned to show an index card.",
-    budget: null,
+    budget,
     simulated: true,
   },
   {
@@ -45,7 +48,7 @@ export const PREVIEW_EVENTS: RunEvent[] = [
       { kind: "row", loan_id: "PV-02", field: "applicant_info.phone" },
     ],
     note: "Both synthetic applications list the same phone number (555-0142).",
-    budget: null,
+    budget,
     simulated: true,
   },
 ];

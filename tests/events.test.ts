@@ -1,12 +1,27 @@
 // Board state is a pure function of the run's event rows (CLAUDE.md hard rule 2).
 import { describe, expect, test } from "bun:test";
-import { applyEvent, emptyBoard, PREVIEW_EVENTS, previewFeed, reduceEvents, threadWidth, type RunEvent } from "@/lib/events";
+import {
+  applyEvent,
+  crsRequestIds,
+  describeSource,
+  emptyBoard,
+  EventSchema,
+  PREVIEW_EVENTS,
+  previewFeed,
+  reduceEvents,
+  threadWidth,
+  type RunEvent,
+} from "@/lib/events";
 
 describe("preview fixture", () => {
+  test("every row validates against the event contract", () => {
+    for (const e of PREVIEW_EVENTS) expect(EventSchema.safeParse(e).success).toBe(true);
+  });
+
   test("is labeled simulated and never cites CRS", () => {
     for (const e of PREVIEW_EVENTS) {
       expect(e.simulated).toBe(true);
-      expect(e.sources.some((s) => s.kind === "crs")).toBe(false);
+      expect(crsRequestIds(e.sources)).toEqual([]);
     }
   });
 
@@ -47,6 +62,12 @@ describe("board state", () => {
     expect(applyEvent(board, other)).toBe(board);
   });
 
+  test("carries simulated vs live from each row", () => {
+    const live = reduceEvents(PREVIEW_EVENTS.map((e) => ({ ...e, simulated: false })));
+    expect(live.cards.every((c) => !c.simulated) && live.threads.every((t) => !t.simulated)).toBe(true);
+    expect(board.cards.every((c) => c.simulated) && board.threads.every((t) => t.simulated)).toBe(true);
+  });
+
   test("starts empty", () => {
     expect(reduceEvents([])).toEqual(emptyBoard);
   });
@@ -55,5 +76,30 @@ describe("board state", () => {
     expect(threadWidth(0)).toBe(1);
     expect(threadWidth(0.5)).toBe(5);
     expect(threadWidth(2)).toBe(9);
+  });
+});
+
+describe("event contract", () => {
+  const row = PREVIEW_EVENTS[2];
+
+  test("rejects an unknown type, a missing budget and a non-positive seq", () => {
+    expect(EventSchema.safeParse({ ...row, type: "string_cut" }).success).toBe(false);
+    expect(EventSchema.safeParse({ ...row, budget: undefined }).success).toBe(false);
+    expect(EventSchema.safeParse({ ...row, seq: 0 }).success).toBe(false);
+  });
+
+  test("accepts a Postgres timestamptz and a null tool", () => {
+    expect(EventSchema.safeParse({ ...row, ts: "2026-10-24T12:00:02+00:00", tool: null }).success).toBe(true);
+  });
+});
+
+describe("sources", () => {
+  test("label CRS, data-room and not-yet-named kinds without inventing a RequestID", () => {
+    expect(describeSource({ kind: "crs", request_id: "abc-123" })).toEqual({ label: "CRS", detail: "RequestID abc-123" });
+    expect(describeSource({ kind: "row", loan_id: "L0412", field: "applicant_info.phone" }).detail).toBe(
+      "L0412 · applicant_info.phone",
+    );
+    expect(describeSource({ kind: "rule", rule_id: "R-001" })).toEqual({ label: "rule", detail: '{"rule_id":"R-001"}' });
+    expect(crsRequestIds([{ kind: "row", loan_id: "L1", field: "x" }, { kind: "crs", request_id: "r1" }])).toEqual(["r1"]);
   });
 });
