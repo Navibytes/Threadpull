@@ -68,7 +68,7 @@ data/                                                                           
   generate.ts            ✅ seeded generator (`bun run data`)
   seed-db.ts             ✅ upsert normalized loans into Supabase
   record-crs.ts          ✅ record every persona's CRS sandbox responses, run once by hand   B
-  crs-recordings/        ○ its output, one JSON per endpoint and persona (RequestID kept, no secrets)   B
+  crs-recordings/        ✅ its output: the real sandbox responses of 2026-10-24, one JSON per endpoint and persona (RequestID kept, scanned for secrets)   B
   personas.json          ✅ canonical CRS persona identities
   patterns/seed13.json   ✅ pattern spec; seed99.json ○ (C, after detector-frozen)
   out/  keys/            gitignored outputs: tape + lookups / ground truth
@@ -78,7 +78,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-recorded, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows

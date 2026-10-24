@@ -1,0 +1,206 @@
+{
+  "endpoint": "identity",
+  "persona": "P13",
+  "path": "/transunion/identity-manager-verification/basic",
+  "status": 200,
+  "request_id": "da8f3b3b-9de3-4baa-9961-372af272e384",
+  "request": {
+    "firstName": "KAYLA",
+    "lastName": "BRENNAN",
+    "ssn": "666701013",
+    "dob": "1999-12-24",
+    "street1": "9021 KINGSTON PIKE",
+    "city": "KNOXVILLE",
+    "state": "TN",
+    "zip": "37923"
+  },
+  "response": {
+    "fileNumber": "01",
+    "fileSummary": {
+      "fileHitIndicator": "SUBJECT_HIT",
+      "creditDataStatus": {
+        "suppressed": false,
+        "doNotPromote": {
+          "indicator": false
+        },
+        "freeze": {
+          "indicator": false
+        },
+        "minor": false,
+        "disputed": false
+      }
+    },
+    "indicative": {
+      "names": [
+        {
+          "person": {
+            "first": "KAYLA",
+            "middle": "D",
+            "last": "BRENNAN"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "addresses": [
+        {
+          "status": "CURRENT",
+          "street": {
+            "unparseds": [],
+            "number": "9021",
+            "name": "KINGSTON PIKE"
+          },
+          "location": {
+            "city": "KNOXVILLE",
+            "state": "TN",
+            "zipCode": "37923"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "socialSecurities": [
+        {
+          "number": "666701013",
+          "identificationIssuance": {
+            "type": "SSN",
+            "status": "ISSUED_AFTER_21",
+            "yearRange": {
+              "startYear": "2001",
+              "endYear": "2001"
+            },
+            "state": "KY",
+            "ageObtained": {
+              "rangeStart": "+35",
+              "rangeEnd": "+36"
+            }
+          },
+          "source": "INPUT",
+          "masked": false
+        },
+        {
+          "number": "666701013",
+          "source": "FILE",
+          "masked": false
+        }
+      ],
+      "dateOfBirths": [
+        {
+          "value": "1999-12-24T00:00:00.000+00:00",
+          "source": "INPUT"
+        }
+      ],
+      "ages": [],
+      "phones": [
+        {
+          "number": {
+            "qualifier": "PERSONAL"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "employments": [],
+      "creditCards": [],
+      "genders": [],
+      "vehicles": []
+    },
+    "originalInputs": [],
+    "custom": {
+      "idmanagerVerAnalysisV2": {
+        "verificationSummary": {
+          "riskIndicator": "MEDIUM",
+          "bestMatch": "FILE",
+          "verificationPoint": 30,
+          "lowerThreshold": 5,
+          "upperThreshold": 49,
+          "keyMessages": {
+            "keyMessages": [
+              {
+                "code": "KMSG07",
+                "text": "ADDRESS RELATED ALERT"
+              }
+            ]
+          }
+        },
+        "fraudAnalysis": {
+          "region": {
+            "zipVsCity": "INVALID",
+            "zipVsState": "VALID",
+            "phoneVsState": "NOT_AVAILABLE",
+            "phoneVsZIP": "NOT_AVAILABLE",
+            "phoneVsZIPDistance": "0000.000",
+            "source": "INPUT"
+          },
+          "employment": {},
+          "distance": {
+            "minimum": {
+              "noAnalysisReason": "NOT_AVAILABLE"
+            },
+            "maximum": {
+              "noAnalysisReason": "NOT_AVAILABLE"
+            },
+            "source": "INPUT"
+          }
+        },
+        "verificationAnalysises": [
+          {
+            "verificationStatus": "SUBJECT_FOUND",
+            "firstNameVerification": "MATCH",
+            "middleNameVerification": "INPUT_NOT_AVAILABLE",
+            "lastNameVerification": "MATCH",
+            "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+            "currentAddressVerification": "NO_MATCH",
+            "previousAddressVerification": "INPUT_NOT_AVAILABLE",
+            "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+            "ssnVerification": "MATCH",
+            "dateOfBirthVerification": "NOT_FOUND",
+            "source": "FILE"
+          },
+          {
+            "verificationStatus": "SUBJECT_NOT_FOUND",
+            "firstNameVerification": "NOT_FOUND",
+            "middleNameVerification": "MATCH_NOT_PERFORMED",
+            "lastNameVerification": "NOT_FOUND",
+            "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+            "currentAddressVerification": "NOT_FOUND",
+            "previousAddressVerification": "MATCH_NOT_PERFORMED",
+            "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+            "ssnVerification": "NOT_FOUND",
+            "dateOfBirthVerification": "NOT_FOUND",
+            "source": "VENDOR_FILE"
+          }
+        ]
+      }
+    },
+    "addOnProducts": [
+      {
+        "code": "FRDMS",
+        "status": "DELIVERED",
+        "idMismatchAlerts": [],
+        "addressAnalysises": [],
+        "idManagerVerification": {
+          "messages": [
+            {
+              "code": "2201",
+              "text": "INPUT SSN NOT ASSOCIATED WITH INPUT NAME",
+              "source": "INPUT"
+            },
+            {
+              "code": "2202",
+              "text": "INPUT DATE OF BIRTH DOES NOT MATCH FILE",
+              "source": "INPUT"
+            },
+            {
+              "code": "2101",
+              "text": "INPUT CURRENT ADDRESS DOES NOT MATCH FILE CURRENT ADDRESS",
+              "source": "INPUT"
+            }
+          ],
+          "deceases": [],
+          "identificationIssuances": [],
+          "returnMessage": "CODES_AND_TEXT",
+          "searchStatus": "HIT"
+        },
+        "creditorContacts": []
+      }
+    ]
+  }
+}
