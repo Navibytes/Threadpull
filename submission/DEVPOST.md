@@ -24,7 +24,7 @@ Hazel follows weighted links between loans and their evidence. A connection is a
 
 The project is built around a human decision-maker. Hazel cannot approve a purchase or take action against a borrower. The intended CRO review brings investigation evidence and proposed portfolio actions together for a person to decide.
 
-The repository currently contains the investigation backend components and proof tooling. The live CRS integration, complete UI/demo flow, and measured seed results are still in progress; this draft should be updated with the final demo and generated `PROOF.md` before submission.
+The repository includes a deterministic TypeScript portfolio generator, normalization, contracts, and a loan API route, alongside Python investigation prototypes. The live CRS integration, TypeScript investigation flow, complete UI/demo, and measured seed results are still in progress; update this draft with the final demo and generated `docs/PROOF.md` before submission.
 
 ## How we use AI
 
@@ -43,7 +43,7 @@ Confirm the exact track names and eligibility in Devpost before submitting.
 
 ## Built with
 
-Python, NetworkX, Anthropic SDK, PyYAML; intended integrations include the CRS sandbox, FastAPI, and a React/React Flow investigator board.
+TypeScript, Bun, Zod, Faker, Supabase; Python, NetworkX, Anthropic SDK, and PyYAML for the investigation prototypes. Planned integrations include the CRS sandbox and a React/React Flow investigator board.
 
 ## Team members
 
