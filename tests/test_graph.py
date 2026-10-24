@@ -37,6 +37,34 @@ class EvidenceGraphTests(unittest.TestCase):
              "email": "same@example.com"},
         ])
         self.assertAlmostEqual(graph.priority_scores()["L1"], 1.0)
+        neighbor = graph.find_connections("L1")["result"]["neighbors"][0]
+        self.assertAlmostEqual(neighbor["priority_score"], 1.0)
+
+    def test_find_connections_has_standard_free_tool_envelope(self):
+        graph = EvidenceGraph([
+            {"loan_id": "L1", "phone": "5550100"},
+            {"loan_id": "L2", "phone": "5550100"},
+        ])
+        result = graph.find_connections("L1")
+        self.assertEqual(result["ok"], True)
+        self.assertEqual(result["cost"], {"acorns": 0, "unit": "1 graph query"})
+        self.assertFalse(result["simulated"])
+        neighbor = result["result"]["neighbors"][0]
+        self.assertEqual(neighbor["loan_id"], "L2")
+        clue = neighbor["connections"][0]
+        self.assertEqual(set(("edge_id", "kind", "weight", "sources", "origins", "explained"))
+                         - set(clue), set())
+
+    def test_rank_prefers_multiple_rare_links_over_a_common_employer(self):
+        loans = [{"loan_id": f"L{i:02}", "employer": "Regional Hospital"}
+                 for i in range(1, 11)]
+        loans[0].update(phone="555-0100", documents=[{"doc_id": "D1",
+                                                        "template_id": "tpl-1"}])
+        loans[1].update(phone="5550100", documents=[{"doc_id": "D2",
+                                                       "template_id": "tpl-1"}])
+        graph = EvidenceGraph(loans)
+        self.assertEqual(graph.ranked_leads()[0]["loan_id"], "L01")
+        self.assertGreater(graph.priority_scores()["L01"], graph.priority_scores()["L03"])
 
     def test_zip_alone_never_creates_a_connection(self):
         graph = EvidenceGraph([

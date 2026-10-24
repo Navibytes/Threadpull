@@ -16,6 +16,6 @@
 - [ ] A priority score (a ranking, not a probability) puts the ring's lead in the top 5 on seed 13 without any code that names personas or planted patterns. Blocked until issue 02 provides seed-13 data.
 - [x] Unit tests cover 1/n weighting, the household fade, origin grouping and the no-location rule.
 
-Implementation: `backend/graph.py`; tests: `tests/test_graph.py`. The graph depends on NetworkX (`requirements.txt`). Python syntax compilation passed. The unit tests have not run because NetworkX is not installed in this environment.
+Implementation: `backend/graph.py`; tests: `tests/test_graph.py`. The graph depends on NetworkX (`requirements.txt`). Generic graph and ranking tests pass in the project virtual environment. The exact seed-13 ranking check remains blocked by issue 02 data.
 
 Spec: SKELETON.md (contracts, rules and the 24-hour plan).

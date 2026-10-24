@@ -227,10 +227,19 @@ class EvidenceGraph:
         neighbors: dict[str, dict[str, Any]] = {}
         for clue in clues:
             item = neighbors.setdefault(clue["b"], {
-                "loan_id": clue["b"], "priority_score": 0.0, "connections": []})
-            item["priority_score"] += clue["weight"]
+                "loan_id": clue["b"], "priority_score": 0.0, "connections": [],
+                "_origin_weights": {}})
+            origins = {source.get("origin") for source in clue["sources"]
+                       if source.get("loan_id") == loan_id and source.get("origin")}
+            if not origins:
+                origins = set(clue["origins"] or [clue["edge_id"]])
+            for origin in origins:
+                item["_origin_weights"][origin] = max(
+                    item["_origin_weights"].get(origin, 0.0), clue["weight"])
             item["connections"].append({k: clue[k] for k in
                 ("edge_id", "kind", "weight", "sources", "origins", "explained")})
+        for item in neighbors.values():
+            item["priority_score"] = sum(item.pop("_origin_weights").values())
         result = sorted(neighbors.values(), key=lambda x: (-x["priority_score"], x["loan_id"]))
         return {"ok": True, "result": {"loan_id": loan_id, "neighbors": result},
                 "sources": [s for c in clues for s in c["sources"]],
@@ -245,7 +254,7 @@ class EvidenceGraph:
                 if clue["explained"]:
                     continue
                 # A source submission/document is one independent origin even if
-                # several fields from it create separate graph edges.
+                # several fields or neighboring loans create separate graph edges.
                 origins = {source.get("origin") for source in clue["sources"]
                            if source.get("loan_id") == loan_id and source.get("origin")}
                 if not origins:
