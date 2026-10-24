@@ -8,6 +8,9 @@
   },
   "dependencies": {
     "@faker-js/faker": "10.6.0",
+    "graphology": "0.26.0",
+    "graphology-components": "1.5.4",
+    "graphology-types": "0.24.8",
     "zod": "4.6.7"
   },
   "devDependencies": {
