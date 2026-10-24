@@ -20,7 +20,7 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
   return (
     <section
       aria-label="Hazel's notebook"
-      className="notebook-paper shrink-0 rounded-lg border border-walnut/15 pb-3 pl-6 pr-4 pt-3 shadow-[0_2px_10px_rgb(74_55_40/0.12)]"
+      className="notebook-paper shrink-0 rounded-lg pb-3 pl-6 pr-4 pt-3 shadow-[0_18px_30px_-16px_rgb(0_0_0/0.65),0_3px_8px_rgb(0_0_0/0.35)]"
     >
       <div>
         <div>

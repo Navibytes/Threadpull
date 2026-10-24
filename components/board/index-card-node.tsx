@@ -1,82 +1,125 @@
 "use client";
 
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
-import type { BoardCard } from "@/lib/events";
-import { cardTilt } from "./layout";
+import { crsRequestIds, type BoardCard, type SourceRef } from "@/lib/events";
+import { cardTilt, cardWidth } from "./layout";
+import { Pushpin } from "./pushpin";
 import { StatusChip } from "./status-chip";
 
-export type IndexCardNodeType = Node<{ card: BoardCard }, "indexCard">;
+// `animate`: the card arrived after the board loaded, so it pins in; history appears in place.
+// `lead`: first pinned by lead_opened, so it is the centre of its cluster.
+export type IndexCardNodeType = Node<{ card: BoardCard; animate: boolean; lead: boolean }, "indexCard">;
 
-// The pin sits on the card's top edge; yarn is tied to it and the card tilts around it.
-export const PIN_Y = 10;
+// Yarn is drawn edge to edge (see YarnEdge); React Flow still needs a handle on each card.
+const hiddenHandle = { top: "50%", left: "50%", width: 1, height: 1, opacity: 0, pointerEvents: "none" } as const;
 
-const hidden = { top: PIN_Y, opacity: 0, pointerEvents: "none" } as const;
+const SOURCE_WORD: Record<SourceRef["kind"], string> = {
+  row: "data room",
+  document: "document",
+  crs: "CRS",
+  lookup: "lookup",
+  rule: "rule",
+  human: "human answer",
+  event: "earlier event",
+};
+
+function hash(id: string) {
+  let h = 7;
+  for (const ch of id) h = (h * 33 + ch.charCodeAt(0)) | 0;
+  return Math.abs(h);
+}
+
+const SHADOW = "drop-shadow(0px 2px 2px rgb(0 0 0 / 0.45)) drop-shadow(0px 10px 12px rgb(0 0 0 / 0.38))";
+const SHADOW_LIFTED = "drop-shadow(0px 4px 3px rgb(0 0 0 / 0.5)) drop-shadow(0px 20px 22px rgb(0 0 0 / 0.5))";
 
 function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
-  const { card } = data;
-  return (
-    <div
-      className="relative w-64"
-      style={{ transform: `rotate(${cardTilt(card.id)}deg)`, transformOrigin: `50% ${PIN_Y}px` }}
-    >
-      <Handle id="pin-in" type="target" position={Position.Top} isConnectable={false} style={hidden} />
-      <Handle id="pin-out" type="source" position={Position.Top} isConnectable={false} style={hidden} />
+  const { card, animate, lead } = data;
+  const reduce = useReducedMotion();
+  const tilt = cardTilt(card.id);
+  const h = hash(card.id);
+  const width = cardWidth(card.id) + (lead ? 14 : 0);
+  const kinds = [...new Set(card.sources.map((s) => SOURCE_WORD[s.kind]))];
+  const crs = crsRequestIds(card.sources);
 
-      <article
-        className={`index-card rounded-[3px] px-4 pb-3 pt-7 shadow-[0_2px_3px_rgb(74_55_40/0.2),0_10px_18px_-8px_rgb(74_55_40/0.45)] transition-shadow duration-150 ${
-          selected ? "outline-2 outline-terracotta outline-offset-2" : ""
+  return (
+    <motion.div
+      className="relative"
+      style={{ width, transformOrigin: "50% 12px" }}
+      initial={animate && !reduce ? { opacity: 0, y: -16, rotate: tilt - 4, scale: 1.03, filter: SHADOW_LIFTED } : false}
+      animate={{ opacity: 1, y: selected ? -3 : 0, rotate: tilt, scale: 1, filter: selected ? SHADOW_LIFTED : SHADOW }}
+      transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 24, mass: 0.8 }}
+    >
+      <Handle id="pin-in" type="target" position={Position.Top} isConnectable={false} style={hiddenHandle} />
+      <Handle id="pin-out" type="source" position={Position.Top} isConnectable={false} style={hiddenHandle} />
+
+      <div
+        className={`card-frame relative rounded-[2px] transition-[outline-color] duration-150 ${
+          selected ? "outline-2 outline-offset-4 outline-amber" : "outline-2 outline-offset-4 outline-transparent"
         }`}
       >
-        <header className="-mx-4 -mt-1 h-[18px] bg-paper px-4">
-          <p className="text-[11px] font-medium uppercase leading-[18px] tracking-[0.14em] text-walnut/80">
-            Loan application
-          </p>
-        </header>
-        <h3 className="mt-1.5 bg-paper text-xl font-semibold leading-6">{card.id}</h3>
+        <article
+          className={`paper worn-${h % 4} px-4 pb-3.5 pt-6 text-walnut`}
+          style={{ backgroundPosition: `0 0, ${-(h % 400)}px ${-(h % 260)}px` }}
+        >
+          <header className="flex items-baseline justify-between gap-2 border-b border-terracotta/45 pb-1">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-walnut/85">
+              {lead ? "Lead · loan application" : "Loan application"}
+            </p>
+            <p className="shrink-0 font-mono text-[10.5px] text-walnut/80">seq {card.firstSeq}</p>
+          </header>
+          <h3 className={`mt-1.5 font-semibold leading-tight tracking-tight ${lead ? "text-[1.6rem]" : "text-[1.3rem]"}`}>
+            {card.id}
+          </h3>
 
-        <div className="mt-[11px] space-y-[5px] text-[13px] leading-[17px]">
-          <div>
+          <div className="mt-2 space-y-1.5 text-[12.5px] leading-[1.35]">
             <StatusChip status={card.status} />
-          </div>
-          <p>
-            Pinned by <span className="font-medium">{card.pinnedBy}</span> · seq {card.firstSeq}
-          </p>
-          <p>
-            {card.sources.length} source{card.sources.length === 1 ? "" : "s"}
+            <p>
+              Pinned by <span className="font-medium">{card.pinnedBy}</span>
+              {card.tool && <span className="text-walnut/80"> · {card.tool}</span>}
+            </p>
+            <p className="text-walnut/85">
+              {card.sources.length} source{card.sources.length === 1 ? "" : "s"}
+              {kinds.length > 0 && <>: {kinds.join(", ")}</>}
+            </p>
+            {crs.length > 0 && (
+              <p className="truncate font-mono text-[11px]" title={crs.join(", ")}>
+                CRS RequestID {crs[0]}
+                {crs.length > 1 && ` +${crs.length - 1}`}
+              </p>
+            )}
             {card.simulated && (
-              <span className="ml-2 rounded-sm bg-honey/25 px-1.5 py-px text-[11px] font-semibold tracking-[0.08em]">
+              <span className="inline-block rounded-sm bg-honey/30 px-1.5 py-px text-[10px] font-semibold tracking-[0.1em]">
                 SIMULATED
               </span>
             )}
-          </p>
-        </div>
-      </article>
+          </div>
+        </article>
 
-      <Pin />
-    </div>
-  );
-}
+        {/* the lead's own note from its lead_opened row, taped on */}
+        {lead && card.note && (
+          <div
+            className="sticky-note absolute -bottom-12 -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
+            style={{ transform: `rotate(${2 + (h % 4)}deg)` }}
+          >
+            <span aria-hidden className="tape pointer-events-none absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 -rotate-3" />
+            <p className="font-hand text-[17px] leading-[1.05] text-walnut line-clamp-3">{card.note}</p>
+          </div>
+        )}
+      </div>
 
-function Pin() {
-  return (
-    <svg
-      aria-hidden
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      className="pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-[1px_2px_1px_rgb(74_55_40/0.45)]"
-      style={{ top: PIN_Y }}
-    >
-      <defs>
-        <radialGradient id="brass" cx="35%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#f4dca0" />
-          <stop offset="55%" stopColor="#c9a35a" />
-          <stop offset="100%" stopColor="#8a6a2e" />
-        </radialGradient>
-      </defs>
-      <circle cx="9" cy="9" r="7" fill="url(#brass)" />
-    </svg>
+      {/* decoration: pin at the top, tape on some cards */}
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-4px] -translate-x-1/2">
+        <Pushpin color={lead ? "red" : "brass"} size={lead ? 24 : 20} />
+      </div>
+      {h % 3 === 0 && (
+        <span
+          aria-hidden
+          className="tape pointer-events-none absolute -left-3 top-3 h-4 w-14 -rotate-[38deg]"
+        />
+      )}
+    </motion.div>
   );
 }
 

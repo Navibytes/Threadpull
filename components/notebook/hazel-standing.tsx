@@ -7,11 +7,11 @@ import { HazelAvatar } from "./hazel-avatar";
 export function HazelStanding({ pose }: { pose: HazelPose }) {
   return (
     <div className="pointer-events-none absolute -bottom-7 -right-8 z-20 select-none">
-      <div aria-hidden className="absolute inset-x-[14%] bottom-[1%] h-[5%] rounded-[50%] bg-walnut/30 blur-md" />
+      <div aria-hidden className="absolute inset-x-[14%] bottom-[1%] h-[5%] rounded-[50%] bg-black/55 blur-md" />
       <HazelAvatar
         pose={pose}
         size={420}
-        className="w-[clamp(240px,26vw,400px)] drop-shadow-[0_6px_10px_rgb(74_55_40/0.28)]"
+        className="w-[clamp(240px,26vw,400px)] drop-shadow-[0_8px_14px_rgb(0_0_0/0.45)]"
       />
     </div>
   );

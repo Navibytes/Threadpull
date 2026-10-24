@@ -12,6 +12,8 @@
   --color-sage: #8fa67e;
   --color-dusty: #7b91a6;
   --color-honey: #d9a441;
+  --color-ink: #1d140e; /* the dark desk */
+  --color-amber: #f0c27e; /* lamp light */
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
@@ -30,55 +32,131 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Cork: two soft speckle layers over a warm base, drawn in CSS so there is no image to load. */
-.cork {
-  background-color: var(--color-cork);
-  background-image:
-    radial-gradient(circle at 20% 30%, rgb(74 55 40 / 0.07) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 70% 80%, rgb(255 251 244 / 0.18) 0 1px, transparent 1.5px);
-  background-size: 7px 7px, 11px 11px;
-  box-shadow: inset 0 0 0 10px #a9845f, inset 0 0 24px 12px rgb(74 55 40 / 0.25);
+/* Textures live in public/assets/detective/. Every rule keeps a CSS fallback underneath, so a missing
+   image degrades to a plain warm surface instead of a broken look. */
+
+/* The office: dark walnut desk under a warm lamp. */
+.desk {
+  background:
+    radial-gradient(ellipse 80% 60% at 42% -8%, rgb(255 196 120 / 0.2), transparent 60%),
+    linear-gradient(rgb(20 12 7 / 0.8), rgb(16 10 6 / 0.9)),
+    url("/assets/detective/wood-walnut.webp") center / cover,
+    #22170f;
+  color: var(--color-cream);
 }
 
-/* Index-card ruling: a terracotta header rule and faint dusty-blue lines. */
-.index-card {
-  background-color: var(--color-paper);
-  background-image:
-    linear-gradient(to bottom, transparent 46px, rgb(181 83 60 / 0.45) 46px 47px, transparent 47px),
-    repeating-linear-gradient(to bottom, transparent 0 21px, rgb(123 145 166 / 0.22) 21px 22px);
-  background-position: 0 0, 0 47px;
+/* The board's walnut frame: grain, a bevel (light top-left, dark bottom-right) and a drop shadow on the wall. */
+.board-frame {
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgb(255 228 196 / 0.16), transparent 32%, transparent 64%, rgb(0 0 0 / 0.38)),
+    url("/assets/detective/wood-walnut.webp") center / 140% auto,
+    linear-gradient(135deg, #5a3b25, #2e1d12);
+  box-shadow:
+    0 34px 60px -24px rgb(0 0 0 / 0.75),
+    0 10px 20px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 226 190 / 0.3),
+    inset 1px 0 0 rgb(255 226 190 / 0.12),
+    inset 0 -2px 0 rgb(0 0 0 / 0.45),
+    inset -1px 0 0 rgb(0 0 0 / 0.3);
 }
 
-/* React Flow chrome in the paper palette. */
+/* The cork sits recessed in the frame: inner shadow drawn above the canvas, never taking clicks. */
+.board-recess {
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.55),
+    inset 0 10px 18px -4px rgb(0 0 0 / 0.6),
+    inset 0 -6px 14px -6px rgb(0 0 0 / 0.45),
+    inset 10px 0 16px -10px rgb(0 0 0 / 0.5),
+    inset -10px 0 16px -10px rgb(0 0 0 / 0.5);
+}
+
+/* Lamp light: a soft amber pool from above and a restrained vignette. Never takes clicks. */
+.board-light {
+  background:
+    radial-gradient(ellipse 62% 52% at 44% 4%, rgb(255 206 140 / 0.2), transparent 72%),
+    radial-gradient(ellipse 120% 95% at 50% 45%, transparent 58%, rgb(12 6 2 / 0.42) 100%);
+}
+
+/* Cork surface: fallback speckle if the texture is missing (the texture itself is set inline, anchored to the
+   canvas so it pans and zooms with the cards). */
+.cork-surface {
+  background-color: #6a4426;
+}
+
+/* Paper for cards and panels. */
+.paper {
+  background-color: #f4e9d4;
+  background-image:
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 62%, rgb(140 98 52 / 0.16) 100%),
+    url("/assets/detective/paper-aged.webp");
+  background-size: auto, 640px auto;
+}
+.panel-paper {
+  background-color: #f6ecda;
+  background-image:
+    radial-gradient(ellipse 130% 110% at 50% 30%, transparent 70%, rgb(140 98 52 / 0.12) 100%),
+    url("/assets/detective/paper-aged.webp");
+  background-size: auto, 900px auto;
+  box-shadow: 0 18px 30px -16px rgb(0 0 0 / 0.65), 0 3px 8px rgb(0 0 0 / 0.35);
+}
+
+/* Slightly worn card edges: four irregular outlines, chosen per card. */
+.worn-0 { clip-path: polygon(0.4% 0.8%, 30% 0, 71% 0.6%, 99.6% 0, 100% 46%, 99.3% 99.2%, 58% 100%, 18% 99.4%, 0 100%, 0.6% 52%); }
+.worn-1 { clip-path: polygon(0 0.3%, 44% 0.9%, 100% 0, 99.5% 33%, 100% 99.6%, 72% 99.1%, 31% 100%, 0.5% 99.4%, 0 61%); }
+.worn-2 { clip-path: polygon(0.7% 0, 57% 0.5%, 99.2% 0.4%, 100% 70%, 99.6% 100%, 42% 99.3%, 0 100%, 0.3% 28%); }
+.worn-3 { clip-path: polygon(0 0, 26% 0.7%, 82% 0.2%, 100% 0.9%, 99.4% 58%, 100% 99.5%, 66% 100%, 9% 99.2%, 0.5% 99.8%, 0 37%); }
+
+/* A strip of masking tape, decorative only. */
+.tape {
+  background: linear-gradient(180deg, rgb(238 228 204 / 0.82), rgb(222 208 178 / 0.78));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+  clip-path: polygon(3% 0, 97% 4%, 100% 30%, 96% 55%, 100% 82%, 95% 100%, 4% 96%, 0 70%, 4% 45%, 0 18%);
+}
+
+/* A small handwritten note, taped to a lead. */
+.sticky-note {
+  background-color: #f1d98a;
+  background-image: linear-gradient(170deg, rgb(255 255 255 / 0.25), transparent 40%, rgb(150 110 30 / 0.12));
+}
+
+/* React Flow chrome on the dark board. */
 .react-flow__controls {
-  box-shadow: 0 2px 6px rgb(74 55 40 / 0.25);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.5);
   border-radius: 6px;
   overflow: hidden;
 }
 .react-flow__controls-button {
-  background: var(--color-paper);
-  border-bottom-color: rgb(74 55 40 / 0.15);
-  color: var(--color-walnut);
-  fill: var(--color-walnut);
+  background: #2c1e14;
+  border-bottom-color: rgb(255 230 200 / 0.12);
+  color: var(--color-cream);
+  fill: var(--color-cream);
 }
 .react-flow__controls-button:hover {
-  background: var(--color-cream);
+  background: #3d2a1c;
 }
 .react-flow__attribution {
-  background: rgb(255 251 244 / 0.6);
+  background: rgb(20 12 7 / 0.55);
+}
+.react-flow__attribution a {
+  color: rgb(243 233 220 / 0.7);
 }
 .react-flow__node:focus-visible {
   outline: none;
 }
-.react-flow__node:focus-visible .index-card {
-  outline: 3px solid var(--color-dusty);
+.react-flow__node:focus-visible .card-frame {
+  outline: 3px solid var(--color-amber);
   outline-offset: 3px;
 }
 
 /* Hazel's notebook: warm paper with a faint margin line; text starts right of it. */
 .notebook-paper {
-  background-color: #fbf3e6;
-  background-image: linear-gradient(to right, transparent 13px, rgb(181 83 60 / 0.25) 13px 14px, transparent 14px);
+  background-color: #f6ecda;
+  background-image:
+    linear-gradient(to right, transparent 13px, rgb(181 83 60 / 0.28) 13px 14px, transparent 14px),
+    url("/assets/detective/paper-aged.webp");
+  background-size: auto, 900px auto;
 }
 
 /* Hazel's poses are stacked; the active one fades in with a small lift. No motion when reduced. */

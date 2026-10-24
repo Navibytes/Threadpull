@@ -1,5 +1,6 @@
 "use client";
 
+import { MotionConfig } from "motion/react";
 import { useMemo, useState } from "react";
 import { browserClient } from "@/lib/db/browser";
 import { hazelPose, previewFeed, supabaseFeed } from "@/lib/events";
@@ -15,7 +16,7 @@ import { useRunEvents } from "./use-run-events";
 export function InvestigatorView({ runId }: { runId?: string }) {
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
   const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
-  const { board, errors } = useRunEvents(feed);
+  const { board, errors, animateAfterSeq } = useRunEvents(feed);
   const [selection, setSelection] = useState<Selection>(null);
 
   const notices = [
@@ -26,44 +27,51 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   ];
 
   return (
-    <div className="flex h-dvh flex-col">
-      <header className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b border-walnut/15 px-6 py-3">
-        <h1 className="font-display text-2xl font-semibold">Threadpull</h1>
-        <p className="text-sm text-walnut/80">Find the ring. Protect the innocent. Decide the deal.</p>
-        <div className="ml-auto self-center">
-          <ModeBadge mode={feed.mode} runId={feed.runId} />
-        </div>
-      </header>
+    <MotionConfig reducedMotion="user">
+      <div className="desk flex h-dvh flex-col">
+        <header className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b border-black/40 bg-black/25 px-6 py-3 shadow-[0_1px_0_rgb(255_220_180/0.06)]">
+          <h1 className="font-display text-2xl font-semibold text-cream">Threadpull</h1>
+          <p className="text-sm text-cream/75">Find the ring. Protect the innocent. Decide the deal.</p>
+          <div className="ml-auto self-center">
+            <ModeBadge mode={feed.mode} runId={feed.runId} />
+          </div>
+        </header>
 
-      {/* extra gap and floor so Hazel can step past the board's frame without covering the panels */}
-      <main className="flex min-h-0 flex-1 gap-10 px-4 pb-9 pt-4">
-        <div className="relative flex min-w-0 flex-1">
-          <section aria-label="Corkboard" className="cork relative min-w-0 flex-1 overflow-hidden rounded-lg">
-            <Corkboard board={board} onSelect={setSelection} />
-            <div className="pointer-events-none absolute left-5 top-5 max-w-[70%] space-y-2">
-              {feed.mode === "preview" && (
-                <p className="w-fit rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">
-                  PREVIEW · synthetic fixture · not a live or recorded investigation
-                </p>
-              )}
-              {notices.map((n) => (
-                <p
-                  key={n}
-                  role="status"
-                  className="w-fit rounded border border-terracotta bg-paper/95 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm"
-                >
-                  {n}
-                </p>
-              ))}
+        {/* extra gap and floor so Hazel can step past the board's frame without covering the panels */}
+        <main className="flex min-h-0 flex-1 gap-10 px-4 pb-9 pt-4">
+          <div className="relative flex min-w-0 flex-1">
+            <div className="board-frame flex min-w-0 flex-1 p-[18px]">
+              <section aria-label="Corkboard" className="relative min-w-0 flex-1 overflow-hidden rounded-[3px] bg-[#4a2c18]">
+                <Corkboard board={board} animateAfterSeq={animateAfterSeq} onSelect={setSelection} />
+                {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
+                <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
+                <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />
+                <div className="pointer-events-none absolute left-5 top-5 z-20 max-w-[70%] space-y-2">
+                  {feed.mode === "preview" && (
+                    <p className="w-fit rounded-sm border border-honey bg-paper px-3 py-1.5 text-xs font-medium text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.4)]">
+                      PREVIEW · synthetic fixture · not a live or recorded investigation
+                    </p>
+                  )}
+                  {notices.map((n) => (
+                    <p
+                      key={n}
+                      role="status"
+                      className="w-fit rounded-sm border border-terracotta bg-paper px-3 py-1.5 text-xs font-medium text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.4)]"
+                    >
+                      {n}
+                    </p>
+                  ))}
+                </div>
+              </section>
             </div>
-          </section>
-          <HazelStanding pose={hazelPose(board.events).pose} />
-        </div>
-        <div className="flex min-h-0 w-[22rem] shrink-0 flex-col gap-4">
-          <HazelNotebook board={board} mode={feed.mode} />
-          <EvidencePanel board={board} selection={selection} mode={feed.mode} />
-        </div>
-      </main>
-    </div>
+            <HazelStanding pose={hazelPose(board.events).pose} />
+          </div>
+          <div className="flex min-h-0 w-[22rem] shrink-0 flex-col gap-4 text-walnut">
+            <HazelNotebook board={board} mode={feed.mode} />
+            <EvidencePanel board={board} selection={selection} mode={feed.mode} />
+          </div>
+        </main>
+      </div>
+    </MotionConfig>
   );
 }

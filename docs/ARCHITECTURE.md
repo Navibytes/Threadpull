@@ -13,6 +13,7 @@ Threadpull/
 ├── components/        React UI only
 ├── lib/               all logic: contracts, CRS, graph, agent, evidence, deal (no React)
 ├── data/              generator, persona fixtures, pattern specs (outputs gitignored)
+├── public/            static files served as-is: hazel/ (Hazel's poses), assets/detective/ (cork, walnut, paper textures)  C
 ├── eval/              baseline agent and evaluator: the ONLY code that reads answer keys
 ├── supabase/          SQL migrations (tables, RLS)
 └── tests/             bun tests, one file per module

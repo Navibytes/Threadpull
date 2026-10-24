@@ -1,18 +1,19 @@
 "use client";
 
 import {
-  Background,
-  BackgroundVariant,
   Controls,
   ReactFlow,
   useEdgesState,
   useNodesState,
+  type FitViewOptions,
   type OnSelectionChangeParams,
 } from "@xyflow/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { BoardState } from "@/lib/events";
+import { AutoFrame } from "./auto-frame";
+import { CorkSurface } from "./cork-surface";
 import { IndexCardNode, type IndexCardNodeType } from "./index-card-node";
-import { cardPosition } from "./layout";
+import { layoutBoard } from "./layout";
 import { YarnEdge, type YarnEdgeType } from "./yarn-edge";
 
 export type Selection = { kind: "card" | "thread"; id: string } | null;
@@ -20,26 +21,61 @@ export type Selection = { kind: "card" | "thread"; id: string } | null;
 const nodeTypes = { indexCard: IndexCardNode };
 const edgeTypes = { yarn: YarnEdge };
 
+// The right side is kept clear for Hazel, who stands at the board's bottom-right corner.
+const FIT: FitViewOptions = { padding: { top: "70px", bottom: "60px", left: "60px", right: "36%" }, maxZoom: 1.15 };
+
 // Draws BoardState only. Cards can be dragged and the view panned or zoomed, but nothing here adds,
-// removes or restyles evidence: that comes from event rows through the reducer.
-export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s: Selection) => void }) {
+// removes or restyles evidence: that comes from event rows through the reducer. Rows up to
+// `animateAfterSeq` were history when the board loaded and appear in place; later rows animate in.
+export function Corkboard({
+  board,
+  animateAfterSeq,
+  onSelect,
+}: {
+  board: BoardState;
+  animateAfterSeq: number;
+  onSelect: (s: Selection) => void;
+}) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
   const moved = useRef(new Set<string>()); // cards the viewer dragged keep their spot; the rest follow the layout
+  const userMoved = useRef(false); // the viewer panned or zoomed by hand
+
+  const layout = useMemo(() => layoutBoard(board.cards, board.threads), [board.cards, board.threads]);
+
+  // The active case: the cluster of the latest row that names a card on the board.
+  const focusIds = useMemo(() => {
+    for (let i = board.events.length - 1; i >= 0; i--) {
+      const id = board.events[i].loan_ids.find((l) => layout.has(l));
+      if (id === undefined) continue;
+      const cluster = layout.get(id)!.cluster;
+      return [...layout].filter(([, p]) => p.cluster === cluster).map(([cid]) => cid);
+    }
+    return [];
+  }, [board.events, layout]);
 
   useEffect(() => {
     setNodes((prev) =>
-      board.cards.map((card, i) => {
+      board.cards.map((card): IndexCardNodeType => {
         const old = prev.find((n) => n.id === card.id);
-        const position = old && moved.current.has(card.id) ? old.position : cardPosition(i);
-        return { ...old, id: card.id, type: "indexCard", position, data: { card } };
+        const spot = layout.get(card.id)!;
+        const position = old && moved.current.has(card.id) ? old.position : { x: spot.x, y: spot.y };
+        const lead = card.pinnedBy === "lead_opened";
+        return {
+          ...old,
+          id: card.id,
+          type: "indexCard",
+          position,
+          zIndex: lead ? 2 : 1,
+          data: { card, lead, animate: card.firstSeq > animateAfterSeq },
+        };
       }),
     );
-  }, [board.cards, setNodes]);
+  }, [board.cards, layout, animateAfterSeq, setNodes]);
 
   useEffect(() => {
     setEdges((prev) =>
-      board.threads.map((thread) => {
+      board.threads.map((thread): YarnEdgeType => {
         const old = prev.find((e) => e.id === thread.id);
         return {
           ...old,
@@ -49,12 +85,15 @@ export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s
           target: thread.b,
           sourceHandle: "pin-out",
           targetHandle: "pin-in",
-          zIndex: 1, // yarn runs over the cards, pin to pin
-          data: { thread },
+          data: {
+            thread,
+            animate: thread.firstSeq > animateAfterSeq,
+            retract: !!thread.explained && thread.explained.seq > animateAfterSeq,
+          },
         };
       }),
     );
-  }, [board.threads, setEdges]);
+  }, [board.threads, animateAfterSeq, setEdges]);
 
   const handleSelection = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) =>
@@ -70,22 +109,31 @@ export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s
       onEdgesChange={onEdgesChange}
       onSelectionChange={handleSelection}
       onNodeDragStop={(_, node) => moved.current.add(node.id)}
+      onMoveStart={(event) => {
+        if (event) userMoved.current = true; // programmatic fits have no event
+      }}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       nodesConnectable={false}
-      elevateNodesOnSelect={false} // keep the yarn above a selected card
       deleteKeyCode={null}
       fitView
-      // the right side is kept clear for Hazel, who stands at the board's bottom-right corner
-      fitViewOptions={{ padding: { top: "80px", bottom: "48px", left: "56px", right: "36%" }, maxZoom: 1.2 }}
+      fitViewOptions={FIT}
       attributionPosition="top-right"
       minZoom={0.3}
       maxZoom={2}
       style={{ background: "transparent" }}
       aria-label="Corkboard: evidence cards and the threads between them"
     >
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1.4} color="rgb(74 55 40 / 0.16)" />
-      <Controls showInteractive={false} position="bottom-left" />
+      <CorkSurface />
+      <AutoFrame focusIds={focusIds} userMoved={userMoved} options={FIT} />
+      <Controls
+        showInteractive={false}
+        position="bottom-left"
+        fitViewOptions={FIT}
+        onFitView={() => {
+          userMoved.current = false;
+        }}
+      />
     </ReactFlow>
   );
 }

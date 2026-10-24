@@ -3,17 +3,17 @@ import type { FeedMode } from "@/lib/events";
 const LABEL: Record<FeedMode, { text: string; className: string; title: string }> = {
   preview: {
     text: "PREVIEW",
-    className: "border-honey bg-honey/20 text-walnut",
+    className: "border-honey bg-honey text-ink",
     title: "Hand-written synthetic fixture. Not a live or recorded investigation.",
   },
   replay: {
     text: "REPLAY",
-    className: "border-dusty bg-dusty/20 text-walnut",
+    className: "border-dusty bg-dusty text-ink",
     title: "A recorded run's event rows, played back in seq order.",
   },
   live: {
     text: "LIVE",
-    className: "border-terracotta bg-terracotta/15 text-terracotta",
+    className: "border-terracotta bg-terracotta text-paper",
     title: "Event rows arriving from a running investigation.",
   },
 };

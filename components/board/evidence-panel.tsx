@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { crsRequestIds, threadWidth, type BoardCard, type BoardState, type BoardThread, type FeedMode } from "@/lib/events";
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
@@ -13,12 +14,22 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
     <aside
       aria-label="Evidence details"
       aria-live="polite"
-      className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-walnut/10 bg-paper p-5 shadow-[0_2px_10px_rgb(74_55_40/0.12)]"
+      className="panel-paper min-h-0 flex-1 overflow-y-auto rounded-lg p-5"
     >
       <h2 className="font-display text-xl font-semibold">Evidence</h2>
-      {card && <CardDetails card={card} mode={mode} />}
-      {thread && <ThreadDetails thread={thread} mode={mode} />}
-      {!card && !thread && <Empty board={board} />}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={card ? `card:${card.id}` : thread ? `thread:${thread.id}` : "empty"}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16 }}
+        >
+          {card && <CardDetails card={card} mode={mode} />}
+          {thread && <ThreadDetails thread={thread} mode={mode} />}
+          {!card && !thread && <Empty board={board} />}
+        </motion.div>
+      </AnimatePresence>
     </aside>
   );
 }
@@ -35,6 +46,9 @@ function Empty({ board }: { board: BoardState }) {
         <p className="mt-1">
           Thickness is 1 + 8 × weight, where weight reflects how rare the shared attribute is in the pool. It is a
           design weight, not a fraud probability. A connection is not proof.
+        </p>
+        <p className="mt-1">
+          A pale dashed line is a link that was explained: the suspicion came down, the shared fact stays.
         </p>
       </div>
     </div>
@@ -80,11 +94,18 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
         </p>
       </div>
       {thread.note && <p className="text-sm leading-relaxed">{thread.note}</p>}
+      {thread.explained && <Explanation thread={thread} />}
       <div className="rounded border border-walnut/10 bg-cream/60 p-3 text-[13px]">
-        <p>
-          Weight <span className="font-semibold">{thread.weight.toFixed(2)}</span> · yarn{" "}
-          {threadWidth(thread.weight).toFixed(1)} px
-        </p>
+        {thread.explained ? (
+          <p>
+            Weight <span className="font-semibold">{thread.weight.toFixed(2)}</span> when found, 0 after the explanation
+          </p>
+        ) : (
+          <p>
+            Weight <span className="font-semibold">{thread.weight.toFixed(2)}</span> · yarn{" "}
+            {threadWidth(thread.weight).toFixed(1)} px
+          </p>
+        )}
         <p className="mt-1 text-walnut/80">Design weight from rarity, not a fraud probability. A connection is not proof.</p>
       </div>
       <Provenance
@@ -102,6 +123,29 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
         <SourceList sources={thread.sources} />
       </Section>
     </div>
+  );
+}
+
+// Why the suspicion came down, with the explanation's own sources (the check's event row or a saved rule).
+function Explanation({ thread }: { thread: BoardThread }) {
+  const x = thread.explained!;
+  return (
+    <section className="rounded border border-sage bg-sage/15 p-3 text-[13px]">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-walnut">Explained · no longer a reason to suspect</h3>
+      <p className="mt-1.5 leading-snug">{x.reason}</p>
+      <dl className="mt-2 grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1">
+        <dt className="text-walnut/80">Explained by</dt>
+        <dd className="font-medium">{x.explainedBy}{x.ruleId && ` (${x.ruleId})`}</dd>
+        <dt className="text-walnut/80">Event</dt>
+        <dd className="font-medium">seq {x.seq}</dd>
+        <dt className="text-walnut/80">Verification</dt>
+        <dd className="font-medium">{x.simulated ? "simulated" : "live"}</dd>
+      </dl>
+      <div className="mt-2">
+        <SourceList sources={x.sources} />
+      </div>
+      <p className="mt-2 text-walnut/80">The shared {thread.kind} is still on the board as a fact (pale dashed line).</p>
+    </section>
   );
 }
 
