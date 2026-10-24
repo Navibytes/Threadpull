@@ -4,3 +4,7 @@ export {
   RARE_TEMPLATE_MAX_USES, RECYCLED_THRESHOLD,
   type DocumentComparison, type PayStub, type StubIssue,
 } from "./documents";
+export {
+  DOCUMENT_FIELDS, safeDocumentView, scanDocument, WITHHELD,
+  type InjectionMatch, type InjectionScan, type SafeDocumentView,
+} from "./injection";

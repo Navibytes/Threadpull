@@ -57,7 +57,7 @@ lib/
   crs/                   ○ CRS client, persona guard, cache                            B
   ledger.ts              ○ acorn budget                                                B
   graph/                 ○ graphology evidence graph, weights, clusters, priority      D
-  evidence/              ✅ document fingerprints ✅; injection guard ○, explanation checks ○   A
+  evidence/              ✅ document fingerprints ✅, injection guard ✅; explanation checks ○   A
   agent/                 ○ Hazel loop (AI SDK), tools, prompts, models.ts              D
   rules/                 ○ ask-once rule matching and storage                          D
   deal/                  ○ verdicts, pricing, buyback + document-request drafts        B
@@ -75,7 +75,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A); runs, events, rules, questions, dispositions, crs_cache ○ (C, B)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
