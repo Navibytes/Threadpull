@@ -153,6 +153,11 @@ through RLS. `events` is insert-only.
 
 ## Working rules
 
+- **No AI watermarks, ever.** Commit messages and PR descriptions carry no `Co-Authored-By: Claude…`,
+  no `Claude-Session:` link, no "Generated with Claude Code" line. Before any push, check the
+  commits being pushed (`git log origin/main..HEAD --format=%B`) and the changed files for these
+  marks (and for invisible Unicode) and remove them.
+
 - Demo-first: the end-to-end path must work at every commit to `main`.
 - Thin end to end first (tape → graph → one CRS call → one withdrawn thread → CRO screen), then deepen.
 - Corkboard shows 20–30 cards, not 1,000. Hazel is a small avatar; budget shown in dollars.
