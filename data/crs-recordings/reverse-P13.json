@@ -1,0 +1,18 @@
+{
+  "endpoint": "reverse",
+  "persona": "P13",
+  "path": "/accurate-append/reverse",
+  "status": 200,
+  "request_id": "e029243b-b18c-4f60-9137-ea926f5ccf38",
+  "request": {
+    "phoneNumber": "5550101013"
+  },
+  "response": {
+    "success": true,
+    "message": "Unified reverse completed successfully",
+    "data": {
+      "transactionId": "TC-REVERSE-0001",
+      "records": []
+    }
+  }
+}

@@ -78,7 +78,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
