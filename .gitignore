@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.DS_Store
+*.pdf
+.agents/
+skills-lock.json
+data/out/
+runs/
+node_modules/
+__pycache__/
+.venv/
