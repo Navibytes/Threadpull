@@ -80,6 +80,7 @@ const PAYROLL: Record<string, Template> = {
   workday: { template_id: "T-WDY-04", font: "Calibri", creating_tool: "Workday HCM" },
 };
 const RING_TEMPLATE: Template = { template_id: "T-7F3A", font: "Arial Narrow", creating_tool: "PDFescape Online 4.2" };
+const RING_CHECK_NO = "000418";
 
 // display make, model, trims, WMI, price range (new)
 const VEHICLES: [string, string, string[], string, [number, number]][] = [
@@ -208,6 +209,8 @@ class Generator {
   rng: Rng; fake: Faker; tapeDate: Date; start: Date; end: Date;
   usedPhones = new Set(Object.values(PERSONAS).map((p) => p.phone));
   usedSsns = new Set(Object.values(PERSONAS).map((p) => p.ssn));
+  usedIps = new Set(Object.values(PERSONAS).map((p) => p.ip_address));
+  usedCheckNos = new Set([RING_CHECK_NO]);
   employers = new Map<string, { headcount: number; payroll: string }>();
   dealers: Dealer[]; brokers: string[]; smallCompanies: string[] = [];
   key: Omit<AnswerKey, "case_loans"> & Record<string, unknown>;
@@ -250,7 +253,18 @@ class Generator {
       if (!this.usedSsns.has(s)) { this.usedSsns.add(s); return s; }
     }
   }
-  docIp() { return `${this.rng.choice(["192.0.2", "198.51.100", "203.0.113"])}.${this.rng.int(31, 254)}`; } // RFC 5737
+  newIp() { // 100.64.0.0/10 (RFC 6598 shared space): never a real home or office address; unique per loan
+    for (;;) {
+      const ip = `100.${this.rng.int(64, 127)}.${this.rng.int(0, 255)}.${this.rng.int(1, 254)}`;
+      if (!this.usedIps.has(ip)) { this.usedIps.add(ip); return ip; }
+    }
+  }
+  newCheckNo() {
+    for (;;) {
+      const c = String(this.rng.int(100000, 999999));
+      if (!this.usedCheckNos.has(c)) { this.usedCheckNos.add(c); return c; }
+    }
+  }
 
   backgroundPerson(over: Partial<Person> = {}): Person {
     const first = this.fake.person.firstName().toUpperCase(), last = this.fake.person.lastName().toUpperCase();
@@ -260,7 +274,7 @@ class Generator {
       email: `${clean(first)}.${clean(last)}${this.rng.int(1, 999)}@example.${this.rng.choice(["com", "net", "org"])}`,
       street: this.fake.location.streetAddress().toUpperCase().replace(/[.,]/g, ""),
       city: this.fake.location.city().toUpperCase(), state: this.fake.location.state({ abbreviated: true }),
-      zip: this.fake.location.zipCode("#####"), ip: this.docIp(), ...over };
+      zip: this.fake.location.zipCode("#####"), ip: this.newIp(), ...over };
   }
 
   personaPerson(pid: string): Person {
@@ -502,10 +516,10 @@ class Generator {
     const gross = round2(ln.income / 2);
     let payDate = ts.getUTCDate() > 15 ? utc(ts.getUTCFullYear(), ts.getUTCMonth() + 1, 15) : addDays(utc(ts.getUTCFullYear(), ts.getUTCMonth() + 1, 1), -1);
     const periods = payDate.getUTCMonth() * 2 + (payDate.getUTCDate() > 15 ? 2 : 1);
-    let ytd = round2(gross * periods), checkNo = String(rng.int(100000, 999999));
+    let ytd = round2(gross * periods), checkNo = this.newCheckNo();
     let tpl: Template;
     if (ln.ringStub) { // one template, one check number, YTD that doesn't fit the pay date
-      tpl = RING_TEMPLATE; payDate = utc(2026, 7, 31); ytd = round2(gross * 4); checkNo = "000418";
+      tpl = RING_TEMPLATE; payDate = utc(2026, 7, 31); ytd = round2(gross * 4); checkNo = RING_CHECK_NO;
     } else if (ln.employer === "Retired") tpl = PAYROLL.paychex;
     else tpl = PAYROLL[this.employers.get(ln.employer)!.payroll];
     const net = round2(gross * rng.uniform(0.72, 0.8));

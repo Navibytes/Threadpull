@@ -71,6 +71,25 @@ describe("planted patterns", () => {
     expect([...loans.values()].filter((l) => payStub(l).template_id === "T-7F3A").length).toBe(6);
     expect([...loans.values()].filter((l) => l.applicant_info.phone === get("L0037").applicant_info.phone).length).toBe(2);
   });
+  test("personal identifiers are shared only where a pattern plants it", () => {
+    const ring = new Set(key.rings.flatMap((r) => r.loan_ids));
+    const household = new Set(key.lookalikes.find((x) => x.explanation.startsWith("spouses"))!.loan_ids);
+    const fields: [string, (l: Loan) => string, Set<string>][] = [
+      ["phone", (l) => l.applicant_info.phone, new Set([...ring, ...household])],
+      ["email", (l) => l.applicant_info.email, new Set()],
+      ["bank account", (l) => l.funding_info.ach_bank_account, ring],
+      ["device", (l) => l.submission.device_id, ring],
+      ["ip", (l) => l.submission.ip_address, ring],
+      ["check no", (l) => payStub(l).text.match(/Check no: (\d+)/)![1], ring],
+    ];
+    for (const [name, value, allowed] of fields) {
+      const groups = new Map<string, string[]>();
+      for (const l of loans.values()) groups.set(value(l), [...(groups.get(value(l)) ?? []), l.loan_id]);
+      const leaks = [...groups].filter(([, ids]) => ids.length > 1 && ids.some((id) => !allowed.has(id)));
+      expect(leaks.map(([v, ids]) => `${name} ${v}: ${ids.join(",")}`)).toEqual([]);
+    }
+  });
+
   test("lookalikes, review cases, burst and injection", () => {
     const [building, hospital, dental, household] = key.lookalikes.map((x) => x.loan_ids.map(get));
     expect(new Set(building.map((l) => l.derived.address_key)).size).toBe(1);

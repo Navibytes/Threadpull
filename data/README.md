@@ -20,6 +20,8 @@ Two deliberate differences from a real dealer file:
 
 - Full fake SSNs, not masked ones, because CRS needs the full number to match a persona. Background SSNs use the never-issued 9xx area, so they can't belong to anyone.
 - Emails are `@example.*`, so a fake email can never be a real address.
+- Background submission IPs come from 100.64.0.0/10 (shared address space, never a real home or office) and are unique per loan.
+  Persona IPs are the CRS ones. Phones, emails, bank accounts, devices, IPs and pay-stub check numbers are shared **only** where a pattern plants it (a test enforces this), so every shared value is a real clue.
 
 | Output | Who reads it |
 | --- | --- |
