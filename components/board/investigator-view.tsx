@@ -35,27 +35,30 @@ export function InvestigatorView({ runId }: { runId?: string }) {
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 gap-4 p-4">
-        <section aria-label="Corkboard" className="cork relative min-w-0 flex-1 overflow-hidden rounded-lg">
-          <Corkboard board={board} onSelect={setSelection} />
+      {/* extra gap and floor so Hazel can step past the board's frame without covering the panels */}
+      <main className="flex min-h-0 flex-1 gap-10 px-4 pb-9 pt-4">
+        <div className="relative flex min-w-0 flex-1">
+          <section aria-label="Corkboard" className="cork relative min-w-0 flex-1 overflow-hidden rounded-lg">
+            <Corkboard board={board} onSelect={setSelection} />
+            <div className="pointer-events-none absolute left-5 top-5 max-w-[70%] space-y-2">
+              {feed.mode === "preview" && (
+                <p className="w-fit rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">
+                  PREVIEW · synthetic fixture · not a live or recorded investigation
+                </p>
+              )}
+              {notices.map((n) => (
+                <p
+                  key={n}
+                  role="status"
+                  className="w-fit rounded border border-terracotta bg-paper/95 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm"
+                >
+                  {n}
+                </p>
+              ))}
+            </div>
+          </section>
           <HazelStanding pose={hazelPose(board.events).pose} />
-          <div className="pointer-events-none absolute left-5 top-5 max-w-[70%] space-y-2">
-            {feed.mode === "preview" && (
-              <p className="w-fit rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">
-                PREVIEW · synthetic fixture · not a live or recorded investigation
-              </p>
-            )}
-            {notices.map((n) => (
-              <p
-                key={n}
-                role="status"
-                className="w-fit rounded border border-terracotta bg-paper/95 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm"
-              >
-                {n}
-              </p>
-            ))}
-          </div>
-        </section>
+        </div>
         <div className="flex min-h-0 w-[22rem] shrink-0 flex-col gap-4">
           <HazelNotebook board={board} mode={feed.mode} />
           <EvidencePanel board={board} selection={selection} mode={feed.mode} />

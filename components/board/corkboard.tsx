@@ -77,7 +77,7 @@ export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s
       deleteKeyCode={null}
       fitView
       // the right side is kept clear for Hazel, who stands at the board's bottom-right corner
-      fitViewOptions={{ padding: { top: "80px", bottom: "48px", left: "56px", right: "32%" }, maxZoom: 1.2 }}
+      fitViewOptions={{ padding: { top: "80px", bottom: "48px", left: "56px", right: "36%" }, maxZoom: 1.2 }}
       attributionPosition="top-right"
       minZoom={0.3}
       maxZoom={2}
