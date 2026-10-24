@@ -54,8 +54,8 @@ lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event ○, rule ○   C (loan, tool-result: A)
   ingest/                ✅ normalize the messy tape; load reference lookups               A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
-  crs/                   ○ CRS client, persona guard, cache                            B
-  ledger.ts              ○ acorn budget                                                B
+  crs/                   ✅ persona guard, client + cache, crs_identity_check; other CRS tools ○   B
+  ledger.ts              ✅ acorn budget; its onSpend hook is where `budget_spent` is written   B
   graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
   evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
   agent/                 ○ Hazel loop (AI SDK), tools, prompts, models.ts              D
@@ -66,6 +66,8 @@ lib/
 data/                                                                                A
   generate.ts            ✅ seeded generator (`bun run data`)
   seed-db.ts             ✅ upsert normalized loans into Supabase
+  record-crs.ts          ✅ record every persona's CRS sandbox responses, run once by hand   B
+  crs-recordings/        ○ its output, one JSON per endpoint and persona (RequestID kept, no secrets)   B
   personas.json          ✅ canonical CRS persona identities
   patterns/seed13.json   ✅ pattern spec; seed99.json ○ (C, after detector-frozen)
   out/  keys/            gitignored outputs: tape + lookups / ground truth
@@ -74,8 +76,8 @@ eval/                                                                           
   baseline.ts            ○ fixed-rule baseline, same tools and budget
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
-supabase/migrations/     ✅ loans (A); runs, events, rules, questions, dispositions, crs_cache ○ (C, B)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph (.test.ts); one <module>.test.ts per lib module
+supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, ledger (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
