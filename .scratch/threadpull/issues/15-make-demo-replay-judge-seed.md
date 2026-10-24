@@ -1,4 +1,4 @@
-# 15: make demo, replay and judge seed
+# 15: bun run demo, replay and judge seed
 
 **Owner:** C (Board)  
 **Target:** H19, Sun 04:00 (feature freeze)
@@ -9,7 +9,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] `make demo` generates seed 13, runs Hazel (live, or replay of the recorded best run) and opens the board; it works three times in a row.
+- [ ] `bun run demo` generates seed 13, runs Hazel (live, or replay of the recorded best run) and opens the board; it works three times in a row.
 - [ ] Replay reproduces the same events in order, with adjustable speed.
 - [ ] A seed picker starts a live run on any seed and falls back to replay, clearly labeled, if CRS is unavailable.
 - [ ] Timings follow the demo script in SKELETON §2.

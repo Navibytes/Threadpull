@@ -19,7 +19,7 @@ short version plus the rules every coding agent must follow.
 
 ## Deadlines
 
-- **Sat 21:00** prototype freeze: `make demo` works three times in a row.
+- **Sat 21:00** prototype freeze: `bun run demo` works three times in a row.
 - **Sun 09:00** Devpost submission (late = not judged). Repo public before then.
 - **Sun 10:30–12:30** judging at the table, whole team present, live demo required.
 
@@ -33,30 +33,31 @@ consumer/multimodal/hardware; treat an overall placing as a bonus.
 
 1. Loan #37 (P13): live CRS TU identity → `2202` SSN issued before DOB. Synthetic identity.
 2. Threads spread via a shared rare phone and a recycled pay-stub template → 4 more loans, Dealer #3.
-3. P01 + P19 share an address → one `check_address` → 200-unit apartment building → thread falls.
+3. P08 + a neighbour share an address → one `check_address` → 212-unit apartment building → thread falls.
 4. Budget meter: ring found for $X vs ~$21,500 to check everything (real measured numbers only).
 5. CRO screen: exclusions, buyback demands, revised bid → Approve.
 
 ## Architecture
 
 ```
-data/generate.py (seeded) → ingest/ (normalize messy tape, extract docs)
-  → graph.py (NetworkX: loans, borrowers, phones, emails, addresses, employers, dealers, doc fingerprints; rarity scores)
-  → agent/ (Claude tool-use loop; tools in agent/tools.py; backend enforces budget)
-  → decide.py (deterministic verdicts + pricing) → outputs/ (bid, buybacks, doc requests, CRO memo)
-  → runs/<id>/events.jsonl → FastAPI SSE → Next.js + React Flow corkboard
+data/generate.ts (seeded, Bun) → normalize → Supabase `loans`
+  → lib/graph (graphology: loans, borrowers, phones, emails, addresses, employers, dealers, doc fingerprints; rarity weights)
+  → lib/agent (Vercel AI SDK tool loop, Claude Sonnet 5.5; tools validated with Zod; code enforces budget)
+  → lib/deal (deterministic verdicts + pricing) → drafts (bid, buybacks, doc requests, CRO memo)
+  → Supabase `events` rows → Supabase Realtime → Next.js + React Flow corkboard
 ```
 
-Suggested layout: `backend/{app.py, crs_client.py, persona_guard.py, ledger.py, graph.py, agent/, decide.py, outputs/, audit.py}`,
-`frontend/`, `data/{generate.py, answer_key.json}`, `rules/`, `tests/`, `PROOF.md`.
+Layout: `app/` (pages + `app/api/*` route handlers), `components/`, `lib/{contracts,crs,ledger.ts,graph,agent,deal,evidence}`,
+`supabase/migrations/`, `data/{generate.ts, personas.json, patterns/}`, `eval/` (baseline + evaluator, the only code
+that reads answer keys), `tests/`, `docs/PROOF.md`. Full table in SKELETON.md §11.
 
 ## Hard rules for the code
 
 1. **The backend enforces everything the LLM could get wrong.** Budget, allowed tools, persona
    guard, verdicts and every number are code. Claude chooses the next tool, reads documents and
    writes explanations. It never computes a price or sets a verdict directly.
-2. **Every UI animation is an event from `events.jsonl`.** No scripted animations. Replay mode
-   plays a recorded log; live mode runs the agent.
+2. **Every UI animation is a row in the Supabase `events` table.** No scripted animations. Replay mode
+   plays a recorded run's rows; live mode runs the agent and the board receives rows over Realtime.
 3. **Suspicion goes down only with a cited check.** A withdrawn thread must reference the tool
    result that explains it (`check_address`, `check_employer`, `reverse_phone`,
    `check_dealer_timeline`, `verify_identity`) or a saved rule.
@@ -90,7 +91,7 @@ Investigate · No material anomaly found · Insufficient evidence · Human-confi
 Portfolio actions on the CRO screen: Exclude / Reprice / Protect (more due diligence, seller
 buyback promises, holdback). Frozen bureau (P15) or bureau disagreement (P17) → Insufficient evidence.
 
-## Hazel's tools (assumed prices, enforced by `ledger.py`; budget $300)
+## Hazel's tools (assumed prices, enforced by `lib/ledger.ts`; budget $300)
 
 `inspect_loan` free · `find_connections` free · `compare_documents` $0.10 · `check_dealer_timeline` free ·
 `verify_identity` (CRS TU) $2 · `pull_credit` (CRS 3 bureaus) $15 · `check_contact` (CRS Fraud Finder) $1 ·
@@ -113,9 +114,11 @@ CRS employments) $0.20 · `ask_human(question, to, confidence, reason)` free but
 
 ## Demo data
 
-- 1,000 background loans (Faker, `--seed 13`), terms from SEC ABS-EE distributions; never sent to CRS.
+- 1,000 loans (`bun run data`, spec `data/patterns/seed13.json`), shaped like a dealer credit application
+  (applicant / residential / employment / vehicle blocks) plus funding data; terms from SEC ABS-EE-like
+  distributions; background loans never sent to CRS.
 - ~30 case loans use the 20 CRS personas. Ring: P13 lead, P12, P14 + 2 background loans at Dealer #3.
-  Innocents: P01+P19 (apartment), P02+P10+6 background (hospital, R-001), P18 + spouse (household
+  Innocents: P08 + neighbour (apartment), P02+P10+6 background (hospital, R-001), P18 + spouse (household
   phone), Dealer #1 month-end burst. Review: P16 fraud alert, P15 frozen, P17 divergence.
   Reprice not fraud: P05, P07, P11. One injected pay stub.
 - `--seed 99` = held-out test, never used to tune prompts. Judges may pick a seed.
@@ -139,9 +142,14 @@ CRS employments) $0.20 · `ask_human(question, to, confidence, reason)` free but
 
 ## Stack
 
-Python 3.12 + FastAPI + httpx + NetworkX + SQLite; Claude via the Anthropic SDK with a plain
-tool-use loop (`claude-sonnet-5-5` for steps, `claude-opus-5-5` for the memo); Next.js + Tailwind +
-React Flow; SSE for live events; Faker for data.
+Next.js + React + TypeScript (app and API routes) · Tailwind + shadcn/ui + Motion · React Flow (corkboard) ·
+graphology (evidence graph) · Supabase PostgreSQL + Realtime (loans, events, rules, approvals; live board) ·
+Vercel AI SDK + Zod (tool calls and validation) · Claude Sonnet 5.5 (`claude-sonnet-5-5`, Hazel's steps and
+the memo) and Claude Haiku (document extraction; `claude-haiku-4-5-20251001` until a newer id is confirmed) ·
+CRS sandbox API · Bun (scripts, `bun test`, baseline evaluator) · faker-js for data.
+
+Supabase service-role key is server-only (route handlers, scripts); the browser gets the anon key and reads
+through RLS. `events` is insert-only.
 
 ## Working rules
 

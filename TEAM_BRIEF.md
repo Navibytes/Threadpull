@@ -52,7 +52,7 @@ Reality check from past winners: Cal Hacks 12.0 and 11.0 overall winners were co
 
 ## 3. Demo data
 
-**Background pool:** 1,000 loans from 5 fictional dealers, generated with Faker from a fixed seed (`data/generate.py --seed 13`). Loan terms follow real distributions from SEC ABS-EE auto-loan tapes. Background borrowers are never sent to CRS.
+**Background pool:** 1,000 loans from 24 fictional dealers, generated with faker-js from a fixed seed (`bun run data`, spec `data/patterns/seed13.json`). Each loan is shaped like the credit application a dealer sends the bank (applicant, residence, employment, vehicle and loan blocks) plus funding data. Loan terms follow ABS-EE-like distributions. Background borrowers are never sent to CRS.
 
 **Case loans (~30):** every loan the investigation touches with CRS uses one of the 20 CRS sandbox personas, because only persona requests return results.
 
@@ -75,7 +75,7 @@ The tape is messy on purpose: mixed date formats, SSNs with and without dashes, 
 | Pattern | Personas / loans | Truth |
 | --- | --- | --- |
 | Fraud ring at Dealer #3: synthetic identity + shared phone + recycled pay stubs | P13 (lead), P12, P14 + 2 background loans linked by phone/stub | Fraud: exclude, buyback |
-| Shared address that is an apartment building | P01 + P19 | Innocent: thread withdrawn |
+| Shared address that is an apartment building | P08 + a background neighbour | Innocent: thread withdrawn |
 | Shared employer that is a large hospital | P02 + P10 + 6 background loans | Innocent: withdrawn, becomes rule R-001 |
 | Shared phone = co-borrowers in one household | P18 + background spouse | Innocent: withdrawn |
 | Month-end sales burst at Dealer #1 | 40 background loans | Innocent: dealer timeline explains it |
@@ -93,7 +93,7 @@ The backend, not the LLM, enforces the budget, records every result and its sour
 | Tool | What it does | Data source | Cost (assumed) |
 | --- | --- | --- | --- |
 | `inspect_loan(loan_id)` | Tape row + extracted document fields | Data room | free |
-| `find_connections(entity_id)` | Neighbors in the evidence graph, with how rare each shared attribute is | NetworkX graph | free |
+| `find_connections(entity_id)` | Neighbors in the evidence graph, with how rare each shared attribute is | graphology graph | free |
 | `compare_documents(doc_a, doc_b)` | Template fingerprint and number consistency of two documents | Our document analyzer | $0.10 |
 | `check_dealer_timeline(dealer_id)` | Origination bursts vs the dealer's own history and month-end pattern | Data room | free |
 | `verify_identity(loan_id)` | TransUnion identity check | CRS `tu_identity_verification` | $2 |
@@ -172,7 +172,7 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 - **Headline we aim for:** "Same ring found, a fraction of the cost, zero innocents left flagged." Only real measured numbers go on screen.
 - **Red-team tests:** prompt injection in documents, a borrower name containing instructions, a fake "verified" stamp. Each is caught and logged.
 - **Recovery:** CRS 429 → honor `Retry-After`; frozen bureau (P15) → partial data, Review; bureaus disagree (P17) → Review.
-- **Replay:** every run writes `runs/<id>/events.jsonl`. The UI can replay a recorded run (safe at the judging table) or run live (for the judges' seed). Every animation is an event from that log.
+- **Replay:** every run writes its events as rows in the Supabase `events` table. The UI can replay a recorded run (safe at the judging table) or run live (for the judges' seed), receiving rows over Supabase Realtime. Every animation is one of those rows.
 
 ## 8. CRS rules that bite
 
@@ -193,14 +193,18 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 
 ## 10. Stack
 
-| Part | Tech |
-| --- | --- |
-| Frontend | Next.js + Tailwind, React Flow for the corkboard, SSE for live events |
-| Backend | Python 3.12 + FastAPI, `httpx` for CRS with Retry-After handling |
-| Graph | NetworkX |
-| Agent | Claude via the Anthropic SDK, plain tool-use loop (no agent framework): `claude-sonnet-5-5` for investigation steps, `claude-opus-5-5` for the CRO memo |
-| Storage | SQLite + JSONL event log |
-| Data | Faker + ABS-EE distributions, fixed seeds |
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| Web application | Next.js, React, TypeScript | Corkboard, CRO review, API routes |
+| Styling | Tailwind, shadcn/ui, Motion | Hazel's warm detective-office interface |
+| Interactive graph | React Flow | Evidence cards, connecting threads, animations |
+| Graph intelligence | graphology | Entity relationships and connected clusters |
+| Database | Supabase PostgreSQL | Loans, evidence, investigations, approvals |
+| Live synchronization | Supabase Realtime | Push investigation updates to the board |
+| AI | Claude Sonnet 5.5, Claude Haiku | Investigation planning and document extraction |
+| Agent orchestration | Vercel AI SDK, Zod | Structured tool calls and validation |
+| Identity verification | CRS sandbox API | Actual external identity / fraud signals |
+| Evaluation | Bun tests and a baseline evaluator | Measure detection, accuracy and costs |
 
 ## 11. Team split
 
@@ -208,16 +212,16 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 | --- | --- | --- |
 | A: Evidence | Data generator, documents and pay-stub fingerprints, `compare_documents`, `check_vin`, red-team documents | ML / computer vision |
 | B: Verification | CRS client, persona guard, cost ledger, all CRS tools, recovery cases | Backend |
-| C: Board | Filing drawer, corkboard animations from SSE, notebook, CRO screen, replay | Frontend |
+| C: Board | Next.js + Supabase skeleton, filing drawer, corkboard animations from Realtime, notebook, replay | Frontend |
 | D: Investigation | Graph and rarity scores, Hazel's tool loop and prompts, ask-once rules, baselines and metrics, memo, pitch and video | Agents / product |
 
 ## 12. Today's plan
 
 - [ ] 10:00–11:30 Repo + skeleton. One live TU identity call for P13 returns 2202. Generator writes the 1,000-loan tape and answer key.
-- [ ] 11:30–14:00 Graph + rarity; all tools wired with costs; Hazel's loop runs end to end in the terminal and writes `events.jsonl`.
-- [ ] 14:00–17:00 Corkboard renders events live (SSE); de-escalation works on the apartment and hospital cases; CRO screen with outputs.
+- [ ] 11:30–14:00 Graph + rarity; all tools wired with costs; Hazel's loop runs end to end in the terminal and writes rows to the `events` table.
+- [ ] 14:00–17:00 Corkboard renders events live (Supabase Realtime); de-escalation works on the apartment and hospital cases; CRO screen with outputs.
 - [ ] 17:00–19:00 Ask-once rule R-001; baselines and metrics on both seeds; replay mode.
-- [ ] 19:00–21:00 **Prototype freeze:** `make demo` runs three times in a row; rough video opening with the moment.
+- [ ] 19:00–21:00 **Prototype freeze:** `bun run demo` runs three times in a row; rough video opening with the moment.
 - [ ] Night: document images, red-team tests, judge seed picker, Devpost draft, make repo public.
 - [ ] Sun 06:00–08:45: polish, README + PROOF.md (real vs simulated), final video, submit.
 

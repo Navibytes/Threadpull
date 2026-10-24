@@ -9,7 +9,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] The baseline runs a fixed checklist in priority order with the same tools and budget.
+- [ ] The baseline (`eval/baseline.ts`) runs a fixed checklist in priority order with the same tools and budget.
+- [ ] The evaluator (`eval/evaluate.ts`, run with Bun) is the only code that reads the answer keys.
 - [ ] Metrics: ring members found, innocents left flagged, unnecessary escalations, acorns spent, questions asked, runtime.
 - [ ] The held-out seed runs exactly once after the freeze, and results are recorded with the commit hash.
 - [ ] PROOF.md's results table is generated from those results, with simulated calls labeled.

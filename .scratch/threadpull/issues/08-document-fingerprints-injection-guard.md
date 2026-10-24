@@ -11,7 +11,7 @@
 
 - [ ] Fingerprint from template id, font, creating tool, layout and text features, plus arithmetic checks (gross minus deductions equals net; year-to-date consistent with pay periods).
 - [ ] Returns a match score and the specific differences as sources, at 1 acorn per pair.
-- [ ] Claude's document extraction fills a fixed schema only; instruction-like text produces an `attack_detected` event.
-- [ ] Test: the injected pay stub does not change any status; the recycled template links the ring loans.
+- [ ] Claude Haiku extracts pay-stub fields into a fixed Zod schema only (AI SDK structured output); instruction-like text produces an `attack_detected` event.
+- [ ] `bun test`: the injected pay stub does not change any status; the recycled template links the ring loans.
 
 Spec: SKELETON.md (contracts, rules and the 24-hour plan).

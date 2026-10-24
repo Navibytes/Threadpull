@@ -4,7 +4,7 @@
 
 This file is the single source of truth for building. It merges the team's Project Brief (Google Doc, Oct 24) with Yehor's proposed edits, and adds the contracts every teammate codes against. If something here conflicts with an older doc, this file wins. Change a contract only after telling the whole team.
 
-- Repo: https://github.com/Navibytes/Threadpull (currently public: keep secrets out from the first commit)
+- Repo: https://github.com/Navibytes/Threadpull (private until submission; keep secrets out from the first commit anyway, because it goes public on Sunday)
 - Event: Cal Hacks 13.0. Devpost deadline **Sun Oct 25, 08:50 PT**; we submit by **08:00**. Judging Sun 10:30–12:30, whole team at the table.
 - Tickets: `.scratch/threadpull/issues/` (one file per ticket) and one plan per person in `.scratch/threadpull/people/`.
 
@@ -53,7 +53,7 @@ Two run modes: **replay** (a recorded run, safe at the judging table) and **live
 | --- | --- |
 | Portfolio | The box of loans the bank wants to buy (ours: 1,000 synthetic loans) |
 | Case loan | A loan whose borrower is one of the 20 CRS sandbox personas, so CRS can verify it |
-| Background loan | A Faker loan; never sent to CRS |
+| Background loan | A synthetic loan (faker-js, fixed seed); never sent to CRS |
 | Ring | Loans secretly connected by the same people or paperwork |
 | Lookalike | A loan that looks suspicious but has a normal explanation |
 | Clue | One piece of evidence, with its source and weight |
@@ -86,26 +86,23 @@ Two run modes: **replay** (a recorded run, safe at the judging table) and **live
 
 ## 5. Data contract
 
-### 5.1 Loan record (generator output, one row per loan)
+### 5.1 Loan record (generator output, one per loan)
 
-| Field | Type | Notes |
+The record is shaped like a dealer's credit application as it reaches the bank (the `applicant_info` … `vehicle_and_loan_details` blocks), plus the deal-jacket data the bank holds after funding. The Zod schema in `lib/contracts/loan.ts` is the source of truth; this table is the summary.
+
+| Block | Fields | Notes |
 | --- | --- | --- |
-| loan_id | str | `L0001`…`L1000` |
-| kind | `case` \| `background` | case = borrower is a CRS persona |
-| persona_id | str \| null | `P01`…`P20` for case loans; never read by detection code |
-| first_name, last_name | str | messy on purpose (case, "LAST, FIRST", typos) |
-| dob | str | mixed formats on purpose |
-| ssn | str | fake; with or without dashes |
-| phone, email | str | |
-| address, city, state, zip | str | |
-| bank_account, device_id | str | fake |
-| employer, job_title, stated_income_monthly, years_employed | | |
-| dealer_id, dealer_name, broker_id | str | dealer_name spelled 3 ways on purpose |
-| application_ts | ISO time | |
-| amount_financed, apr, term_months, monthly_payment, current_balance, purchase_price | number | distributions from SEC ABS-EE auto-loan tapes |
-| vin, vehicle_year, make, model | | |
-| co_applicant_name | str \| null | household explanations |
-| documents | list | `{doc_id, type (pay_stub \| application), template_id, font, creating_tool, text}` |
+| top level | `loan_id`, `kind`, `persona_id` | `L0001`…`L1000`; `case` \| `background`; `P01`…`P20` for case loans, **never read by detection code** |
+| `submission` | `dealer_id`, `dealer_name`, `broker_id`, `submitted_at`, `channel`, `device_id`, `ip_address` | dealer_name spelled 3 ways on purpose; channel = RouteOne / DealerTrack |
+| `applicant_info` | `first_name`, `last_name`, `date_of_birth`, `ssn`, `email`, `phone` | messy on purpose (case, "LAST, FIRST", date formats, SSN with/without dashes, phone formats); fake SSNs only |
+| `co_applicant_info` | `first_name`, `last_name`, `relationship` or `null` | household explanations |
+| `residential_info` | `street_address`, `city`, `state`, `zip_code`, `housing_status`, `monthly_housing_payment`, `months_at_address` | street may carry ", Apt 4B"; state sometimes spelled out |
+| `employment_info` | `employer_name`, `job_title`, `time_at_employer_months`, `gross_monthly_income` | |
+| `vehicle_and_loan_details` | `vehicle_condition`, `year_make_model`, `vin`, `purchase_price`, `down_payment`, `requested_loan_amount` | `year_make_model` is one free-text string ("2023 Ford F-150 XLT") |
+| `funding_info` | `amount_financed`, `apr`, `term_months`, `monthly_payment`, `first_payment_date`, `current_balance`, `ach_bank_account` | terms from SEC ABS-EE-like distributions; money sometimes arrives as "$27,431.50" |
+| `documents[]` | `doc_id`, `type` (`pay_stub` \| `application`), `template_id`, `font`, `creating_tool`, `text` | pay-stub fingerprints live here |
+
+Normalization adds `address_key` (street without unit + ZIP, so a shared apartment building links), a canonical `dealer_name` (raw spelling kept), parsed `vehicle_year` / `make` / `model`, and `status` (`Not reviewed` until Hazel touches the loan).
 
 ### 5.2 Answer key (never read by the agent or detectors)
 
@@ -116,7 +113,7 @@ Two run modes: **replay** (a recorded run, safe at the judging table) and **live
 | Pattern | Loans | Truth |
 | --- | --- | --- |
 | Ring of six at one dealer: synthetic identity + shared phone + recycled pay-stub template | P13 (lead), P12, P14 + 3 background loans | Investigate → Exclude, buyback |
-| Twin Compare: two lookalikes split at one piece of evidence | P01 + P19 share an address; apartment building | String down |
+| Twin Compare: two lookalikes split at one piece of evidence | P08 + a background neighbour share a 212-unit apartment building (persona addresses are fixed by the sandbox, so P01 + P19 could not share one) | String down |
 | Large employer | P02 + P10 + background loans at a hospital | String down, becomes R-001 |
 | Household phone | P18 + co-applicant spouse | Link fades |
 | Month-end dealer burst | ~40 background loans | Explained by dealer timeline |
@@ -170,14 +167,14 @@ Every tool returns `{ok, result, sources: [source_ref], cost: {acorns, unit}, si
 
 ## 8. Event contract (the corkboard's only input)
 
-One JSON object per line in the run's event log, also streamed over SSE.
+One row per event in the Supabase `events` table (insert-only). The board subscribes with **Supabase Realtime**; replay mode reads the same rows of a recorded run in `seq` order. The Zod schema in `lib/contracts/event.ts` is the source of truth.
 
 ```json
 {"run_id": "r13-001", "seq": 42, "ts": "2026-10-24T15:04:05Z",
  "type": "link_found",
  "loan_ids": ["L0037", "L0412"], "tool": "find_connections",
  "result": {"edge_id": "e-phone-5550101013", "kind": "phone", "weight": 0.33},
- "sources": [{"kind": "crs", "request_id": "…"}, {"kind": "row", "loan_id": "L0412", "field": "phone"}],
+ "sources": [{"kind": "crs", "request_id": "…"}, {"kind": "row", "loan_id": "L0412", "field": "applicant_info.phone"}],
  "note": "Same phone as the lead, and nobody else in the pool shares it.",
  "budget": {"spent": 11, "limit": 60}, "simulated": false}
 ```
@@ -188,53 +185,79 @@ Types: `run_started`, `lead_opened`, `check_run`, `link_found`, `clue_explained`
 
 ## 9. Rules memory (ask once, remember forever)
 
-```yaml
-id: R-001
-created_from: question q-003, answered by CRO at 2026-10-24T22:42Z
-when: {link_kind: employer, min_group_size: 500, tenure_on_credit_file: true}
-then: explain_link
-reason_text: "Large employer; tenure confirmed on the credit file."
-version: 1
+Stored as a row in the Supabase `rules` table (validated by a Zod schema):
+
+```json
+{"id": "R-001", "created_from": "question q-003, answered by CRO at 2026-10-24T22:42Z",
+ "when": {"link_kind": "employer", "min_group_size": 500, "tenure_on_credit_file": true},
+ "then": "explain_link",
+ "reason_text": "Large employer; tenure confirmed on the credit file.",
+ "version": 1}
 ```
 
 Hazel applies a rule only when every `when` condition holds and cites it in `rule_applied`. Outside the scope, she asks again.
 
 ---
 
-## 10. API
+## 10. API (Next.js route handlers, `app/api/…`)
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/runs` | start a run `{seed, budget, mode: live \| replay, agent: hazel \| baseline}` |
-| GET | `/runs/{id}/events` | SSE stream of events |
-| GET | `/loans` | filing drawer: loans with current status |
-| GET | `/runs/{id}/report` | CRO screen data: balances, concentration, actions, drafts, proof |
-| POST | `/questions/{id}/answer` | CRO answers; creates or updates a rule |
-| POST | `/dispositions` | approve / override (override needs a reason) |
-| GET | `/runs/{id}/why/{loan_id}` | memo answer grounded in events only |
+| POST | `/api/runs` | start a run `{seed, budget, mode: live \| replay, agent: hazel \| baseline}` |
+| GET | `/api/loans` | filing drawer: loans with current status (reads Supabase `loans`) |
+| GET | `/api/runs/{id}/report` | CRO screen data: balances, concentration, actions, drafts, proof |
+| POST | `/api/questions/{id}/answer` | CRO answers; creates or updates a rule |
+| POST | `/api/dispositions` | approve / override (override needs a reason) |
+| GET | `/api/runs/{id}/why/{loan_id}` | memo answer grounded in events only |
+
+Live events don't need an endpoint: the board subscribes to `events` rows for the run through Supabase Realtime.
 
 ---
 
-## 11. Architecture and repo layout
+## 11. Architecture, stack and repo layout
 
 ```
-generator (seeded) → ingest/normalize → evidence graph (NetworkX)
-   → Hazel loop (Claude tool calls; backend enforces budget, rules, statuses)
-   → tool results feed back into the graph
-   → event log → SSE → corkboard + notebook
-   → deal engine (plain Python) → CRO screen → approvals logged
+data/generate.ts (seeded, Bun) → data/seed-db.ts → Supabase `loans` (normalized)
+   → lib/graph (graphology: entities, weights, connected clusters)
+   → Hazel loop (Vercel AI SDK + Claude Sonnet 5.5; tools defined with Zod; code enforces budget, rules, statuses)
+   → tool results feed back into the graph; Claude Haiku extracts pay-stub fields into a Zod schema
+   → every step inserts a row into `events` → Supabase Realtime → corkboard + notebook
+   → deal engine (plain TypeScript) → CRO screen → approvals logged
 ```
 
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| Web application | Next.js, React, TypeScript | Corkboard, CRO review, API routes |
+| Styling | Tailwind, shadcn/ui, Motion | Hazel's warm detective-office interface |
+| Interactive graph | React Flow | Evidence cards, connecting threads, animations |
+| Graph intelligence | graphology | Entity relationships and connected clusters |
+| Database | Supabase PostgreSQL | Loans, evidence, investigations, approvals |
+| Live synchronization | Supabase Realtime | Push investigation updates to the board |
+| AI | Claude Sonnet 5.5, Claude Haiku | Investigation planning (Sonnet) and document extraction (Haiku) |
+| Agent orchestration | Vercel AI SDK, Zod | Structured tool calls and validation |
+| Identity verification | CRS sandbox API | Actual external identity / fraud signals |
+| Evaluation | Bun tests and a baseline evaluator | Measure detection, accuracy and costs |
+
+Model ids: `claude-sonnet-5-5` for Hazel's steps and the CRO memo. Haiku: the newest released id we can confirm is `claude-haiku-4-5-20251001`; swap it in one place (`lib/agent/models.ts`) if a newer Haiku is available.
+
 ```
-backend/   app (FastAPI), crs (client, persona guard), ledger (acorns), graph, agent (loop, tools, prompts),
-           deal (verdicts, pricing, drafts), rules, audit (event log), baseline
-frontend/  Next.js + Tailwind + React Flow: drawer, corkboard, notebook, CRO screen
-data/      generator, answer keys (gitignored outputs)
-tests/     persona expectations, weights, injection, recovery, baseline
-docs/      README, PROOF.md (real vs simulated, results), Devpost text
+app/            Next.js App Router: drawer, corkboard, CRO screen; app/api/* route handlers
+components/     shadcn/ui, corkboard (React Flow + Motion), notebook, CRO panels
+lib/contracts/  Zod schemas: loan, tool result, event, rule (shared by server and client)
+lib/crs/        CRS client, persona guard, response cache
+lib/ledger.ts   acorn budget
+lib/graph/      graphology evidence graph, weights, priority score
+lib/agent/      Hazel loop, tools, prompts, models
+lib/deal/       verdicts, pricing, drafts
+lib/evidence/   explanation checks, document fingerprints, injection guard
+supabase/       migrations (loans, events, runs, rules, questions, dispositions), RLS
+data/           generator, personas.json, pattern specs (outputs and answer keys gitignored)
+eval/           baseline agent and evaluator (the only code that reads answer keys)
+tests/          bun test: personas, weights, injection, recovery, baseline
+docs/           PROOF.md, Devpost text
 ```
 
-**Stack:** Next.js, React, Tailwind, React Flow · FastAPI, httpx, NetworkX, Pandas, Faker, SQLite · Claude via the Anthropic SDK (Sonnet for Hazel's steps, Opus for the CRO memo) · SSE.
+Commands: `bun install` · `bun run dev` · `bun test` · `bun run data` (generate + seed Supabase) · `bun run demo`.
 
 ---
 
@@ -255,13 +278,13 @@ H0 = Sat 09:00 PT. Submission target H23 (Sun 08:00); hard deadline Sun 08:50.
 
 | Hours | Clock | Milestone | Done when |
 | --- | --- | --- | --- |
-| H0–H3 | 09:00–12:00 | Contracts frozen; skeleton; generator; first live CRS call | Event replays onto the board; seed 13 written; P13 returns 2202 live |
+| H0–H3 | 09:00–12:00 | Contracts frozen (Zod); Next.js + Supabase skeleton; generator; first live CRS call | An events row appears on the board via Realtime; seed 13 in Supabase; P13 returns 2202 live |
 | H3–H6 | 12:00–15:00 | Graph and weights; more CRS tools | Lead's neighbors with weights; credit report and Fraud Finder tools work |
 | H6–H12 | 15:00–21:00 | Hazel loop, tools, budget, events, statuses; board live; strings come down | **H12 checkpoint (21:00): one full rough run: generator → graph → live CRS → one withdrawn thread → CRO screen** |
 | H12–H16 | 21:00–01:00 | CRO screen and deal engine; ask-once; document fingerprints; injection guard | Approve an exclusion; R-001 clears a lookalike |
 | H16–H19 | 01:00–04:00 | `detector-frozen` tag; held-out set; baseline; memo | Proof numbers from real runs |
 | H19 | 04:00 | **Feature freeze** | Only bug fixes after this |
-| H19–H22 | 04:00–07:00 | Rehearse; backup demo video; README, PROOF.md | `make demo` works three times in a row |
+| H19–H22 | 04:00–07:00 | Rehearse; backup demo video; README, PROOF.md | `bun run demo` works three times in a row |
 | H22–H23 | 07:00–08:00 | Submit on Devpost; repo public and clean | Submitted |
 
 **Cut order if behind:** VIN check → document images → judge seed picker → animation polish. **Never cut:** live CRS, the ring + Twin Compare, the acorn budget, the event log, ask-once, the CRO screen.

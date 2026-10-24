@@ -2,6 +2,8 @@
 
 **Good fit:** Backend
 
+**Your stack:** TypeScript server code in Next.js route handlers (`lib/crs/`, `lib/ledger.ts`, `lib/deal/`), Zod for CRS request/response bodies, Supabase (`crs_cache`, `dispositions`), shadcn/ui for the CRO screen, Claude Sonnet 5.5 via the Vercel AI SDK for the memo, `bun test`.
+
 **Your tickets, in order:**
 
 | Ticket | Title | Target | Blocked by |
@@ -15,9 +17,9 @@
 
 **First 30 minutes:**
 
-1. Get the CRS sandbox credentials (calhacks.crscreditapi.com or the CRS booth) and put them in `.env` only.
+1. Get the CRS sandbox credentials (calhacks.crscreditapi.com or the CRS booth) and put them in `.env.local` only (no `NEXT_PUBLIC_` prefix).
 1. Log in once by hand and keep the token; never loop on a failed login.
-1. Make the P13 identity call and confirm code 2202 before writing any other code.
+1. Make the P13 identity call and confirm code 2202 before writing any other code. Build bodies from `data/personas.json` matched by SSN.
 
 **While you're blocked:** Between 15:00 and 21:00, once 06 is done: start the deal engine math (10) against the generated portfolio so the CRO screen only needs wiring when 05 lands.
 

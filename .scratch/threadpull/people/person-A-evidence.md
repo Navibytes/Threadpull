@@ -2,6 +2,8 @@
 
 **Good fit:** ML / computer vision
 
+**Your stack:** TypeScript + Bun (generator, seed script, `bun test`), faker-js, Zod (loan schema, pay-stub extraction schema), Supabase (`loans` table), Claude Haiku via the Vercel AI SDK (document extraction), Motion (falling string, with C).
+
 **Your tickets, in order:**
 
 | Ticket | Title | Target | Blocked by |
@@ -14,11 +16,11 @@
 
 **First 30 minutes:**
 
-1. Pull the persona request bodies from the `crs-calhacks` MCP server (`get_personas`) so case-loan identity fields match exactly.
-1. Agree the loan record fields (SKELETON §5.1) with C before writing the generator.
-1. Write the ring of six and the apartment twins first; the rest of the patterns after the first commit.
+1. Done: persona bodies pulled into `data/personas.json`; seed-13 pattern spec written; a Python generator proved the patterns (branch `a/portfolio`).
+1. Port the generator to TypeScript/Bun on the dealer-application record shape (SKELETON §5.1) and agree the Zod loan schema with C.
+1. Write the `loans` migration and the seed script so D can query Supabase (or the JSON file) by noon.
 
-**While you're blocked:** Between 12:00 and 15:00, while waiting for 05 and 06: prototype the pay-stub fingerprint and the explanation checks (address type, household, employer size) against the generated data, so 07 and 08 go fast once Hazel exists. Pair with C on the falling-string animation.
+**While you're blocked:** Between 12:00 and 15:00, while waiting for 05 and 06: prototype the pay-stub fingerprint, the Haiku extraction schema and the explanation checks (address type, household, employer size) in `lib/evidence/` against the generated data, so 07 and 08 go fast once Hazel exists. Pair with C on the falling-string animation.
 
 **Team checkpoints:** Sat 12:00 contracts frozen · Sat 21:00 one full rough run · Sun 04:00 feature freeze · Sun 08:00 submit (hard deadline 08:50).
 

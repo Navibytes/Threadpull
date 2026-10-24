@@ -13,10 +13,11 @@
 - [ ] Persona guard: the request body built from a loan must contain every field of a persona body; otherwise the call is refused, logged, and nothing is sent.
 - [ ] Results use the tool-result shape in SKELETON §7 with `sources` holding the CRS RequestID and `simulated: false`.
 - [ ] The acorn ledger refuses calls over budget and every spend produces a `budget_spent` event.
-- [ ] Responses are cached by request body so repeated demo runs don't re-hit the sandbox.
-- [ ] Tests: P13 → 2202, P12 → 2201, P14 → 2301, P16 → 2401, P01 → verified, background loan refused, over-budget refused.
+- [ ] The CRS client is server-only TypeScript (`lib/crs/`), called from route handlers / the agent loop; request and response bodies are validated with Zod.
+- [ ] Responses are cached by request body (a Supabase `crs_cache` table) so repeated demo runs don't re-hit the sandbox.
+- [ ] `bun test`: P13 → 2202, P12 → 2201, P14 → 2301, P16 → 2401, P01 → verified, background loan refused, over-budget refused.
 - [ ] If the sandbox is unreachable, a clearly flagged simulated response is used and labeled `simulated` everywhere.
 
-**Notes:** Get sandbox credentials from calhacks.crscreditapi.com or the CRS booth first thing. Keep them only in `.env`.
+**Notes:** Get sandbox credentials from calhacks.crscreditapi.com or the CRS booth first thing. Keep them only in `.env.local` (server-only, never `NEXT_PUBLIC_`). Build request bodies from `data/personas.json`, matched by the loan's normalized SSN, never from tape fields.
 
 Spec: SKELETON.md (contracts, rules and the 24-hour plan).
