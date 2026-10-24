@@ -94,12 +94,31 @@ describe("event contract", () => {
 });
 
 describe("sources", () => {
-  test("label CRS, data-room and not-yet-named kinds without inventing a RequestID", () => {
-    expect(describeSource({ kind: "crs", request_id: "abc-123" })).toEqual({ label: "CRS", detail: "RequestID abc-123" });
+  test("label every SourceRef kind and only CRS refs carry a RequestID", () => {
+    expect(describeSource({ kind: "crs", product: "tu_identity_verification", request_id: "abc-123" })).toEqual({
+      label: "CRS · tu_identity_verification",
+      detail: "RequestID abc-123",
+    });
     expect(describeSource({ kind: "row", loan_id: "L0412", field: "applicant_info.phone" }).detail).toBe(
       "L0412 · applicant_info.phone",
     );
-    expect(describeSource({ kind: "rule", rule_id: "R-001" })).toEqual({ label: "rule", detail: '{"rule_id":"R-001"}' });
-    expect(crsRequestIds([{ kind: "row", loan_id: "L1", field: "x" }, { kind: "crs", request_id: "r1" }])).toEqual(["r1"]);
+    expect(describeSource({ kind: "lookup", name: "address_type", key: "12 Elm St", simulated: true }).label).toBe(
+      "Lookup · address_type (simulated)",
+    );
+    expect(describeSource({ kind: "rule", rule_id: "R-001", version: 1 }).detail).toBe("R-001 v1");
+    expect(describeSource({ kind: "event", run_id: "r1", seq: 7 }).detail).toBe("seq 7 (r1)");
+    expect(
+      crsRequestIds([
+        { kind: "row", loan_id: "L1", field: "x" },
+        { kind: "crs", product: "fraud_finder", request_id: "r1" },
+      ]),
+    ).toEqual(["r1"]);
+  });
+
+  test("an event row accepts tool-result sources and rejects unknown kinds", () => {
+    const base = PREVIEW_EVENTS[2];
+    const doc = { kind: "document", doc_id: "D-1", detail: "template" };
+    expect(EventSchema.safeParse({ ...base, sources: [doc] }).success).toBe(true);
+    expect(EventSchema.safeParse({ ...base, sources: [{ kind: "vibes" }] }).success).toBe(false);
   });
 });
