@@ -4,9 +4,9 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { z } from "zod";
 import type { Loan } from "@/lib/contracts/loan";
-import { SourceRefSchema, ToolNameSchema, toolError, toolOk, type ToolResult } from "@/lib/contracts/tool-result";
+import { EventSchema } from "@/lib/contracts/event";
+import { toolError, toolOk, type ToolResult } from "@/lib/contracts/tool-result";
 import { generate, type AnswerKey } from "@/data/generate";
 import { buildGraph, type EvidenceGraph } from "@/lib/graph";
 import { loadReference } from "@/lib/ingest/reference";
@@ -26,20 +26,25 @@ function portfolio(seed: number) {
   return { loans: r.normalized, key, ref: loadReference(r.outDir) };
 }
 
-// A copy of C's ClueExplainedResultSchema and its source rule (feature/frontend, lib/contracts/event.ts).
-// Replace with the import once that contract is on main.
-const ClueExplainedResultSchema = z.object({
-  edge_ids: z.array(z.string()),
-  explained_by: z.union([ToolNameSchema, z.literal("rule")]),
-  rule_id: z.string().optional(),
-  reason: z.string().min(1),
-}).refine((r) => r.explained_by !== "rule" || !!r.rule_id);
+// The whole clue_explained row, as the agent loop will write it, checked by the team's EventSchema
+// (lib/contracts/event.ts): the result's shape and "cite the check's event row or a rule" (hard rule 3).
 function expectValidRow(c: ClueExplained, at: { run_id: string; seq: number }) {
-  expect(ClueExplainedResultSchema.safeParse(c.result).success).toBe(true);
-  expect(z.array(SourceRefSchema).safeParse(c.sources).success).toBe(true);
-  expect(c.sources[0]).toEqual({ kind: "event", run_id: at.run_id, seq: at.seq }); // hard rule 3
+  const row = { run_id: at.run_id, seq: at.seq + 1, ts: "2026-10-24T15:04:05Z", type: "clue_explained",
+    loan_ids: c.loan_ids, tool: c.result.explained_by, result: c.result, sources: c.sources, note: c.result.reason,
+    budget: { spent: 0, limit: 60 }, simulated: c.simulated };
+  const parsed = EventSchema.safeParse(row);
+  expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
+  expect(c.sources[0]).toEqual({ kind: "event", run_id: at.run_id, seq: at.seq }); // the check that proved it
   expect(c.loan_ids.length).toBeGreaterThan(0);
 }
+
+test("the contract refuses a clue_explained row that cites no check", () => {
+  const row = { run_id: "r", seq: 2, ts: "2026-10-24T15:04:05Z", type: "clue_explained", loan_ids: ["L0001", "L0002"],
+    tool: "check_address", result: { edge_ids: [], explained_by: "check_address", reason: "x" },
+    sources: [{ kind: "row", loan_id: "L0001", field: "residential_info.street_address" }], note: "", budget: { spent: 0, limit: 60 },
+    simulated: false };
+  expect(EventSchema.safeParse(row).success).toBe(false);
+});
 
 const groupBy = <T>(xs: T[], f: (x: T) => string) => {
   const m = new Map<string, T[]>();
@@ -132,7 +137,7 @@ describe.each([13, 7, 21])("seed %i: every explaining check, run over the whole 
     for (const s of clue.sources.slice(1)) expect(s.kind === "row" && inBurst.has(s.loan_id)).toBe(true);
   });
 
-  test("every row fits C's clue_explained contract and cites the check's event row", () => {
+  test("every row is a valid clue_explained event and cites the check's event row", () => {
     for (const { at, clue } of clues) expectValidRow(clue, at);
   });
 

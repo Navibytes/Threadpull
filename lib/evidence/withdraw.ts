@@ -4,21 +4,19 @@
 // true, and every row cites the check's own event row, so a withdrawn thread always points at its proof.
 //
 // check_employer has no withdraw: it never explains on its own (R-001 or a human does, ticket 11).
+import type { ClueExplainedResult } from "@/lib/contracts/event";
 import type { Explanation, GraphEdge } from "@/lib/contracts/graph";
-import type { SourceRef, ToolName, ToolResult } from "@/lib/contracts/tool-result";
+import type { SourceRef, ToolResult } from "@/lib/contracts/tool-result";
 import { entityId, type EvidenceGraph } from "@/lib/graph";
 import type { AddressCheck, DealerTimeline, HouseholdCheck } from "./explanations";
 
 /** The `check_run` event row that recorded the check. The withdrawal cites it. */
 export type CheckEventRef = { run_id: string; seq: number };
 
-/** `clue_explained.result` (SKELETON §8). Weight after is always 0, so it isn't sent. */
-export type ClueExplainedResult = { edge_ids: string[]; explained_by: ToolName | "rule"; rule_id?: string; reason: string };
-
 /** Everything the agent loop needs to write one `clue_explained` row. */
 export type ClueExplained = {
   loan_ids: string[];
-  result: ClueExplainedResult;
+  result: ClueExplainedResult; // the shape lib/contracts/event.ts checks for clue_explained
   sources: SourceRef[];
   simulated: boolean; // true when the proof came from a simulated stand-in (e.g. the address lookup)
 };

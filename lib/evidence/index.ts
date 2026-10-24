@@ -15,5 +15,5 @@ export {
 } from "./explanations";
 export {
   withdrawAddress, withdrawBursts, withdrawHousehold,
-  type CheckEventRef, type ClueExplained, type ClueExplainedResult,
+  type CheckEventRef, type ClueExplained,
 } from "./withdraw";
