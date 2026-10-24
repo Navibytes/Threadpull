@@ -15,3 +15,5 @@ data/keys/
 # Supabase local
 supabase/.temp/
 .next/
+next-env.d.ts
+*.tsbuildinfo
