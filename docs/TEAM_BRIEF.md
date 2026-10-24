@@ -18,7 +18,7 @@ Threadpull is an AI fraud investigator for banks buying auto-loan portfolios. It
 
 **What Threadpull does.**
 1. Scans the portfolio and builds an evidence graph: loans, borrowers, phones, emails, addresses, employers, dealers, document fingerprints.
-2. Hazel, the investigator agent, starts from the strongest lead and pulls the thread: each step is one tool call that costs part of a dollar budget.
+2. Hazel, the investigator agent, starts from the strongest lead and pulls the thread: each step is one tool call that costs acorns from a fixed budget (60 per run).
 3. Every connection is challenged. Hazel actively looks for innocent explanations and withdraws suspicion when the evidence supports one.
 4. Threadpull writes the finished outputs: exclusion list, revised bid, dealer buyback demands, document requests, and a CRO memo. The CRO approves.
 
@@ -34,7 +34,7 @@ Threadpull is an AI fraud investigator for banks buying auto-loan portfolios. It
 1. Loan #37 is pulled. A live CRS call returns TransUnion codes 2201 (the SSN isn't associated with this name), 2202 (the date of birth doesn't match the file) and 2101 (the address doesn't match). A real SSN under a made-up identity.
 2. Red threads spread: the same phone number and a recycled pay-stub template link it to 4 more loans, all from Dealer #3. A ring.
 3. Two other borrowers share an address. Hazel spends one check: it's a 200-unit apartment building. The thread falls away and the card turns green.
-4. The budget meter: the ring was found for $X of checks, versus $Y to check everything.
+4. The acorn meter: the ring was found for X acorns of checks, versus Y to check everything.
 5. The CRO screen: exclusions, drafted buyback demands, revised bid. Approve.
 
 ## 2. Tracks and what they judge
@@ -88,25 +88,26 @@ A second seed (`--seed 99`) with the same pattern types in different places is t
 
 ## 4. Hazel's tools and the budget
 
-The backend, not the LLM, enforces the budget, records every result and its source, and refuses calls outside the allowed set. Prices are our assumptions for the demo and are labeled as such in the UI.
+The backend, not the LLM, enforces the budget, records every result and its source, and refuses calls outside the allowed set. Costs are in **acorns**, a design choice shown next to the real unit (SKELETON §7 is the contract; names and costs live in `lib/contracts/tool-result.ts`).
 
-| Tool | What it does | Data source | Cost (assumed) |
+| Tool | What it does | Data source | Acorns |
 | --- | --- | --- | --- |
-| `inspect_loan(loan_id)` | Tape row + extracted document fields | Data room | free |
-| `find_connections(entity_id)` | Neighbors in the evidence graph, with how rare each shared attribute is | graphology graph | free |
-| `compare_documents(doc_a, doc_b)` | Template fingerprint and number consistency of two documents | Our document analyzer | $0.10 |
-| `check_dealer_timeline(dealer_id)` | Origination bursts vs the dealer's own history and month-end pattern | Data room | free |
-| `verify_identity(loan_id)` | TransUnion identity check | CRS `tu_identity_verification` | $2 |
-| `pull_credit(loan_id)` | 3-bureau report: file age, inquiries, employments, addresses | CRS `credit_report` ×3 | $15 |
-| `check_contact(loan_id)` | Email age, phone owner, IP distance, address type | CRS `fraud_finder` | $1 |
-| `reverse_phone(phone)` | Who the phone is registered to | CRS `accurate_append` reverse | $0.50 |
-| `public_records(loan_id)` | Bankruptcies, liens, judgments | CRS `pitchpoint_blj` | $3 |
-| `check_address(address)` | Multi-unit building or single home | Census geocoder + Fraud Finder `address_type` | free |
-| `check_vin(vin)` | VIN valid and matches make/model/year | NHTSA vPIC | free |
-| `check_employer(name)` | Employer exists and its size | Apify business listing (or CRS `employments`) | $0.20 |
-| `ask_human(question, to, confidence, reason)` | One precise question to the right person | CRO console | free, but counted |
+| `inspect_loan(loan_id)` | Loan record + documents | Data room | 0 |
+| `find_connections(entity_id)` | Neighbors in the evidence graph, with how rare each shared attribute is | graphology graph | 0 |
+| `compare_documents(doc_a, doc_b)` | Template fingerprint and number consistency of two documents | Our document analyzer | 1 |
+| `dealer_timeline(dealer_id)` | Origination bursts vs the dealer's own history and month-end pattern | Data room | 1 |
+| `inspect_dealer_loans(dealer_id)` | Summary of every loan from one dealer | Data room | 5 |
+| `crs_identity_check(loan_id)` | TransUnion identity check | CRS `tu_identity_verification` | 3 |
+| `crs_credit_report(loan_id)` | 3-bureau report: file age, inquiries, employments, addresses | CRS `credit_report` ×3 | 6 |
+| `crs_fraud_finder(loan_id)` | Email age, phone owner, IP distance, address type, risk score | CRS `fraud_finder` | 2 |
+| `crs_reverse_phone(phone)` | Who the phone is registered to | CRS `accurate_append` reverse | 1 |
+| `check_address(address)` | Multi-unit building or single home | Census geocoder + address-type lookup (simulated unit counts) | 0 |
+| `check_household(loan_a, loan_b)` | Same phone + address + last name, or listed co-applicant | Data room | 0 |
+| `check_employer(employer)` | Employer size and how many loans in the pool name it | Reference lookup + pool | 0 |
+| `check_vin(vin)` | VIN valid and matches make/model/year | NHTSA vPIC | 0 |
+| `ask_human(question, to, confidence, reason)` | One precise question to the right person | CRO console | 0, but counted |
 
-**Budget:** $300 for the whole 1,000-loan pool. Checking every loan with every CRS product would cost about $21,500 at these prices.
+**Budget:** 60 acorns per run. The "check everything" comparison on the proof screen is computed from the same costs over the case loans, from real runs only.
 
 ## 5. How suspicion goes up and comes down
 
@@ -129,10 +130,10 @@ The backend, not the LLM, enforces the budget, records every result and its sour
 | Suspicious link | Innocent explanation | Check that proves it |
 | --- | --- | --- |
 | Shared address | Multi-unit apartment building | `check_address` |
-| Shared employer | Large real employer; borrower's tenure confirmed on the credit file | `check_employer`, `pull_credit` employments |
-| Shared phone | Co-borrowers at the same address, same last name or listed co-applicant | `reverse_phone`, tape co-applicant field |
-| Dealer burst | Month-end or annual sales event seen in prior months | `check_dealer_timeline` |
-| Thin credit file | Young borrower or recent immigrant whose identity verifies | `verify_identity` |
+| Shared employer | Large real employer; borrower's tenure confirmed on the credit file | `check_employer`, `crs_credit_report` employments |
+| Shared phone | Co-borrowers at the same address, same last name or listed co-applicant | `check_household`, `crs_reverse_phone`, co-applicant field |
+| Dealer burst | Month-end or annual sales event seen in prior months | `dealer_timeline` |
+| Thin credit file | Young borrower or recent immigrant whose identity verifies | `crs_identity_check` |
 
 Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared by 3 unrelated people is strong. Location alone (ZIP, neighborhood) is never a fraud signal, because it can act as a proxy for protected classes under fair-lending law.
 
@@ -187,7 +188,7 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 
 - **Filing drawer:** the 1,000 loans with status chips.
 - **Corkboard (React Flow):** 20–30 cards at a time, threads appear, turn red, or fall away as events arrive.
-- **Hazel's notebook:** what she saw, why it matters, next action, budget left (in dollars). Hazel is a small avatar here, not the headline.
+- **Hazel's notebook:** what she saw, why it matters, next action, acorns left, shown next to the real unit (CRS calls, lookups). Hazel is a small avatar here, not the headline.
 - **CRO review:** plain professional screen: exclusions, buybacks, Review queue with questions, revised bid, Approve / Override.
 - Look: cream paper, cork, walnut type, terracotta threads, sage green for resolved. The CRO screen is clean and neutral.
 

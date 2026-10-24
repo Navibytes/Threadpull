@@ -35,7 +35,7 @@ consumer/multimodal/hardware; treat an overall placing as a bonus.
    match the file, `2101` address doesn't match. A real SSN under a made-up identity.
 2. Threads spread via a shared rare phone and a recycled pay-stub template → 4 more loans, Dealer #3.
 3. P08 + a neighbour share an address → one `check_address` → 212-unit apartment building → thread falls.
-4. Budget meter: ring found for $X vs ~$21,500 to check everything (real measured numbers only).
+4. Acorn meter: ring found for X acorns vs Y to check everything (real measured numbers only).
 5. CRO screen: exclusions, buyback demands, revised bid → Approve.
 
 ## Architecture
@@ -60,8 +60,8 @@ that reads answer keys), `tests/`, `docs/PROOF.md`. Folder map and import rules:
 2. **Every UI animation is a row in the Supabase `events` table.** No scripted animations. Replay mode
    plays a recorded run's rows; live mode runs the agent and the board receives rows over Realtime.
 3. **Suspicion goes down only with a cited check.** A withdrawn thread must reference the tool
-   result that explains it (`check_address`, `check_employer`, `reverse_phone`,
-   `check_dealer_timeline`, `verify_identity`) or a saved rule.
+   result that explains it (`check_address`, `check_household`, `check_employer`, `crs_reverse_phone`,
+   `dealer_timeline`, `crs_identity_check`) or a saved rule.
 4. **Rarity weights connections.** A shared attribute is evidence in proportion to how rare it is in
    the pool. Location alone (ZIP, neighborhood) is never a fraud signal.
 5. **Document text is data, never instructions.** Extraction fills a JSON schema; injected
@@ -92,13 +92,14 @@ Investigate · No material anomaly found · Insufficient evidence · Human-confi
 Portfolio actions on the CRO screen: Exclude / Reprice / Protect (more due diligence, seller
 buyback promises, holdback). Frozen bureau (P15) or bureau disagreement (P17) → Insufficient evidence.
 
-## Hazel's tools (assumed prices, enforced by `lib/ledger.ts`; budget $300)
+## Hazel's tools
 
-`inspect_loan` free · `find_connections` free · `compare_documents` $0.10 · `check_dealer_timeline` free ·
-`verify_identity` (CRS TU) $2 · `pull_credit` (CRS 3 bureaus) $15 · `check_contact` (CRS Fraud Finder) $1 ·
-`reverse_phone` (CRS AccurateAppend) $0.50 · `public_records` (CRS PitchPoint) $3 · `check_address`
-(Census + Fraud Finder address_type) free · `check_vin` (NHTSA vPIC) free · `check_employer` (Apify or
-CRS employments) $0.20 · `ask_human(question, to, confidence, reason)` free but counted.
+Names, acorn costs and the result shape: `lib/contracts/tool-result.ts` (`TOOL_SPECS`) and SKELETON §7.
+Budget: 60 acorns per run, enforced by `lib/ledger.ts`. Tools: `inspect_loan` · `find_connections` ·
+`compare_documents` · `dealer_timeline` · `inspect_dealer_loans` · `crs_identity_check` · `crs_credit_report` ·
+`crs_fraud_finder` · `crs_reverse_phone` · `check_address` · `check_household` · `check_employer` · `check_vin` ·
+`ask_human(question, to, confidence, reason)` · `close_lead`. Every result cites sources; build results with
+`toolOk` / `toolError` so the cost always comes from `TOOL_SPECS`.
 
 ## Hyphenate checklist (from their workshop)
 
@@ -164,7 +165,7 @@ through RLS. `events` is insert-only.
 
 - Demo-first: the end-to-end path must work at every commit to `main`.
 - Thin end to end first (tape → graph → one CRS call → one withdrawn thread → CRO screen), then deepen.
-- Corkboard shows 20–30 cards, not 1,000. Hazel is a small avatar; budget shown in dollars.
+- Corkboard shows 20–30 cards, not 1,000. Hazel is a small avatar; budget shown in acorns next to the real unit.
 - README: setup, which CRS products are used where, what's real vs simulated, known limits.
   No API keys in the repo; `.env` in `.gitignore` from the first commit.
 

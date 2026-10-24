@@ -51,7 +51,7 @@ components/
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
 
 lib/
-  contracts/             ✅ Zod schemas + types: loan ✅, event ○, tool-result ○, rule ○   C (loan: A)
+  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, event ○, rule ○   C (loan, tool-result: A)
   ingest/                ✅ normalize the messy tape                                   A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
   crs/                   ○ CRS client, persona guard, cache                            B
@@ -75,7 +75,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A); runs, events, rules, questions, dispositions, crs_cache ○ (C, B)
-tests/                   ✅ portfolio.test.ts, architecture.test.ts; one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows

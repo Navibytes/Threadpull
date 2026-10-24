@@ -155,11 +155,13 @@ Acorn costs are design choices; the real unit is shown beside each. Default budg
 | `crs_fraud_finder(loan_id)` | 2 | 1 CRS call | CRS AtData | email age, phone owner, IP distance, address type, risk score |
 | `crs_reverse_phone(phone)` | 1 | 1 CRS call | CRS AccurateAppend | registered name and address |
 | `check_address(address)` | 0 | 1 free lookup | Census geocoder | single home vs multi-unit |
+| `check_household(loan_a, loan_b)` | 0 | 1 loan-pair comparison | data room | same phone + address + last name, or listed co-applicant |
+| `check_employer(employer)` | 0 | 1 employer lookup | reference lookup + pool | headcount and how many loans in the pool name it |
 | `check_vin(vin)` | 0 | 1 free lookup | NHTSA vPIC | year/make/model match |
 | `ask_human(question, to, confidence, reason)` | 0 | 1 question | CRO console | counted, routed to CRO / credit analyst / legal / compliance |
 | `close_lead(case_id, status, note)` | 0 | 1 note | — | sets a status (code validates it) |
 
-Every tool returns `{ok, result, sources: [source_ref], cost: {acorns, unit}, simulated: bool}`. The backend refuses calls over budget, unknown tools, and CRS calls for background loans.
+Every tool returns `{ok, result, sources: [source_ref], cost: {acorns, unit}, simulated: bool, error?}`. Names, costs and the Zod schema live in `lib/contracts/tool-result.ts` (`TOOL_SPECS`, `ToolResultSchema`); a test keeps this table and that file in sync. A refused or failed call returns `ok: false` with an `error` and costs 0 acorns. The backend refuses calls over budget, unknown tools, and CRS calls for background loans.
 
 **Synthetic-identity signals:** TU 2201 (SSN not associated with name) / 2202 (DOB doesn't match file) / 2301 (deceased) are hard. Verified live on 2026-10-24: P13 and P12 → 2201 + 2202 + 2101; P14 → 2301 + 2101; P16 → 2401; P01, P15 → no messages. The sandbox returns the same SSN-issuance block ("ISSUED_AFTER_21", 2001, KY), `riskIndicator` MEDIUM and KMSG07 for every persona, including clean ones: never use them as signals. TU alone gives P13 and P12 the same codes; Fraud Finder and the credit report tell them apart. Other signals: "thick file, thin life" (good score but few addresses, recent file, shallow or borrowed tradelines, inquiry burst) and Fraud Finder contact signals are soft; late SSN issuance is weak alone (immigrants get SSNs as adults).
 
