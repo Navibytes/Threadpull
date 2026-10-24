@@ -22,7 +22,8 @@
         {"kind": "bank_account", "members": ["P13", "P12"]},
         {"kind": "bank_account", "members": ["P14", "bg1"]},
         {"kind": "device_id", "members": ["P12", "bg2"]},
-        {"kind": "device_id", "members": ["P14", "bg3"]}
+        {"kind": "device_id", "members": ["P14", "bg3"]},
+        {"kind": "ip_address", "members": ["P13", "bg2", "bg3"]}
       ],
       "employers": [
         {"name": "Brightline Logistics LLC", "headcount": 4, "members": ["P13", "P12", "bg1", "bg2"]},
