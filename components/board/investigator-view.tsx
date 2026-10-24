@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { browserClient } from "@/lib/db/browser";
-import { previewFeed, supabaseFeed } from "@/lib/events";
+import { hazelPose, previewFeed, supabaseFeed } from "@/lib/events";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
+import { HazelStanding } from "@/components/notebook/hazel-standing";
 import { Corkboard, type Selection } from "./corkboard";
 import { EvidencePanel } from "./evidence-panel";
 import { ModeBadge } from "./mode-badge";
@@ -37,6 +38,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
       <main className="flex min-h-0 flex-1 gap-4 p-4">
         <section aria-label="Corkboard" className="cork relative min-w-0 flex-1 overflow-hidden rounded-lg">
           <Corkboard board={board} onSelect={setSelection} />
+          <HazelStanding pose={hazelPose(board.events).pose} />
           <div className="pointer-events-none absolute left-5 top-5 max-w-[70%] space-y-2">
             {feed.mode === "preview" && (
               <p className="w-fit rounded border border-honey bg-paper/90 px-3 py-1.5 text-xs font-medium text-walnut shadow-sm">

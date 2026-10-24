@@ -1,7 +1,6 @@
 "use client";
 
 import { hazelPose, notebookEntry, type BoardState, type FeedMode, type HazelPose } from "@/lib/events";
-import { HazelAvatar } from "./hazel-avatar";
 
 const POSE_LABEL: Record<HazelPose, string> = {
   idle: "Waiting",
@@ -10,7 +9,8 @@ const POSE_LABEL: Record<HazelPose, string> = {
   resolved: "Explained a clue",
 };
 
-// Hazel's notebook: her pose and her latest step, read only from the run's applied event rows.
+// Hazel's notebook: her latest step, read only from the run's applied event rows. Hazel herself stands on
+// the board (HazelStanding); the pose line here is the text equivalent of her picture.
 export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMode }) {
   const { pose, seq: poseSeq } = hazelPose(board.events);
   const entry = notebookEntry(board.events);
@@ -22,9 +22,8 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
       aria-label="Hazel's notebook"
       className="notebook-paper shrink-0 rounded-lg border border-walnut/15 pb-3 pl-6 pr-4 pt-3 shadow-[0_2px_10px_rgb(74_55_40/0.12)]"
     >
-      <div className="flex items-start gap-3">
-        <HazelAvatar pose={pose} />
-        <div className="min-w-0 flex-1 pt-1">
+      <div>
+        <div>
           <h2 className="font-display text-lg font-semibold leading-tight">Hazel&rsquo;s notebook</h2>
           <p className="mt-0.5 text-sm font-medium" aria-live="polite">
             {POSE_LABEL[pose]}

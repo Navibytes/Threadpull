@@ -18,10 +18,11 @@ const ALT: Record<HazelPose, string> = {
 
 // All four poses are stacked and the current one fades in, so a pose change never waits for a download.
 // The fade and lift are turned off for prefers-reduced-motion (see .hazel-pose in globals.css).
-export function HazelAvatar({ pose, size = 88 }: { pose: HazelPose; size?: number }) {
+// `size` is the largest width it is drawn at (it picks the image resolution); `className` can make it fluid.
+export function HazelAvatar({ pose, size = 88, className }: { pose: HazelPose; size?: number; className?: string }) {
   const height = Math.round((size * 1290) / 1219);
   return (
-    <div className="relative shrink-0" style={{ width: size, height }}>
+    <div className={`relative shrink-0 ${className ?? ""}`} style={{ width: className ? undefined : size, aspectRatio: "1219 / 1290" }}>
       {HAZEL_POSES.map((p) => (
         <Image
           key={p}

@@ -76,7 +76,9 @@ export function Corkboard({ board, onSelect }: { board: BoardState; onSelect: (s
       elevateNodesOnSelect={false} // keep the yarn above a selected card
       deleteKeyCode={null}
       fitView
-      fitViewOptions={{ padding: 0.4, maxZoom: 1.2 }}
+      // the right side is kept clear for Hazel, who stands at the board's bottom-right corner
+      fitViewOptions={{ padding: { top: "80px", bottom: "48px", left: "56px", right: "32%" }, maxZoom: 1.2 }}
+      attributionPosition="top-right"
       minZoom={0.3}
       maxZoom={2}
       style={{ background: "transparent" }}
