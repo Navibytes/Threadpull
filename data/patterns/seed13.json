@@ -1,0 +1,74 @@
+{
+  "seed": 13,
+  "n_loans": 1000,
+  "tape_date": "2026-10-01",
+  "origination_start": "2025-10-01",
+  "origination_end": "2026-09-25",
+  "n_dealers": 24,
+  "n_brokers": 9,
+  "pin": {"P13": "L0037"},
+  "patterns": [
+    {
+      "type": "ring",
+      "ring_id": "RING-1",
+      "dealer": "D03",
+      "broker": "B07",
+      "personas": ["P13", "P12", "P14"],
+      "background_members": 3,
+      "window_days": 9,
+      "start": "2026-08-11",
+      "shared": [
+        {"kind": "phone", "members": ["P13", "bg1"]},
+        {"kind": "bank_account", "members": ["P13", "P12"]},
+        {"kind": "bank_account", "members": ["P14", "bg1"]},
+        {"kind": "device_id", "members": ["P12", "bg2"]},
+        {"kind": "device_id", "members": ["P14", "bg3"]}
+      ],
+      "employers": [
+        {"name": "Brightline Logistics LLC", "headcount": 4, "members": ["P13", "P12", "bg1", "bg2"]},
+        {"name": "Norcross Freight Solutions", "headcount": 6, "members": ["P14", "bg3"]}
+      ],
+      "recycled_pay_stub": true,
+      "vin_year_mismatch": ["bg2"]
+    },
+    {
+      "type": "shared_building",
+      "persona": "P08",
+      "background_members": 1,
+      "units": 212,
+      "proving_check": "check_address"
+    },
+    {
+      "type": "large_employer",
+      "personas": ["P02", "P10"],
+      "background_members": 38,
+      "employer": {"name": "Meridian Health System", "headcount": 48000, "job_titles": ["Registered Nurse", "Medical Assistant", "Radiology Technician", "Pharmacy Technician", "Physician Assistant", "Patient Services Rep"]},
+      "proving_check": "crs_credit_report (employments) + rule R-001"
+    },
+    {
+      "type": "small_employer",
+      "background_members": 3,
+      "employer": {"name": "Kestrel Dental Group", "headcount": 38, "job_titles": ["Dental Hygienist", "Dental Assistant", "Office Manager"]},
+      "truth": "innocent; outside R-001 scope, so Hazel must ask again"
+    },
+    {
+      "type": "household",
+      "persona": "P18",
+      "spouse": {"first_name": "DENISE", "last_name": "ABERNATHY"},
+      "proving_check": "household check (same phone + same address + same last name / co-applicant)"
+    },
+    {
+      "type": "dealer_burst",
+      "dealer": "D01",
+      "month": "2026-08",
+      "count": 40,
+      "history_month_end_share": 0.35,
+      "proving_check": "dealer_timeline"
+    },
+    {"type": "review", "persona": "P16", "expected_status": "Investigate", "reason": "fraud alert on file; ask the CRO"},
+    {"type": "review", "persona": "P15", "expected_status": "Insufficient evidence", "reason": "TransUnion file frozen"},
+    {"type": "review", "persona": "P17", "expected_status": "Insufficient evidence", "reason": "bureaus disagree"},
+    {"type": "risky_real", "personas": ["P05", "P07", "P11"], "expected_action": "Reprice"},
+    {"type": "injection", "persona": "P06"}
+  ]
+}
