@@ -51,12 +51,12 @@ components/
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
 
 lib/
-  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, event ○, rule ○   C (loan, tool-result: A)
+  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event ○, rule ○   C (loan, tool-result: A)
   ingest/                ✅ normalize the messy tape; load reference lookups               A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
   crs/                   ○ CRS client, persona guard, cache                            B
   ledger.ts              ○ acorn budget                                                B
-  graph/                 ○ graphology evidence graph, weights, clusters, priority      D
+  graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
   evidence/              ✅ document fingerprints, injection guard, explanation checks       A
   agent/                 ○ Hazel loop (AI SDK), tools, prompts, models.ts              D
   rules/                 ○ ask-once rule matching and storage                          D

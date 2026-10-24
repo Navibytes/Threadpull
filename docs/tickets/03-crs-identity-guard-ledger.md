@@ -1,6 +1,6 @@
 # 03: Live CRS identity check, persona guard and acorn ledger
 
-**Owner:** B (Verification)  
+**Owner:** B (Verification)
 **Target:** H3, Sat 12:00
 
 **What to build:** For a case loan, Hazel's `crs_identity_check` tool makes a live call to the CRS sandbox: loan #37 (P13) comes back with TransUnion codes 2201, 2202 and 2101 (verified live). The call is logged with its RequestID and charges 3 acorns. A background loan is refused without any network call, and a check over budget is refused.

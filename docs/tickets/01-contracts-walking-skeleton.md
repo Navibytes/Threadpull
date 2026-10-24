@@ -1,6 +1,6 @@
 # 01: Contracts and walking skeleton
 
-**Owner:** C (Board)  
+**Owner:** C (Board)
 **Target:** H3, Sat 12:00
 
 **What to build:** Any teammate can start the Next.js app with one command against a shared Supabase project. Inserting a hand-written sample run into the `events` table makes loan cards plus one yarn thread appear on a bare corkboard through Supabase Realtime. The Zod schemas for a loan record, a tool result and an event (SKELETON §5.1, §7, §8) live in `lib/contracts/` and are imported by both server and client, so everyone else codes against them from noon.
