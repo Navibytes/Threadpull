@@ -1,7 +1,11 @@
 // Injection guard (ticket 08). Document text is data, never instructions (CLAUDE.md hard rule 5).
 // scanDocument finds instruction-like text; safeDocumentView is what Hazel and the model may see of a document:
-// the fixed form fields only, never the raw text, plus the scan result. Detection changes no status by itself;
-// the caller logs `attack_detected` and carries on.
+// the fixed form fields only, never the raw text, plus a text-free summary of the scan. Detection changes no status
+// by itself; the caller logs `attack_detected` (attackEvent) and carries on.
+//
+// Only InjectionScan's `matches` and `unexpected_lines` carry document text (excerpts, for local debugging). They
+// never leave this module's callers: sources, the safe view and the event payload hold line numbers and rule ids
+// only, because event rows and tool results are later read by a model (Hazel, the CRO memo).
 import type { Document } from "@/lib/contracts/loan";
 import type { SourceRef } from "@/lib/contracts/tool-result";
 
@@ -47,6 +51,14 @@ export type InjectionScan = {
 
 const excerpt = (s: string) => (s.length > 120 ? `${s.slice(0, 117)}...` : s);
 
+// No excerpts here: sources travel into tool results and event rows (see the header).
+function attackSources(doc_id: string, matches: InjectionMatch[], invisible: boolean): SourceRef[] {
+  return [
+    ...matches.map((m) => ({ kind: "document" as const, doc_id, detail: `line ${m.line} (${m.rule})` })),
+    ...(invisible ? [{ kind: "document" as const, doc_id, detail: "invisible Unicode characters in the text" }] : []),
+  ];
+}
+
 function isFormLine(type: Document["type"], line: string): boolean {
   const f = DOCUMENT_FIELDS[type];
   const t = line.trim();
@@ -62,32 +74,69 @@ export function scanDocument(doc: Document): InjectionScan {
   const unexpected = lines.flatMap((line, i) => (isFormLine(doc.type, line) ? [] : [{ line: i + 1, excerpt: excerpt(line.trim()) }]));
   const invisible = INVISIBLE.test(doc.text);
   const sources: SourceRef[] = [
-    ...matches.map((m) => ({ kind: "document" as const, doc_id: doc.doc_id, detail: `line ${m.line} (${m.rule}): ${m.excerpt}` })),
-    ...(invisible ? [{ kind: "document" as const, doc_id: doc.doc_id, detail: "invisible Unicode characters in the text" }] : []),
-    ...unexpected.map((u) => ({ kind: "document" as const, doc_id: doc.doc_id, detail: `line ${u.line} is not part of the form: ${u.excerpt}` })),
+    ...attackSources(doc.doc_id, matches, invisible),
+    ...unexpected.map((u) => ({ kind: "document" as const, doc_id: doc.doc_id, detail: `line ${u.line} is not part of the form` })),
   ];
   return { doc_id: doc.doc_id, attack_detected: matches.length > 0 || invisible, matches, unexpected_lines: unexpected,
     invisible_characters: invisible, sources };
 }
 
+/** A scan without any document text: rule ids, line numbers and form labels only. Safe for a model or an event row. */
+export type ScanSummary = {
+  doc_id: string;
+  attack_detected: boolean;
+  rules: string[]; // rule ids that fired, unique, in RULES order
+  lines: number[]; // lines that matched a rule, ascending
+  unexpected_lines: number[]; // lines that aren't part of the form, ascending
+  invisible_characters: boolean;
+  withheld_fields: string[]; // form labels whose value safeDocumentView replaced with WITHHELD
+};
+
 export type SafeDocumentView = {
   doc_id: string; type: Document["type"]; template_id: string; font: string; creating_tool: string;
   fields: Record<string, string>; // only the form's labels; values with invisible characters removed
-  scan: Omit<InjectionScan, "sources">;
+  scan: ScanSummary;
 };
 
 /** What Hazel and any model may see of a document: the form fields only, never the raw text. */
 export function safeDocumentView(doc: Document): SafeDocumentView {
-  const { sources: _s, ...scan } = scanDocument(doc);
+  const scan = scanDocument(doc);
   const flaggedLines = new Set(scan.matches.map((m) => m.line));
   const fields: Record<string, string> = {};
+  const withheld: string[] = [];
   doc.text.split("\n").forEach((line, i) => {
     const label = DOCUMENT_FIELDS[doc.type].labels.find((l) => line.trim().startsWith(`${l}:`));
     if (!label || label in fields) return;
     // a field that itself carries instruction-like text is withheld, so it can never reach a model prompt
+    if (flaggedLines.has(i + 1)) withheld.push(label);
     fields[label] = flaggedLines.has(i + 1) ? WITHHELD
       : line.trim().slice(label.length + 1).replace(new RegExp(INVISIBLE.source, "g"), "").trim();
   });
+  const fired = new Set(scan.matches.map((m) => m.rule));
+  const summary: ScanSummary = {
+    doc_id: doc.doc_id,
+    attack_detected: scan.attack_detected,
+    rules: RULES.map((r) => r.id).filter((id) => fired.has(id)),
+    lines: [...flaggedLines].sort((a, b) => a - b),
+    unexpected_lines: scan.unexpected_lines.map((u) => u.line),
+    invisible_characters: scan.invisible_characters,
+    withheld_fields: withheld,
+  };
   return { doc_id: doc.doc_id, type: doc.type, template_id: doc.template_id, font: doc.font,
-    creating_tool: doc.creating_tool, fields, scan };
+    creating_tool: doc.creating_tool, fields, scan: summary };
+}
+
+/** The `result` of an `attack_detected` event row (SKELETON §8). */
+export type AttackEventResult = Omit<ScanSummary, "attack_detected">;
+
+/**
+ * The payload for an `attack_detected` event, or null when the document is clean. Built from the text-free summary,
+ * so the injected text never enters the event log (the CRO memo model reads event rows).
+ */
+export function attackEvent(doc: Document): { result: AttackEventResult; sources: SourceRef[] } | null {
+  const { scan } = safeDocumentView(doc);
+  if (!scan.attack_detected) return null;
+  const { attack_detected: _a, ...result } = scan;
+  // the event cites the attack itself; off-form lines stay in result.unexpected_lines as numbers
+  return { result, sources: attackSources(doc.doc_id, scanDocument(doc).matches, scan.invisible_characters) };
 }

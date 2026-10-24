@@ -5,8 +5,8 @@ export {
   type DocumentComparison, type PayStub, type StubIssue,
 } from "./documents";
 export {
-  DOCUMENT_FIELDS, safeDocumentView, scanDocument, WITHHELD,
-  type InjectionMatch, type InjectionScan, type SafeDocumentView,
+  attackEvent, DOCUMENT_FIELDS, safeDocumentView, scanDocument, WITHHELD,
+  type AttackEventResult, type InjectionMatch, type InjectionScan, type SafeDocumentView, type ScanSummary,
 } from "./injection";
 export {
   BURST_MIN_LOANS, BURST_MIN_RATIO, BURST_WINDOW_DAYS, checkAddress, checkEmployer, checkHousehold, dealerTimeline,
