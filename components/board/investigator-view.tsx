@@ -1,7 +1,7 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { browserClient } from "@/lib/db/browser";
 import { hazelPose, previewFeed, supabaseFeed } from "@/lib/events";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
@@ -18,6 +18,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
   const { board, errors, animateAfterSeq } = useRunEvents(feed);
   const [selection, setSelection] = useState<Selection>(null);
+  const hazelCorner = useRef<HTMLDivElement>(null); // the camera keeps cards out of Hazel's corner
 
   const notices = [
     ...(runId && !client
@@ -42,7 +43,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
           <div className="relative flex min-w-0 flex-1">
             <div className="board-frame flex min-w-0 flex-1 p-[18px]">
               <section aria-label="Corkboard" className="relative min-w-0 flex-1 overflow-hidden rounded-[3px] bg-[#4a2c18]">
-                <Corkboard board={board} animateAfterSeq={animateAfterSeq} onSelect={setSelection} />
+                <Corkboard board={board} animateAfterSeq={animateAfterSeq} onSelect={setSelection} keepClear={hazelCorner} />
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
                 <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />
@@ -64,7 +65,10 @@ export function InvestigatorView({ runId }: { runId?: string }) {
                 </div>
               </section>
             </div>
-            <HazelStanding pose={hazelPose(board.events).pose} />
+            {/* box-less wrapper: Hazel keeps her own position; the camera measures her through it */}
+            <div ref={hazelCorner} className="contents">
+              <HazelStanding pose={hazelPose(board.events).pose} />
+            </div>
           </div>
           <div className="flex min-h-0 w-[22rem] shrink-0 flex-col gap-4 text-walnut">
             <HazelNotebook board={board} mode={feed.mode} />

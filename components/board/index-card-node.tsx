@@ -97,26 +97,26 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
           </div>
         </article>
 
-        {/* the lead's own note from its lead_opened row, taped on */}
+        {/* the lead's own note from its lead_opened row, taped to the card's bottom margin (never over its text) */}
         {lead && card.note && (
           <div
-            className="sticky-note absolute -bottom-12 -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
+            className="sticky-note absolute -bottom-[66px] -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
             style={{ transform: `rotate(${2 + (h % 4)}deg)` }}
           >
-            <span aria-hidden className="tape pointer-events-none absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 -rotate-3" />
+            <span aria-hidden className="tape pointer-events-none absolute -top-1 left-1/2 h-4 w-12 -translate-x-1/2 -rotate-3" />
             <p className="font-hand text-[17px] leading-[1.05] text-walnut line-clamp-3">{card.note}</p>
           </div>
         )}
       </div>
 
-      {/* decoration: pin at the top, tape on some cards */}
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-4px] -translate-x-1/2">
+      {/* decoration: pin at the top, tape across a corner on some cards; both stay in the card's margins */}
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-7px] -translate-x-1/2">
         <Pushpin color={lead ? "red" : "brass"} size={lead ? 24 : 20} />
       </div>
       {h % 3 === 0 && (
         <span
           aria-hidden
-          className="tape pointer-events-none absolute -left-3 top-3 h-4 w-14 -rotate-[38deg]"
+          className="tape pointer-events-none absolute -left-[22px] -top-[2px] h-4 w-14 -rotate-45"
         />
       )}
     </motion.div>

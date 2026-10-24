@@ -1,25 +1,34 @@
-// Deterministic board layout. Each lead (a card first pinned by lead_opened) is the centre of a cluster; a
-// card pinned by link_found joins the cluster of the card it was linked from, in the first free slot around
-// that cluster. A card's spot depends only on rows up to its own seq, so new cards never move earlier ones,
-// and a refresh or replay of the same rows lays out the same board. No random force layout.
+// Deterministic board layout. Each lead (a card first pinned by lead_opened) starts a case cluster. A card
+// pinned by link_found is placed around the card it was linked FROM (its partner), on the side facing away
+// from the cluster centre, in the first spot that overlaps no card and whose thread crosses no unrelated
+// card. Placement runs in seq order and only looks at earlier cards and threads, so new rows never move
+// earlier cards, and a refresh or replay of the same rows lays out the same board. No random force layout.
 import type { BoardCard, BoardThread } from "@/lib/events";
 
-export const CARD_H = 178; // nominal height used for spacing (cards are about this tall)
-const GAP = 34; // minimum space between cards
-const CLUSTER_W = 1100; // distance between cluster centres
-const CLUSTER_H = 560;
-const CLUSTERS_PER_COLUMN = 3; // clusters stack down first: the board shows more height than width beside Hazel
+// Starting values, tuned on the six-card proof run; adjust here (tests read them from this object).
+export const LAYOUT = {
+  cardH: 178, // nominal card height used for spacing
+  leadNoteH: 64, // the lead's taped note hangs below the card
+  leadExtraW: 14, // the lead card is a little wider (see IndexCardNode)
+  gap: 40, // minimum space between cards of the same case
+  caseGap: 220, // minimum space between cards of different cases, so separate cases never read as linked
+  // distances from the partner card's centre, nearest ring first
+  rings: [
+    { rx: 460, ry: 280 },
+    { rx: 820, ry: 520 },
+    { rx: 1180, ry: 780 },
+  ],
+  // angles tried around the partner, relative to the direction facing away from the cluster centre;
+  // the coarse set first, then the in-between angles
+  spread: [0, 35, -35, 70, -70, 110, -110, 145, -145, 180, 18, -18, 52, -52, 90, -90, 128, -128, 162, -162],
+  cluster: { w: 1300, h: 820, perRow: 2 }, // case clusters on a two-column grid
+  threadSag: (len: number) => 14 + len * 0.07, // matches yarnPath in yarn-edge.tsx
+  threadClearance: 12, // a thread keeps this far from unrelated card boxes
+};
 
-// Slots around a cluster centre: [angle in degrees (0 = right, 90 = down), ring]. Sideways first, so yarn
-// runs between cards rather than over them; further rings when the first fills up.
-const SLOTS: [number, number][] = [
-  [0, 0], [180, 0], [38, 0], [142, 0], [-38, 0], [-142, 0],
-  [0, 1], [180, 1], [20, 1], [160, 1], [-20, 1], [-160, 1], [56, 1], [124, 1], [-56, 1], [-124, 1], [90, 1], [-90, 1],
-];
-const RING = [
-  { rx: 370, ry: 235 },
-  { rx: 700, ry: 430 },
-];
+export type Rect = { x: number; y: number; w: number; h: number };
+export type Spot = { x: number; y: number; cluster: number };
+type Pt = { x: number; y: number };
 
 function hash(id: string) {
   let h = 0;
@@ -31,64 +40,149 @@ function hash(id: string) {
 export const cardWidth = (id: string) => 248 + (hash(id) % 23); // 248-270 px
 export const cardTilt = (id: string) => ((hash(id) % 49) - 24) / 10; // -2.4° to 2.4°
 
-type Rect = { x: number; y: number; w: number; h: number };
-const overlaps = (a: Rect, b: Rect) =>
-  a.x < b.x + b.w + GAP && b.x < a.x + a.w + GAP && a.y < b.y + b.h + GAP && b.y < a.y + a.h + GAP;
+type CardIn = Pick<BoardCard, "id" | "pinnedBy" | "firstSeq"> & { note?: string | null };
+type ThreadIn = Pick<BoardThread, "a" | "b" | "firstSeq">;
 
-export function layoutBoard(
-  cards: Pick<BoardCard, "id" | "pinnedBy" | "firstSeq">[],
-  threads: Pick<BoardThread, "a" | "b" | "firstSeq">[],
-): Map<string, { x: number; y: number; cluster: number }> {
-  const placed = new Map<string, Rect>();
-  const clusterOf = new Map<string, number>(); // card id -> cluster index
-  const centres: { x: number; y: number }[] = [];
-  const free = (r: Rect) => [...placed.values()].every((p) => !overlaps(r, p));
-  const rectAt = (id: string, cx: number, cy: number): Rect => {
-    const w = cardWidth(id);
-    return { x: Math.round(cx - w / 2), y: Math.round(cy - CARD_H / 2), w, h: CARD_H };
-  };
+const isLead = (c: CardIn) => c.pinnedBy === "lead_opened";
 
+// The box a card occupies on the board, including a lead's hanging note.
+export function cardBox(c: CardIn, x: number, y: number): Rect {
+  const w = cardWidth(c.id) + (isLead(c) ? LAYOUT.leadExtraW : 0);
+  const h = LAYOUT.cardH + (isLead(c) && c.note ? LAYOUT.leadNoteH : 0);
+  return { x, y, w, h };
+}
+
+const centreOf = (r: Rect): Pt => ({ x: r.x + r.w / 2, y: r.y + LAYOUT.cardH / 2 });
+
+const overlaps = (a: Rect, b: Rect, gap = LAYOUT.gap) =>
+  a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
+
+// Points along the sagging thread between two card centres (the curve yarn-edge.tsx draws).
+export function threadPoints(p: Pt, q: Pt, samples = 16): Pt[] {
+  const cx = (p.x + q.x) / 2;
+  const cy = (p.y + q.y) / 2 + LAYOUT.threadSag(Math.hypot(q.x - p.x, q.y - p.y));
+  return Array.from({ length: samples + 1 }, (_, i) => {
+    const t = i / samples;
+    return {
+      x: (1 - t) ** 2 * p.x + 2 * (1 - t) * t * cx + t * t * q.x,
+      y: (1 - t) ** 2 * p.y + 2 * (1 - t) * t * cy + t * t * q.y,
+    };
+  });
+}
+
+const inRect = (p: Pt, r: Rect, pad: number) =>
+  p.x > r.x - pad && p.x < r.x + r.w + pad && p.y > r.y - pad && p.y < r.y + r.h + pad;
+
+// Does the polyline pass through the box grown by `pad`? (segment clipping, so long hops are caught too)
+export function polylineHitsRect(pts: Pt[], r: Rect, pad = LAYOUT.threadClearance) {
+  const x0 = r.x - pad, y0 = r.y - pad, x1 = r.x + r.w + pad, y1 = r.y + r.h + pad;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    let t0 = 0, t1 = 1;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const clip = (p: number, q: number) => {
+      if (p === 0) return q > 0;
+      const t = q / p;
+      if (p < 0) {
+        if (t > t1) return false;
+        if (t > t0) t0 = t;
+      } else {
+        if (t < t0) return false;
+        if (t < t1) t1 = t;
+      }
+      return true;
+    };
+    if (clip(-dx, a.x - x0) && clip(dx, x1 - a.x) && clip(-dy, a.y - y0) && clip(dy, y1 - a.y)) return true;
+  }
+  return false;
+}
+
+// True when the thread between two card boxes runs through any of the other boxes.
+export function threadCrossesCards(from: Rect, to: Rect, others: Rect[]) {
+  // only the stretch between the two cards counts: drop the points still inside its own two cards
+  const pts = threadPoints(centreOf(from), centreOf(to)).filter((p) => !inRect(p, from, 0) && !inRect(p, to, 0));
+  if (pts.length < 2) return false;
+  return others.some((o) => polylineHitsRect(pts, o));
+}
+
+export function layoutBoard(cards: CardIn[], threads: ThreadIn[]): Map<string, Spot> {
+  const boxes = new Map<string, Rect>();
+  const clusterOf = new Map<string, number>();
+  const centres: Pt[] = [];
+
+  // free of every card: the case gap applies against other cases' cards
+  const fits = (r: Rect, cluster: number) =>
+    [...boxes].every(([id, p]) => !overlaps(r, p, clusterOf.get(id) === cluster ? LAYOUT.gap : LAYOUT.caseGap));
+  const others = (...except: string[]) => [...boxes].filter(([id]) => !except.includes(id)).map(([, r]) => r);
   for (const card of cards) {
-    // the card it was linked from: an endpoint of a thread that existed when this card was pinned
-    const partner =
-      card.pinnedBy === "lead_opened"
-        ? undefined
-        : threads
-            .filter((t) => t.firstSeq <= card.firstSeq && (t.a === card.id || t.b === card.id))
-            .map((t) => (t.a === card.id ? t.b : t.a))
-            .find((other) => clusterOf.has(other));
+    // threads already on the board when this card arrives (both ends placed)
+    const drawn = threads.filter((t) => t.firstSeq <= card.firstSeq && boxes.has(t.a) && boxes.has(t.b));
+    // how many of them a box placed here would sit on
+    const blocked = (r: Rect) => drawn.filter((t) => threadCrossesCards(boxes.get(t.a)!, boxes.get(t.b)!, [r])).length;
+
+    // the card it was linked from: the other end of the earliest thread that existed when it was pinned
+    const partner = isLead(card)
+      ? undefined
+      : threads
+          .filter((t) => t.firstSeq <= card.firstSeq && (t.a === card.id || t.b === card.id))
+          .sort((x, y) => x.firstSeq - y.firstSeq)
+          .map((t) => (t.a === card.id ? t.b : t.a))
+          .find((other) => boxes.has(other));
+
+    const size = cardBox(card, 0, 0);
+    const at = (cx: number, cy: number): Rect => ({ ...size, x: Math.round(cx - size.w / 2), y: Math.round(cy - LAYOUT.cardH / 2) });
+    let box: Rect | undefined;
+    let cluster: number;
 
     if (partner === undefined) {
-      // a new cluster, placed in reading order
-      const k = centres.length;
-      const centre = { x: Math.floor(k / CLUSTERS_PER_COLUMN) * CLUSTER_W, y: (k % CLUSTERS_PER_COLUMN) * CLUSTER_H };
-      centres.push(centre);
-      let r = rectAt(card.id, centre.x, centre.y);
-      for (let step = 1; !free(r); step++) r = rectAt(card.id, centre.x, centre.y + step * (CARD_H + GAP));
-      placed.set(card.id, r);
-      clusterOf.set(card.id, k);
-      continue;
-    }
-
-    const k = clusterOf.get(partner)!;
-    const { x: cx, y: cy } = centres[k];
-    let rect: Rect | undefined;
-    for (const [deg, ring] of SLOTS) {
-      const a = (deg * Math.PI) / 180;
-      const r = rectAt(card.id, cx + RING[ring].rx * Math.cos(a), cy + RING[ring].ry * Math.sin(a));
-      if (free(r)) {
-        rect = r;
-        break;
+      // a new case: the next cell of the two-column grid
+      cluster = centres.length;
+      const c = {
+        x: (cluster % LAYOUT.cluster.perRow) * LAYOUT.cluster.w,
+        y: Math.floor(cluster / LAYOUT.cluster.perRow) * LAYOUT.cluster.h,
+      };
+      centres.push(c);
+      for (let step = 0; !box; step++) {
+        const r = at(c.x, c.y + step * (LAYOUT.cardH + LAYOUT.gap));
+        if (fits(r, cluster) && blocked(r) === 0) box = r;
+      }
+    } else {
+      cluster = clusterOf.get(partner)!;
+      const pBox = boxes.get(partner)!;
+      const p = centreOf(pBox);
+      const c = centres[cluster];
+      // face away from the cluster centre; the lead itself sits at the centre and starts facing right
+      const away = Math.hypot(p.x - c.x, p.y - c.y) < 1 ? 0 : (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
+      let best: { r: Rect; crossings: number } | undefined;
+      search: for (const ring of LAYOUT.rings) {
+        for (const d of LAYOUT.spread) {
+          const a = ((away + d) * Math.PI) / 180;
+          const r = at(p.x + ring.rx * Math.cos(a), p.y + ring.ry * Math.sin(a));
+          if (!fits(r, cluster)) continue;
+          const crossings = (threadCrossesCards(pBox, r, others(partner)) ? 1 : 0) + blocked(r);
+          if (crossings === 0) {
+            box = r;
+            break search;
+          }
+          if (!best || crossings < best.crossings) best = { r, crossings };
+        }
+      }
+      // nowhere clean: the free spot with the fewest crossings, else stack below the partner
+      box ??= best?.r;
+      for (let step = 1; !box; step++) {
+        const r = at(p.x, p.y + step * (LAYOUT.cardH + LAYOUT.gap) + LAYOUT.leadNoteH);
+        if (fits(r, cluster)) box = r;
       }
     }
-    // every slot taken: stack below the cluster until there is room
-    for (let step = 1; !rect; step++) {
-      const r = rectAt(card.id, cx, cy + RING[1].ry + step * (CARD_H + GAP));
-      if (free(r)) rect = r;
-    }
-    placed.set(card.id, rect);
-    clusterOf.set(card.id, k);
+
+    boxes.set(card.id, box);
+    clusterOf.set(card.id, cluster);
   }
 
-  return new Map([...placed].map(([id, r]) => [id, { x: r.x, y: r.y, cluster: clusterOf.get(id)! }]));
+  return new Map([...boxes].map(([id, r]) => [id, { x: r.x, y: r.y, cluster: clusterOf.get(id)! }]));
+}
+
+// The board boxes for a finished layout (for framing and tests).
+export function layoutBoxes(cards: CardIn[], spots: Map<string, Spot>): Map<string, Rect> {
+  return new Map(cards.filter((c) => spots.has(c.id)).map((c) => [c.id, cardBox(c, spots.get(c.id)!.x, spots.get(c.id)!.y)]));
 }
