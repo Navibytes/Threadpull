@@ -1,5 +1,6 @@
 // Pure reduction of a run's event rows into what the corkboard draws. Same rows in, same board out,
 // so a refresh or a replay reproduces the board exactly. Rows already applied (seq <= lastSeq) are ignored.
+import { ClueExplainedResultSchema } from "@/lib/contracts/event";
 import type { EventType, LoanStatus, RunEvent, SourceRef } from "./types";
 
 export type BoardCard = {
@@ -12,6 +13,18 @@ export type BoardCard = {
   tool: string | null;
   ts: string;
   note: string | null;
+  sources: SourceRef[];
+  simulated: boolean;
+};
+
+// Why a thread came down: copied from the clue_explained row, with the row's own sources (the check's event
+// row or a saved rule, required by the contract). The thread itself is kept: the shared fact stays inspectable.
+export type ThreadExplanation = {
+  seq: number;
+  ts: string;
+  explainedBy: string;
+  ruleId: string | null;
+  reason: string;
   sources: SourceRef[];
   simulated: boolean;
 };
@@ -29,6 +42,7 @@ export type BoardThread = {
   note: string | null;
   sources: SourceRef[];
   simulated: boolean;
+  explained: ThreadExplanation | null;
 };
 
 export type BoardState = {
@@ -89,8 +103,28 @@ export function applyEvent(state: BoardState, e: RunEvent): BoardState {
       note: e.note,
       sources: e.sources,
       simulated: e.simulated,
+      explained: threads.find((t) => t.id === id)?.explained ?? null,
     };
     threads = threads.some((t) => t.id === id) ? threads.map((t) => (t.id === id ? thread : t)) : [...threads, thread];
+  }
+
+  // Only the agreed payload takes a thread down; anything else is kept in the log and changes nothing.
+  if (e.type === "clue_explained") {
+    const r = ClueExplainedResultSchema.safeParse(e.result);
+    const cites = e.sources.some((s) => s.kind === "event" || s.kind === "rule"); // hard rule 3
+    if (r.success && cites) {
+      const explained: ThreadExplanation = {
+        seq: e.seq,
+        ts: e.ts,
+        explainedBy: r.data.explained_by,
+        ruleId: r.data.rule_id ?? null,
+        reason: r.data.reason,
+        sources: e.sources,
+        simulated: e.simulated,
+      };
+      const ids = new Set(r.data.edge_ids);
+      threads = threads.map((t) => (ids.has(t.id) && !t.explained ? { ...t, explained } : t));
+    }
   }
 
   return { runId: e.run_id, lastSeq: e.seq, cards, threads, events: [...state.events, e] };

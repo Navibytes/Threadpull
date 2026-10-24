@@ -14,8 +14,9 @@ export function supabaseFeed(client: SupabaseClient, runId: string, gapWaitMs = 
   return {
     mode: "live",
     runId,
-    subscribe(onEvents, onError = () => {}, onReset = () => {}) {
+    subscribe(onEvents, onError = () => {}, onReset = () => {}, onHistory = () => {}) {
       let last = 0;
+      let historyAnnounced = false; // per rebuild: the first completed read is the history
       let gen = 0; // bumped on every rebuild; reads started before it are ignored
       let closed = false;
       let queue: Promise<void> = Promise.resolve();
@@ -72,6 +73,7 @@ export function supabaseFeed(client: SupabaseClient, runId: string, gapWaitMs = 
         last = 0;
         pending.clear();
         skipped.clear();
+        historyAnnounced = false;
         if (gapTimer) clearTimeout(gapTimer);
         gapTimer = null;
         onReset();
@@ -97,6 +99,10 @@ export function supabaseFeed(client: SupabaseClient, runId: string, gapWaitMs = 
             onError(`Couldn't read the run's events: ${e instanceof Error ? e.message : String(e)}`);
           }
           release(skipGap);
+          if (!historyAnnounced && started === gen && !closed) {
+            historyAnnounced = true;
+            onHistory(last);
+          }
         }));
       };
 

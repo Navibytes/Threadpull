@@ -8,13 +8,15 @@ export type FeedMode = "preview" | "replay" | "live";
 export interface RunEventFeed {
   mode: FeedMode;
   runId: string;
-  // Calls onEvents with batches of rows in seq order, onError with readable problems, and onReset when the
-  // board must be rebuilt from scratch (the rows that follow start again at the run's first seq).
-  // Returns an unsubscribe.
+  // Calls onEvents with batches of rows in seq order, onError with readable problems, onReset when the
+  // board must be rebuilt from scratch (the rows that follow start again at the run's first seq), and
+  // onHistory once the rows recorded so far have been delivered (again after each reset), with the last
+  // seq delivered (0 if none). Rows after that point are new. Returns an unsubscribe.
   subscribe(
     onEvents: (events: RunEvent[]) => void,
     onError?: (message: string) => void,
     onReset?: () => void,
+    onHistory?: (lastSeq: number) => void,
   ): () => void;
 }
 
@@ -25,8 +27,10 @@ export function previewFeed(events: RunEvent[] = PREVIEW_EVENTS, runId = PREVIEW
   return {
     mode: "preview",
     runId,
-    subscribe(onEvents) {
-      onEvents([...events].sort(bySeq));
+    subscribe(onEvents, _onError, _onReset, onHistory) {
+      const rows = [...events].sort(bySeq);
+      onEvents(rows);
+      onHistory?.(rows.at(-1)?.seq ?? 0);
       return () => {};
     },
   };

@@ -122,3 +122,49 @@ describe("sources", () => {
     expect(EventSchema.safeParse({ ...base, sources: [{ kind: "vibes" }] }).success).toBe(false);
   });
 });
+
+describe("clue_explained", () => {
+  const link = { ...PREVIEW_EVENTS[2], run_id: "r-x" };
+  const checkRow = { kind: "event" as const, run_id: "r-x", seq: 4 };
+  const explain = (result: Record<string, unknown>, sources: RunEvent["sources"] = [checkRow]): RunEvent => ({
+    ...link,
+    seq: 5,
+    type: "clue_explained",
+    tool: null,
+    result,
+    sources,
+  });
+  const base = [{ ...PREVIEW_EVENTS[1], run_id: "r-x" }, link];
+
+  test("the agreed payload marks the thread explained and keeps it, with its reason and sources", () => {
+    const b = reduceEvents([
+      ...base,
+      explain({ edge_ids: ["e-phone-preview"], explained_by: "check_household", reason: "same phone and home; same last name" }),
+    ]);
+    expect(b.threads).toHaveLength(1);
+    expect(b.threads[0].explained).toMatchObject({ seq: 5, explainedBy: "check_household", ruleId: null, sources: [checkRow] });
+    expect(b.cards).toHaveLength(2);
+  });
+
+  test("changes nothing without the agreed payload or without a cited check or rule", () => {
+    const noPayload = reduceEvents([...base, explain({ edge_id: "e-phone-preview" })]);
+    expect(noPayload.threads[0].explained).toBeNull();
+    const noCite = reduceEvents([
+      ...base,
+      explain({ edge_ids: ["e-phone-preview"], explained_by: "check_address", reason: "x" }, [
+        { kind: "row", loan_id: "PV-01", field: "residential_info.street_address" },
+      ]),
+    ]);
+    expect(noCite.threads[0].explained).toBeNull();
+  });
+
+  test("a rule explanation keeps the rule id; an unknown edge id changes nothing", () => {
+    const rule = { kind: "rule" as const, rule_id: "R-001", version: 1 };
+    const b = reduceEvents([
+      ...base,
+      explain({ edge_ids: ["e-phone-preview", "e-missing"], explained_by: "rule", rule_id: "R-001", reason: "Large employer" }, [rule]),
+    ]);
+    expect(b.threads[0].explained?.ruleId).toBe("R-001");
+    expect(b.threads.map((t) => t.id)).toEqual(["e-phone-preview"]);
+  });
+});
