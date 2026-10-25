@@ -11,6 +11,5 @@
 /node_modules/
 /.agents/
 /.scratch/
-/backend/
 *.pdf
 .DS_Store
