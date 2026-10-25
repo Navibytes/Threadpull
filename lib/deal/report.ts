@@ -57,6 +57,15 @@ const status = (v: unknown): LoanStatus | null => (LOAN_STATUSES as readonly str
 const sum = (xs: Iterable<number>) => cents([...xs].reduce((s, x) => s + x, 0));
 const ORDER: Record<Verdict, number> = { Exclude: 0, Review: 1, Reprice: 2, Clear: 3 };
 
+/** The credit scores the run itself recorded: a crs_credit_report check_run row carries the lowest bureau score (lib/crs creditEventFacts). */
+function scoresInEvents(events: readonly Event[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const e of events)
+    if (e.type === "check_run" && e.tool === "crs_credit_report" && e.result.ok === true && typeof e.result.score === "number" && e.loan_ids[0])
+      out.set(e.loan_ids[0], e.result.score);
+  return out;
+}
+
 export function buildReport(input: {
   run_id: string;
   loans: readonly Loan[];
@@ -69,7 +78,8 @@ export function buildReport(input: {
   const top = topTierMin(a);
   const events = [...input.events].sort((x, y) => x.seq - y.seq);
   const byId = new Map(input.loans.map((l) => [l.loan_id, l]));
-  const scoreOf = (id: string) => input.scores?.get(id) ?? null;
+  const recorded = scoresInEvents(events);
+  const scoreOf = (id: string) => input.scores?.get(id) ?? recorded.get(id) ?? null; // an analyst's score wins over the run's
   const confirmed = confirmedByLoan(events);
 
   // the last valid status the run gave each loan (a malformed row never replaces a good one)
