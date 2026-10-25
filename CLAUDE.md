@@ -122,7 +122,7 @@ Budget: 60 acorns per run, enforced by `lib/ledger.ts`. Tools: `inspect_loan` ·
 - ~30 case loans use the 20 CRS personas. Ring: P13 lead, P12, P14 + 2 background loans at Dealer #3.
   Innocents: P08 + neighbour (apartment), P02+P10+6 background (hospital, R-001), P18 + spouse (household
   phone), Dealer #1 month-end burst. Review: P16 fraud alert, P15 frozen, P17 divergence.
-  Reprice not fraud: P05, P07, P11. One injected pay stub.
+  Reprice not fraud: P05, P07, P11. One injected pay stub, on a ring loan (RING-1 bg1): code keeps it Investigate.
 - `--seed 99` = held-out test, never used to tune prompts. Judges may pick a seed.
 - `answer_key.json` holds the truth; metrics compare Threadpull vs check-everything vs fixed rules:
   recall on ring members, innocents left flagged, $ spent, questions asked, runtime.

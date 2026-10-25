@@ -82,7 +82,7 @@ The tape is messy on purpose: mixed date formats, SSNs with and without dashes, 
 | Fraud alert on file | P16 | Review: ask the CRO |
 | Frozen bureau / bureaus disagree | P15 / P17 | Review: partial data, recovery |
 | Risky but real (subprime, Ch. 13, eviction) | P05, P07, P11 | Reprice, never fraud |
-| Prompt injection hidden in a pay stub | 1 case loan | Attack logged, no effect on verdict |
+| Prompt injection hidden in a pay stub | 1 ring loan | Attack logged, no effect on verdict (stays Investigate) |
 
 A second seed (`--seed 99`) with the same pattern types in different places is the held-out test; the agent prompt is never tuned on it. Judges can pick any seed.
 

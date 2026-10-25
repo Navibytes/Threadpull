@@ -472,7 +472,13 @@ class Generator {
           this.key.risky_real.push({ loan_ids: [], expected_action: pat.expected_action, fraud: false });
           this.pending.risky_real.push({ members: pat.personas.map((p: string) => `risky:${p}`) });
           break;
-        case "injection": {
+        case "injection": { // into an already planted loan, named by its tag ("RING-1:bg1"), or a persona's own loan
+          if (pat.target) {
+            const ln = loans.find((l) => l.tag === pat.target);
+            if (!ln) throw new Error(`injection target ${pat.target} is not a planted loan (list it after its pattern)`);
+            ln.inject = true;
+            break;
+          }
           const ln = caseLoan(pat.persona, `injection:${pat.persona}`);
           ln.inject = true;
           loans.push(ln);
