@@ -9,7 +9,7 @@
 
 **Status:** tools, 429 recovery and the real-response tests are done (B, Sat 2026-10-24). Left: the deceased halt, appending the recovery row once C's events module exists, and a test that each result validates against `ToolResultSchema`.
 
-**Update (Sat 23:05, checked against `main`):** All four CRS tools are wired into Hazel (D, PR #29): credit report, Fraud Finder and reverse phone are charged, logged with RequestIDs, and a throw becomes a logged, uncharged refusal; P15 (frozen) and P17 (bureaus disagree) come out Insufficient evidence; a deceased file is a hard signal. Open: `bun run hazel` doesn't pass `onRecovery` to the CRS client, so a 429 never becomes a `recovery` row on the board; the deceased halt (no further CRS calls for that loan).
+**Update (Sat 23:05, checked against `main`):** All four CRS tools are wired into Hazel (D, PR #29): credit report, Fraud Finder and reverse phone are charged, logged with RequestIDs, and a throw becomes a logged, uncharged refusal; P15 (frozen) and P17 (bureaus disagree) come out Insufficient evidence; a deceased file is a hard signal. A 429 now becomes a `recovery` row for the rate-limited call's loan (A, PR #32). Open: the deceased halt (no further CRS calls for that loan).
 
 - [x] `crs_credit_report` merges the three bureaus and computes the "thick file, thin life" features in code: file age vs borrower age, number of addresses, tradeline depth, share of authorized-user tradelines, inquiries in 60 days. (The sandbox's credit reports carry no address history, so the address count is null, not 0.)
 - [x] `crs_fraud_finder` returns email age, phone owner, IP distance, address type and risk score. (The address type is "Street" for every sandbox persona, so it cannot show a multi-unit building.)

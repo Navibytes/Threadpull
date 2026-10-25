@@ -38,7 +38,6 @@ The generator, normalizer, contracts, graph/agent/rule prototypes, and proof hel
 - No `bun run demo` or replay with speed control yet (ticket 15); the board plays a recorded run from Supabase.
 - No CRO screen yet (ticket 10): pricing, buyback drafts and Approve/Override are not built. `/dashboard` shows status counts and run metrics only.
 - Saved rules and questions live in memory for one run; the Supabase `rules`/`questions` tables are not built (ticket 11).
-- A CRS 429 is retried after Retry-After, but `bun run hazel` doesn't write the `recovery` row yet.
 - Address and employer lookups are simulated stand-ins and are labeled simulated wherever they appear.
 - The Python modules in `backend/` predate the TypeScript architecture and are not used by it.
 - Issue 13 proof helpers need the held-out set, the final TypeScript detector/baseline, and recorded runs before measured results can be published.
