@@ -9,7 +9,7 @@
 | Ticket | Title | Target | Blocked by | Status |
 | --- | --- | --- | --- | --- |
 | 02 | Seeded portfolio and answer key | Sat 12:00 | None | ✅ done |
-| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | evidence side ✅ done (PRs #4, #7, #9; Hazel wiring #13); left: falling string + Twin Compare UI, after C's board |
+| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | ✅ done (PRs #4, #7, #9, Hazel wiring #13; falling thread + Twin Compare) |
 | 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 | ✅ done except Haiku extraction (needs an API key) (PRs #2, #3, #6, #9; Hazel wiring #13) |
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
