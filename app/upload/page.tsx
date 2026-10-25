@@ -44,8 +44,9 @@ export default function UploadPage() {
                   &ldquo;unknown&rdquo; instead of guessing.</span>
               </li>
               <li>
-                <span><strong>Stays on this machine.</strong> Accepted loans are saved under <code className={s.monoLight}>data/out/uploads</code> and
-                  sent nowhere else.</span>
+                <span><strong>Stays with this app.</strong> Accepted loans are saved on the server that took them
+                  (<code className={s.monoLight}>data/out/uploads</code> when it runs locally). Investigating a tape also keeps its loans in the
+                  app&apos;s own database, so the CRO screen can read them; they go nowhere else.</span>
               </li>
             </ol>
             <p className="mt-5 text-[0.95rem] leading-relaxed">
