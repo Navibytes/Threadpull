@@ -58,11 +58,13 @@ export type CardFinding = { text: string; explained: boolean };
 // Why a card is on the board, in plain English, from the link_found threads it is on. It rewords the recorded
 // connections and nothing else: a shared detail is named, never called fraud. An explained connection keeps its
 // fact and says it has an explanation.
-export function cardFinding(id: string, lead: boolean, threads: BoardThread[]): CardFinding | null {
+export const SPOT_CHECK_FINDING = "Spot check of a large balance nobody had verified.";
+
+export function cardFinding(id: string, lead: boolean, threads: BoardThread[], spotCheck = false): CardFinding | null {
   const links = threads
     .filter((t) => t.a === id || t.b === id)
     .sort((x, y) => Number(!!x.explained) - Number(!!y.explained) || y.weight - x.weight);
-  if (links.length === 0) return lead ? { text: "No connections found yet.", explained: false } : null;
+  if (links.length === 0) return spotCheck ? { text: SPOT_CHECK_FINDING, explained: false } : lead ? { text: "No connections found yet.", explained: false } : null;
   const other = (t: BoardThread) => (t.a === id ? t.b : t.a);
   if (lead) {
     const loans = new Set(links.map(other)).size;

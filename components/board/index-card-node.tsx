@@ -150,7 +150,7 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
             className="folder folder-tab absolute left-4 flex items-center px-3 font-semibold uppercase tracking-[0.14em] text-walnut"
             style={{ fontSize: label, height: label * 1.75, top: -label * 1.75 + 2 }}
           >
-            Lead
+            {card.spotCheck ? "Spot check" : "Lead"}
           </span>
         )}
 
