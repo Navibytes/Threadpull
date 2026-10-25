@@ -366,3 +366,53 @@ body {
     transition-duration: 120ms;
   }
 }
+
+@layer components {
+/* Portfolio Intelligence (/dashboard): the same cream, walnut, sage and terracotta as the room, on quiet paper
+   panels. The page is calm on purpose: no wallpaper, no motion. */
+.dash-bg {
+  background:
+    radial-gradient(ellipse 90% 70% at 15% 0%, rgb(255 244 222 / 0.9), transparent 60%),
+    linear-gradient(180deg, #efe3d1 0%, #e6cfb6 100%);
+}
+.dash-shell {
+  background-color: rgb(251 246 234 / 0.92);
+  box-shadow: 0 30px 60px -28px rgb(74 55 40 / 0.55), 0 2px 6px rgb(74 55 40 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+.dash-card {
+  background-color: #fffbf4;
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 900px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 1px 3px rgb(74 55 40 / 0.14), 0 6px 14px -8px rgb(74 55 40 / 0.3);
+}
+.dash-pill {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  border: 1px solid rgb(74 55 40 / 0.25);
+  border-radius: 9999px;
+  padding: 0 0.9rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-walnut);
+}
+.dash-pill:hover {
+  background-color: rgb(74 55 40 / 0.06);
+}
+.dash-pill-dark {
+  border-color: var(--color-walnut);
+  background-color: var(--color-walnut);
+  color: var(--color-cream);
+}
+.dash-pill-dark:hover {
+  background-color: #3a2a1d;
+}
+.dash-pill:focus-visible,
+.dash-shell a:focus-visible,
+.dash-shell summary:focus-visible,
+.dash-shell button:focus-visible {
+  outline: 2px solid var(--color-terracotta);
+  outline-offset: 2px;
+}
+}
