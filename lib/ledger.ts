@@ -9,11 +9,18 @@ export type Spend = { tool: ToolName; cost: Cost; sources: SourceRef[]; simulate
 
 export class Ledger {
   private used = 0;
+  private readonly halted = new Map<string, string>();
 
   constructor(readonly limit = DEFAULT_BUDGET, private readonly onSpend: (spend: Spend) => void | Promise<void> = () => {}) {}
 
   get spent() { return this.used; }
   get remaining() { return this.limit - this.used; }
+
+  /** A CRS answer ruled this loan out for the rest of the run (a deceased result): the loan-based CRS tools refuse it from now on. */
+  halt(loanId: string, reason: string) {
+    if (!this.halted.has(loanId)) this.halted.set(loanId, reason);
+  }
+  haltedBecause(loanId: string): string | undefined { return this.halted.get(loanId); }
 
   /**
    * Run one tool call under the budget. The cost is reserved before the call, so tool calls running in parallel

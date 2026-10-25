@@ -4,6 +4,7 @@ import { toolError, toolOk, type SourceRef, type ToolResult } from "@/lib/contra
 import type { Ledger } from "@/lib/ledger";
 import { CrsError, defaultCrsClient, type CrsClient, type CrsEndpoint } from "./client";
 import { BUREAUS, bureauView, CreditResponseSchema, mergeBureaus, type Bureau, type CreditSummary } from "./credit-features";
+import { refuseIfHalted } from "./halt";
 import { bodyForLoan, GuardRefused } from "./persona-guard";
 
 const TOOL = "crs_credit_report";
@@ -15,14 +16,17 @@ type LoanRef = Parameters<typeof bodyForLoan>[1] & { applicant_info: { date_of_b
 /**
  * crs_credit_report: three bureau pulls under one 6-acorn charge. A loan with no sandbox persona is refused before any request.
  * One bureau failing does not hide the other two: it shows up as an `error` bureau and the report is partial.
+ * A deceased result halts the loan for the rest of the run, and a loan already halted is refused before any request.
  */
-export function crsCreditReport(
+export async function crsCreditReport(
   loan: LoanRef, // a Loan fits: the SSN picks the persona, the date of birth only gives the borrower's age
   ledger: Ledger,
   client: CrsClient = defaultCrsClient(),
   now = Date.now(),
 ): Promise<ToolResult<CreditReport | null>> {
-  return ledger.run(TOOL, async (): Promise<ToolResult<CreditReport | null>> => {
+  const halted = refuseIfHalted(TOOL, loan.loan_id, ledger);
+  if (halted) return halted;
+  const result = await ledger.run(TOOL, async (): Promise<ToolResult<CreditReport | null>> => {
     let body: ReturnType<typeof bodyForLoan>;
     try {
       body = bodyForLoan("credit_report", loan);
@@ -55,4 +59,6 @@ export function crsCreditReport(
     const sources = pulls.flatMap((p): SourceRef[] => ("request_id" in p ? [{ kind: "crs", product: ENDPOINT[p.bureau], request_id: p.request_id }] : []));
     return toolOk(TOOL, report, sources);
   });
+  if (result.ok && result.result?.deceased) ledger.halt(loan.loan_id, "credit report: the bureaus report this SSN as a deceased person's file");
+  return result;
 }

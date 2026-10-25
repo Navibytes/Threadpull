@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toolError, toolOk, type ToolResult } from "@/lib/contracts/tool-result";
 import type { Ledger } from "@/lib/ledger";
 import { CrsError, CrsUnreachable, defaultCrsClient, type CrsClient } from "./client";
+import { DECEASED_CODE, refuseIfHalted } from "./halt";
 import { bodyForLoan, GuardRefused } from "./persona-guard";
 import { RECORDED_IDENTITY_CODES } from "./simulated";
 
@@ -23,14 +24,17 @@ const check = (loan_id: string, messages: IdentityMessage[]): IdentityCheck => (
 
 /**
  * crs_identity_check: charged through the ledger. A loan with no sandbox persona is refused before any request;
- * if the sandbox is unreachable a recorded answer is returned, flagged `simulated`.
+ * if the sandbox is unreachable a recorded answer is returned, flagged `simulated`. A deceased result (2301) halts the loan
+ * for the rest of the run, and a loan already halted is refused before any request.
  */
-export function crsIdentityCheck(
+export async function crsIdentityCheck(
   loan: Parameters<typeof bodyForLoan>[1], // a Loan fits: only loan_id and the SSN are read
   ledger: Ledger,
   client: CrsClient = defaultCrsClient(),
 ): Promise<ToolResult<IdentityCheck | null>> {
-  return ledger.run(TOOL, async (): Promise<ToolResult<IdentityCheck | null>> => {
+  const halted = refuseIfHalted(TOOL, loan.loan_id, ledger);
+  if (halted) return halted;
+  const result = await ledger.run(TOOL, async (): Promise<ToolResult<IdentityCheck | null>> => {
     let body: ReturnType<typeof bodyForLoan>;
     try {
       body = bodyForLoan("tu_identity", loan);
@@ -56,4 +60,7 @@ export function crsIdentityCheck(
       throw e;
     }
   });
+  if (result.ok && result.result?.messages.some((m) => m.code === DECEASED_CODE))
+    ledger.halt(loan.loan_id, `TransUnion identity returned ${DECEASED_CODE}: the SSN belongs to a deceased person`);
+  return result;
 }
