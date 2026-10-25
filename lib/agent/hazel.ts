@@ -10,7 +10,7 @@ import { LOAN_STATUSES, type Loan, type LoanStatus } from "@/lib/contracts/loan"
 import { QuestionTopicSchema } from "@/lib/contracts/rule";
 import { toolError, TOOL_SPECS, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
 import {
-  crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
+  creditEventFacts, crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
   type IdentityCheck,
 } from "@/lib/crs";
 import { budgetSpentRow, recoveryRow } from "@/lib/event-rows";
@@ -198,7 +198,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
         note: hazelNote ?? `${name} refused: ${result.error ?? "no reason given"}.`, simulated: false });
       return json({ ok: false, error: result.error, budget: budget() });
     }
-    const row = await log.append({ type: "check_run", loan_ids: loansIn(input), tool: name, result: { input, ok: true },
+    const row = await log.append({ type: "check_run", loan_ids: loansIn(input), tool: name, result: { input, ok: true, ...(name === "crs_credit_report" ? creditEventFacts(result.result as CreditReport) : {}) },
       sources: result.sources, note: hazelNote ?? `${name} ran.`, simulated: result.simulated });
     const hint = await afterCheck(name, input, result, { run_id: row.run_id, seq: row.seq });
     return json({ ok: true, result: result.result, ...(hint ? { rule: hint } : {}), budget: budget(), simulated: result.simulated });

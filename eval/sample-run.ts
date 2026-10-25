@@ -1,0 +1,26 @@
+// Write a sample run to runs/r13-sample/ so the CRO screen (/cro) works without an Anthropic key.
+//   bun run eval/sample-run.ts
+// It is the real Hazel loop on seed 13 with the real CRS answers recorded on 2026-10-24, but the model's turns are scripted:
+// the ring, a fraud alert, and credit reports for a clean borrower, a thin file, a frozen bureau and a bureau disagreement.
+// run.json says so, and the CRO screen shows that note. Use `bun run hazel` for a run with the real model.
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { dealRunWithCredit } from "@/tests/deal-run";
+
+const run = await dealRunWithCredit();
+// The report is built from the run's loans, which lib/deal reads from the generated tape (what `bun run data` writes), so make it if it is missing.
+const tape = join("data", "out", "seed13", "loans.normalized.json");
+if (!existsSync(tape)) {
+  mkdirSync(dirname(tape), { recursive: true });
+  writeFileSync(tape, JSON.stringify(run.loans, null, 1) + "\n");
+}
+const dir = join("runs", run.run_id);
+mkdirSync(dir, { recursive: true });
+writeFileSync(join(dir, "run.json"), JSON.stringify({
+  run_id: run.run_id, spec: "data/patterns/seed13.json", seed: 13, crs: "recorded",
+  crs_note: "real sandbox responses recorded 2026-10-24, replayed",
+  model_note: "Scripted sample run: the model is a scripted stand-in, so what Hazel chose to check is not a model's judgement.",
+  started_at: run.events[0].ts,
+}, null, 1) + "\n");
+writeFileSync(join(dir, "events.jsonl"), run.events.map((e) => JSON.stringify(e)).join("\n") + "\n");
+console.log(`wrote ${run.events.length} events to ${dir}. Open /cro?run=${run.run_id}`);

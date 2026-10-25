@@ -38,14 +38,16 @@ docs/
 app/                                                                                 C
   page.tsx               ✅ investigator view: filing drawer + corkboard + evidence panel + notebook (`/?run=<id>` plays a Supabase run)
   dashboard/page.tsx     ✅ Portfolio Intelligence: status counts and run metrics from recorded rows, Hazel's Case Notes
-  cro/page.tsx           ○ CRO screen
+  cro/page.tsx           ✅ CRO screen: reads a run with `?run=<id>`, shows the report, takes approve/override   B
   landing/page.tsx       ✅ landing page: hero corkboard, promises, how it works, limits      A
   upload/page.tsx        ✅ upload a loan tape: intake envelope + intake report           A
   api/loans/route.ts     ✅ GET /api/loans                                            A
   api/tapes/route.ts     ✅ POST /api/tapes: upload a loan tape (JSON or CSV), intake report  A
-  api/runs/…             ○ POST /api/runs, GET /api/runs/[id]/report, /why/[loan]     D, B
+  api/runs/route.ts      ✅ GET /api/runs: the runs on disk, newest first             B
+  api/runs/[id]/report/  ✅ GET /api/runs/[id]/report: report + drafts under the analyst's assumptions  B
+  api/runs/…             ○ POST /api/runs (D), GET /api/runs/[id]/why/[loan] (B, ticket 14)
   api/questions/…        ○ POST /api/questions/[id]/answer                           D
-  api/dispositions/…     ○ POST /api/dispositions                                     B
+  api/dispositions/…     ✅ POST /api/dispositions: record an approve or override       B
 
   dev/drawer/page.tsx     development-only filing drawer preview (404 in production) C
 
@@ -58,7 +60,7 @@ components/
   twin-compare/          ✅ Twin Compare panel (in the evidence panel)                 A
   landing/               ✅ hero case board, shared site header and footer               A
   upload/                ✅ upload desk, intake report view, upload model                A
-  cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
+  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions (neutral Tailwind, not the cork look)  B
 
 lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
@@ -71,7 +73,7 @@ lib/
   evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
   agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts  D
   rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
-  deal/                  ○ verdicts, pricing, buyback + document-request drafts        B
+  deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy)  B
   events/                ✅ board state reducer, Supabase Realtime feed, preview fixture, Hazel's pose/notebook   C
   dashboard/             ✅ dashboard metrics from loans + one run's rows (no estimates)   C
 
@@ -89,10 +91,11 @@ data/                                                                           
 
 eval/                                                                                D
   hazel-run.ts           ✅ one Hazel run measured against the answer key (`bun run hazel`)
+  sample-run.ts          ✅ writes runs/r13-sample: Hazel's loop with a scripted model on recorded CRS answers, for the local CRO screen   B
   baseline.ts            ○ fixed-rule baseline, same tools and budget
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
-supabase/migrations/     ✅ loans (A), events (C, insert-only), crs_cache (B); runs, rules, questions, dispositions ○
+supabase/migrations/     ✅ loans (A), events (C, insert-only), crs_cache (B), dispositions (B; apply it in the SQL Editor); runs, rules, questions ○
 tests/                   ✅ one <module>.test.ts per lib module: 34 TypeScript test files (bun test), including architecture, hazel, board-fall, spec, freeze; test_*.py cover the old Python prototype
 ```
 

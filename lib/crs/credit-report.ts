@@ -62,3 +62,13 @@ export async function crsCreditReport(
   if (result.ok && result.result?.deceased) ledger.halt(loan.loan_id, "credit report: the bureaus report this SSN as a deceased person's file");
   return result;
 }
+
+/**
+ * What a credit report adds to the run's check_run row, so the CRO report can price the loan: each bureau's score, and the
+ * lowest one, the score a lender would price on. A bureau that returned no file contributes no score.
+ */
+export function creditEventFacts(report: CreditReport): { score: number | null; scores: Record<string, number | null> } {
+  const scores = Object.fromEntries(report.bureaus.map((b) => [b.bureau, b.status === "file_returned" ? b.score : null]));
+  const found = Object.values(scores).filter((s): s is number => s !== null);
+  return { score: found.length ? Math.min(...found) : null, scores };
+}

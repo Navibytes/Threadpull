@@ -1,0 +1,14 @@
+// POST /api/dispositions: the CRO approves a proposed verdict or overrides it (an override needs a reason).
+// Appends a disposition_recorded row to the run's event log (the record of truth), then copies it to the Supabase
+// dispositions table; `mirror` in the answer says whether the copy worked. The loan then reads Human-confirmed disposition.
+import { recordDisposition } from "@/lib/deal/service";
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+  try {
+    const out = await recordDisposition(body);
+    return out.ok ? Response.json({ ok: true, event: out.event, mirror: out.mirror }, { status: 201 }) : Response.json({ error: out.error }, { status: out.status });
+  } catch (e) {
+    return Response.json({ error: e instanceof Error ? e.message : "could not record the decision" }, { status: 500 });
+  }
+}
