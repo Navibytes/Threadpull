@@ -11,7 +11,7 @@ import type { Question, Rule } from "@/lib/contracts/rule";
 import { serverClient } from "@/lib/db/server";
 import { answerQuestion, currentRules, FileRuleStore, type RuleStore } from "@/lib/rules";
 import type { Mirror } from "./dispositions-db";
-import { readRun, STILL_RUNNING, stillRunning } from "./service";
+import { readRun, runsRoot, STILL_RUNNING, stillRunning } from "./service";
 
 export const rulesPath = () => process.env.THREADPULL_RULES ?? join(process.cwd(), "runs", "rules.json");
 
@@ -79,7 +79,7 @@ export async function recordAnswer(raw: unknown, deps: Deps = {}): Promise<Answe
   const event = EventSchema.parse({ run_id: input.run_id, seq: (last?.seq ?? 0) + 1, ts: (deps.now?.() ?? new Date()).toISOString(),
     type: "question_answered", loan_ids: out.event.loan_ids, tool: "ask_human", result: out.event.result, sources: out.event.sources,
     note, budget: last?.budget ?? { spent: 0, limit: 0 }, simulated: false });
-  appendFileSync(/*turbopackIgnore: true*/ join(deps.root ?? join(process.cwd(), "runs"), input.run_id, "events.jsonl"), `${JSON.stringify(event)}\n`);
+  appendFileSync(/*turbopackIgnore: true*/ join(deps.root ?? runsRoot(), input.run_id, "events.jsonl"), `${JSON.stringify(event)}\n`);
   return { ok: true, event, rule: out.rule, mirror: await mirror(event, deps.db === undefined ? defaultEventsDb() : deps.db) };
 }
 

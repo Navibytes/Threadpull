@@ -2,8 +2,10 @@
 // Appends a disposition_recorded row to the run's event log (the record of truth), then copies it to the Supabase
 // dispositions table; `mirror` in the answer says whether the copy worked. The loan then reads Human-confirmed disposition.
 import { recordDisposition } from "@/lib/deal/service";
+import { demoRefusal, publicDemo } from "@/lib/demo";
 
 export async function POST(req: Request) {
+  if (publicDemo()) return demoRefusal();
   const body = await req.json().catch(() => null);
   try {
     const out = await recordDisposition(body);
