@@ -28,3 +28,12 @@ describe("sample situations", () => {
     expect(scenarioById("nope").id).toBe("phone");
   });
 });
+
+describe("large sample situations", () => {
+  test.each([["busy", 19, 13, 4], ["large", 31, 21, 9]] as const)("%s: every loan is on the board, and only the explained threads are taken down", (id, loans, threads, explained) => {
+    const board = reduceEvents(scenarioById(id).events);
+    expect(board.cards).toHaveLength(loans);
+    expect(board.threads).toHaveLength(threads);
+    expect(board.threads.filter((t) => t.explained !== null)).toHaveLength(explained);
+  });
+});
