@@ -55,7 +55,9 @@ export const numberTokens = (text: string): string[] =>
 export type Facts = { text: string; seqs: ReadonlySet<number>; loans: ReadonlySet<string>; numbers: ReadonlySet<string> };
 
 function loanFact(r: LoanRow): string {
-  const decided = r.confirmed ? ` A person decided: ${r.confirmed.decided_by} ${r.confirmed.decision === "approve" ? "approved" : "overrode"} it as ${r.confirmed.final_verdict}${r.confirmed.reason ? `, saying: ${r.confirmed.reason}` : ""}.` : " No person has decided yet.";
+  // The name and the reason a person typed on the screen are free text: they stay out of what the model reads, and so out of
+  // the allow-lists its sentences are checked against. The screen shows them beside the loan.
+  const decided = r.confirmed ? ` A person decided: they ${r.confirmed.decision === "approve" ? "approved" : "overrode"} it as ${r.confirmed.final_verdict}.` : " No person has decided yet.";
   return `${r.loan_id}: proposed ${r.proposed_verdict}. The run's status is "${r.hazel_status}". Balance ${money(r.balance)} at ${r.dealer_name}.`
     + `${r.score != null ? ` Credit score ${r.score}.` : ""} ${r.price != null ? `Assumed price ${money(r.price)}.` : "Out of the bid."}`
     + `${r.reason ? ` reason: ${r.reason}.` : ""}${decided}`;

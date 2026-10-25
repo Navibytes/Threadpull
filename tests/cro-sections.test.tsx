@@ -2,6 +2,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Actions } from "@/components/cro/actions";
+import { eventRefsShort } from "@/components/cro/format";
 import { Concentration, LoansTable, Spend, Totals } from "@/components/cro/sections";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import { buildReport, buybackDemands, dispositionRow, documentRequests, type DealReport } from "@/lib/deal";
@@ -38,7 +39,7 @@ describe("the deal and the spend", () => {
     for (const t of ["Total principal", "Proposed bid", "Balance under review", "Excluded", "Held out of the bid"]) expect(html).toContain(t);
     expect(html).toContain("$29,186,302");
     expect(html).toContain("assumed");
-    expect(html).toContain("from events #22");
+    expect(html).toContain(`from ${eventRefsShort(report.refs.balance_under_review)}`); // the card cites the report's own events, whatever their numbers
   });
   test("a card with nothing to cite says so instead of 'from no events'", () => {
     const html = renderToStaticMarkup(<Totals r={decided()} />);
