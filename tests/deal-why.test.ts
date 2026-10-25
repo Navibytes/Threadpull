@@ -45,6 +45,17 @@ describe("the answer", () => {
     expect(out.why.answer).toContain(`Ana overrode it as Review (event #${decision.seq}): Documents arrived and match.`);
     expect(out.why.event_seqs.at(-1)).toBe(decision.seq);
   });
+  test("a name or reason a person typed that breaks the wording rules is withheld, the rest is repeated", () => {
+    const last = run.events.at(-1)!;
+    const decision = EventSchema.parse({ run_id: run.run_id, seq: last.seq + 1, ts: "2026-10-25T01:00:00Z", type: "disposition_recorded", loan_ids: [run.ids.lead], tool: null,
+      result: { decision: "override", decided_by: "Ana", reason: "This borrower is a fraudster, keep them out.", items: [{ loan_id: run.ids.lead, proposed_verdict: "Exclude", final_verdict: "Review" }] },
+      sources: [], note: "Overridden.", budget: last.budget, simulated: false });
+    const events = [...run.events, decision];
+    const out = whyLoan(report(events), events, run.ids.lead);
+    if (!out.ok) throw new Error(out.error);
+    expect(out.why.answer).not.toContain("fraudster");
+    expect(out.why.answer).toContain(`Ana overrode it as Review (event #${decision.seq}): (withheld: it breaks the wording rules).`);
+  });
   test("a loan the run opened but never closed has no verdict, and the answer says so", () => {
     const events = run.events.filter((e) => !(e.type === "status_changed" && e.loan_ids[0] === run.ids.lead));
     const out = whyLoan(report(events), events, run.ids.lead);

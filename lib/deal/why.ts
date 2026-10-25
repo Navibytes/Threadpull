@@ -30,8 +30,10 @@ export function whyLoan(report: DealReport, events: readonly Event[], loanId: st
     return { ok: true, why: { loan_id: loanId, verdict: null, proposed_verdict: null, hazel_status: null, reason: null, steps, event_seqs,
       answer: `The run looked at ${loanId} but did not close it, so there is no verdict. Every event recorded for it is listed.` } };
 
+  // the name and reason a person typed are repeated as typed, unless they break the wording rules
+  const typed = (text: string) => (breaksWording(text) ? "(withheld: it breaks the wording rules)" : text);
   const decided = row.confirmed
-    ? ` ${row.confirmed.decided_by} ${row.confirmed.decision === "approve" ? "approved" : "overrode"} it as ${row.verdict} (event #${row.confirmed.seq})${row.confirmed.reason ? `: ${row.confirmed.reason}` : ""}.`
+    ? ` ${typed(row.confirmed.decided_by)} ${row.confirmed.decision === "approve" ? "approved" : "overrode"} it as ${row.verdict} (event #${row.confirmed.seq})${row.confirmed.reason ? `: ${typed(row.confirmed.reason)}` : ""}.`
     : "";
   const answer = `${loanId} is proposed ${row.proposed_verdict} because the run closed it as "${row.hazel_status}"${row.reason ? `: ${row.reason}` : ""} (event #${row.event_seqs[0]}).${decided}`;
   return { ok: true, why: { loan_id: loanId, verdict: row.verdict, proposed_verdict: row.proposed_verdict, hazel_status: row.hazel_status, reason: row.reason, answer, steps, event_seqs } };
