@@ -7,7 +7,7 @@
 
 **Blocked by:** 07 Strings come down: explanations and Twin Compare; 10 CRO screen and deal engine
 
-**Status:** in-progress (D). TypeScript core done: `lib/rules` + `lib/contracts/rule.ts`, tested on seed 13 in `tests/rules.test.ts` (q-001 → R-001 v1 → next hospital lookalike cleared citing R-001 → 38-staff dental group asks again). Remaining: Supabase `rules`/`questions` tables and the CRO answer API/UI (needs 10), real tenure from `crs_credit_report` (06), P16 routing live (03).
+**Status:** in-progress (D). `ask_human` and saved-rule application are wired into Hazel's loop (`lib/agent/hazel.ts`). TypeScript core done: `lib/rules` + `lib/contracts/rule.ts`, tested on seed 13 in `tests/rules.test.ts` (q-001 → R-001 v1 → next hospital lookalike cleared citing R-001 → 38-staff dental group asks again). Remaining: Supabase `rules`/`questions` tables and the CRO answer API/UI (needs 10), real tenure from `crs_credit_report` (06), P16 routing live (03).
 
 - [x] The Python prototype routes questions, computes confidence from evidence weights, and distinguishes `no precedent` from `sources disagree`.
 - [x] Answers can become scoped, versioned drafts; confirmed rules persist and matching clues emit rule/explanation events.

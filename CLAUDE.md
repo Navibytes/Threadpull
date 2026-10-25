@@ -43,7 +43,7 @@ consumer/multimodal/hardware; treat an overall placing as a bonus.
 ```
 data/generate.ts (seeded, Bun) → normalize → Supabase `loans`
   → lib/graph (graphology: loans, borrowers, phones, emails, addresses, employers, dealers, doc fingerprints; rarity weights)
-  → lib/agent (Vercel AI SDK tool loop, Claude Sonnet 5.5; tools validated with Zod; code enforces budget)
+  → lib/agent (Anthropic SDK tool runner, Claude Sonnet 5.5; tools validated with Zod; code enforces budget)
   → lib/deal (deterministic verdicts + pricing) → drafts (bid, buybacks, doc requests, CRO memo)
   → Supabase `events` rows → Supabase Realtime → Next.js + React Flow corkboard
 ```
@@ -149,7 +149,7 @@ Budget: 60 acorns per run, enforced by `lib/ledger.ts`. Tools: `inspect_loan` ·
 
 Next.js + React + TypeScript (app and API routes) · Tailwind + shadcn/ui + Motion · React Flow (corkboard) ·
 graphology (evidence graph) · Supabase PostgreSQL + Realtime (loans, events, rules, approvals; live board) ·
-Vercel AI SDK + Zod (tool calls and validation) · Claude Sonnet 5.5 (`claude-sonnet-5-5`, Hazel's steps and
+Anthropic TypeScript SDK (`@anthropic-ai/sdk`, Hazel's tool runner) + Zod (tool calls and validation) · Claude Sonnet 5.5 (`claude-sonnet-5-5`, Hazel's steps and
 the memo) and Claude Haiku (document extraction; `claude-haiku-4-5-20251001` until a newer id is confirmed) ·
 CRS sandbox API · Bun (scripts, `bun test`, baseline evaluator) · faker-js for data.
 

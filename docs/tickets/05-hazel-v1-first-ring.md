@@ -7,14 +7,14 @@
 
 **Blocked by:** 01 Contracts and walking skeleton; 03 Live CRS identity check, persona guard and acorn ledger; 04 Evidence graph and weights
 
-**Status:** in-progress, blocked on 03 (B: `lib/crs` + `lib/ledger.ts`). Prep done (D): Hazel's eight non-CRS tools in `lib/agent/tools.ts` over the 04 graph and A's checks (strings come down through A's `lib/evidence` withdraw functions); C's draft event contract adopted unchanged. The AI SDK loop, CRS tools and event writes start when 03 lands.
+**Status:** in-progress (D). The loop is built and tested with a scripted model on seed 13 (`lib/agent/hazel.ts`, `tests/hazel.test.ts`): code opens the top lead, charges B's ledger, writes every §8 event row, takes strings down, applies saved rules and decides statuses. Left: a live run with Claude (`bun run hazel`, needs `ANTHROPIC_API_KEY`) to measure the 4-of-6 target, and Supabase as an event sink (C's events table).
 
 - [x] A Python tool-use loop and Anthropic SDK adapter exist in `backend/agent.py`; the loop enforces its tool allowlist, budget, and backend-owned statuses.
 - [x] The Python run writes event and model-trace JSONL, stops at budget/no leads, and bounds notes with sources.
 - [x] Tools without CRS (inspect_loan, find_connections, compare_documents, dealer_timeline, inspect_dealer_loans, check_address, check_household, check_employer) in `lib/agent/tools.ts`: Zod inputs, TOOL_SPECS costs, documents only through `safeDocumentView`, SSN masked; `tests/agent-tools.test.ts`.
-- [ ] Port the agent loop to `lib/agent` (Vercel AI SDK + Claude), with the CRS tools, `ask_human` and `close_lead`.
-- [ ] Use the issue 03 guarded CRS client and the issue 04 graph over generated seed 13 data; verify the 4-of-6 target within 60 acorns.
-- [ ] Persist each SKELETON §8 event and model trace through the configured storage/event path so the board can render only recorded events.
+- [x] Agent loop in `lib/agent/hazel.ts` (Anthropic SDK tool runner, `claude-sonnet-5-5` at medium effort, server-side refusal fallback), with `crs_identity_check`, `ask_human` and `close_lead`; statuses decided by code (`lib/agent/status.ts`).
+- [ ] Use the issue 03 guarded CRS client and the issue 04 graph over generated seed 13 data; verify the 4-of-6 target within 60 acorns. (Wired and passing with a scripted model and recorded CRS answers; the live measurement is `bun run hazel`.)
+- [ ] Persist each SKELETON §8 event and model trace through the configured storage/event path so the board can render only recorded events. (Done to `runs/<run_id>/events.jsonl` + `trace.jsonl` through an `EventSink`; Supabase sink waits on C's events table.)
 
 The TypeScript portfolio generator and loan contract are now available from main. The existing Python prototype uses the earlier flat loan shape and injected identity adapter; it is useful as behavior reference, not yet wired to the current dataset or application.
 

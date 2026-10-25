@@ -51,7 +51,7 @@ components/
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
 
 lib/
-  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event ○, rule ○   C (loan, tool-result: A)
+  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
   ingest/                ✅ normalize the messy tape; load reference lookups               A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
   crs/                   ✅ persona guard, client + cache, crs_identity_check; other CRS tools ○   B
@@ -59,8 +59,8 @@ lib/
   event-rows.ts          ✅ budget_spent and recovery event rows from the ledger and the CRS client (pure; C may fold into events/)   B
   graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
   evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
-  agent/                 ○ Hazel loop (AI SDK), tools, prompts, models.ts              D
-  rules/                 ○ ask-once rule matching and storage                          D
+  agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts  D
+  rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
   deal/                  ○ verdicts, pricing, buyback + document-request drafts        B
   events/                ○ append an event row, read a run's events                    C
 
@@ -74,6 +74,7 @@ data/                                                                           
   out/  keys/            gitignored outputs: tape + lookups / ground truth
 
 eval/                                                                                D
+  hazel-run.ts           ✅ one Hazel run measured against the answer key (`bun run hazel`)
   baseline.ts            ○ fixed-rule baseline, same tools and budget
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
@@ -140,7 +141,7 @@ eval/  ──►  lib/*, data/keys
 | I'm writing… | Put it in |
 | --- | --- |
 | A new field on the loan / event / tool result | `lib/contracts/` first, then tell the team (contracts are frozen after 12:00) |
-| A new Hazel tool | logic in the owning module (`lib/crs`, `lib/evidence`, `lib/graph`), the AI SDK tool wrapper in `lib/agent/tools.ts` |
+| A new Hazel tool | logic in the owning module (`lib/crs`, `lib/evidence`, `lib/graph`), the input schema in `lib/agent/tools.ts`, the tool-runner wrapper (events, ledger) in `lib/agent/hazel.ts` |
 | A new CRS call | `lib/crs/` (body built from `data/personas.json`, charged through `lib/ledger.ts`) |
 | An explanation check ("string comes down") | `lib/evidence/` |
 | Anything that computes money | `lib/deal/` |

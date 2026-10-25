@@ -221,7 +221,7 @@ Live events don't need an endpoint: the board subscribes to `events` rows for th
 ```
 data/generate.ts (seeded, Bun) → data/seed-db.ts → Supabase `loans` (normalized)
    → lib/graph (graphology: entities, weights, connected clusters)
-   → Hazel loop (Vercel AI SDK + Claude Sonnet 5.5; tools defined with Zod; code enforces budget, rules, statuses)
+   → Hazel loop (Anthropic SDK tool runner + Claude Sonnet 5.5; tools defined with Zod; code enforces budget, rules, statuses)
    → tool results feed back into the graph; Claude Haiku extracts pay-stub fields into a Zod schema
    → every step inserts a row into `events` → Supabase Realtime → corkboard + notebook
    → deal engine (plain TypeScript) → CRO screen → approvals logged
@@ -236,7 +236,7 @@ data/generate.ts (seeded, Bun) → data/seed-db.ts → Supabase `loans` (normali
 | Database | Supabase PostgreSQL | Loans, evidence, investigations, approvals |
 | Live synchronization | Supabase Realtime | Push investigation updates to the board |
 | AI | Claude Sonnet 5.5, Claude Haiku | Investigation planning (Sonnet) and document extraction (Haiku) |
-| Agent orchestration | Vercel AI SDK, Zod | Structured tool calls and validation |
+| Agent orchestration | Anthropic TypeScript SDK (tool runner), Zod | Structured tool calls and validation |
 | Identity verification | CRS sandbox API | Actual external identity / fraud signals |
 | Evaluation | Bun tests and a baseline evaluator | Measure detection, accuracy and costs |
 

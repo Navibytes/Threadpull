@@ -203,7 +203,7 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 | Database | Supabase PostgreSQL | Loans, evidence, investigations, approvals |
 | Live synchronization | Supabase Realtime | Push investigation updates to the board |
 | AI | Claude Sonnet 5.5, Claude Haiku | Investigation planning and document extraction |
-| Agent orchestration | Vercel AI SDK, Zod | Structured tool calls and validation |
+| Agent orchestration | Anthropic TypeScript SDK (tool runner), Zod | Structured tool calls and validation |
 | Identity verification | CRS sandbox API | Actual external identity / fraud signals |
 | Evaluation | Bun tests and a baseline evaluator | Measure detection, accuracy and costs |
 
