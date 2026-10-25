@@ -114,7 +114,9 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
     ? `${thread.kind} · explained · ${explained.ruleId ?? explained.explainedBy}`
     : `${thread.kind} · ${thread.weight.toFixed(2)}`;
   const short = explained ? `${thread.kind} · explained` : thread.kind;
-  const tag = placeLabel(at, w / 2 + 8, [full, short], cardBoxes(lookup), px);
+  // the label sits on the thread itself, like a strip of tape holding it down; the search moves it along the
+  // thread until it clears every card
+  const tag = placeLabel(at, 0, [full, short], cardBoxes(lookup), px);
 
   return (
     <>
@@ -197,18 +199,20 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
         {/* positioned by a plain wrapper: Motion owns the transform of the element it animates */}
         <div
           className="nodrag nopan pointer-events-none absolute"
-          style={{ transform: `translate(-50%, 0) translate(${tag.x}px, ${tag.y}px)`, zIndex: 1001 }}
+          style={{ transform: `translate(-50%, -50%) translate(${tag.x}px, ${tag.y}px)`, zIndex: 1001 }}
         >
           <motion.span
-            style={{ fontSize: px }}
-            className={`relative block whitespace-nowrap px-[0.6em] py-[0.15em] font-medium shadow-[0_3px_6px_rgb(0_0_0/0.45)] ${
-              explained ? "bg-[#e3ecd6] text-walnut" : "bg-paper text-walnut"
+            className={`relative block whitespace-nowrap px-[1.1em] py-[0.2em] font-medium text-walnut shadow-[0_2px_4px_rgb(0_0_0/0.35)] ${
+              explained ? "bg-[#e3ecd6]" : "bg-[#fbf6e6]"
             }`}
+            style={{ fontSize: px, rotate: explained ? "1deg" : "-1.5deg" }}
             initial={drawIn ? { opacity: 0, y: -4 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: drawIn ? DRAW_S : 0, duration: 0.3 }}
           >
-            <span aria-hidden className="tape absolute -top-1.5 left-1/2 h-2.5 w-8 -translate-x-1/2 rotate-2" />
+            {/* a strip of tape across each end holds the label onto the thread */}
+            <span aria-hidden className="tape absolute -left-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 -rotate-12" />
+            <span aria-hidden className="tape absolute -right-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 rotate-12" />
             {tag.text}
           </motion.span>
         </div>
