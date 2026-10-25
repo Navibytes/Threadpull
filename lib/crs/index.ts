@@ -5,4 +5,4 @@ export { crsIdentityCheck, type IdentityCheck, type IdentityMessage } from "./id
 export { creditEventFacts, crsCreditReport, type CreditReport } from "./credit-report";
 export { crsFraudFinder, type FraudFinder } from "./fraud-finder";
 export { crsReversePhone, type ReversePhone, type ReversePhoneRecord } from "./reverse-phone";
-export { GuardRefused } from "./persona-guard";
+export { canQuery, GuardRefused } from "./persona-guard";
