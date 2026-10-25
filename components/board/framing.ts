@@ -1,6 +1,6 @@
 // Camera maths for the board, kept pure so it can be tested. Coordinates: "board" is React Flow's flow space,
 // "pane" is screen pixels inside the board's visible area. A keep-out box (Hazel's corner) is never used
-// to show cards: a fit goes either left of it or above it, whichever shows the cards larger.
+// to show cards: a fit goes beside it or above/below it, whichever shows the cards larger.
 export type Box = { x: number; y: number; w: number; h: number };
 export type Viewport = { x: number; y: number; zoom: number };
 
@@ -19,13 +19,17 @@ export function boundsOf(boxes: Box[]): Box | null {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 
-// The pane areas a fit may use: the whole pane, or (with a keep-out box) the part left of it and the part above it.
+// The pane areas a fit may use: the whole pane, or (with a keep-out box) the full-height strips left and
+// right of it and the full-width strips above and below it. Strips with no room are dropped.
 export function safeAreas(pane: { w: number; h: number }, keepOut: Box | null): Box[] {
   const whole = { x: 0, y: 0, w: pane.w, h: pane.h };
   if (!keepOut || keepOut.w <= 0 || keepOut.h <= 0) return [whole];
+  const right = keepOut.x + keepOut.w, bottom = keepOut.y + keepOut.h;
   return [
     { x: 0, y: 0, w: Math.max(0, keepOut.x), h: pane.h },
+    { x: right, y: 0, w: Math.max(0, pane.w - right), h: pane.h },
     { x: 0, y: 0, w: pane.w, h: Math.max(0, keepOut.y) },
+    { x: 0, y: bottom, w: pane.w, h: Math.max(0, pane.h - bottom) },
   ].filter((a) => a.w > 0 && a.h > 0);
 }
 

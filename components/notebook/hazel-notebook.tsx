@@ -24,8 +24,8 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
     >
       <div>
         <div>
-          <h2 className="font-display text-lg font-semibold leading-tight">Hazel&rsquo;s notebook</h2>
-          <p className="mt-0.5 text-sm font-medium" aria-live="polite">
+          {/* titled by the side panel it opens in */}
+          <p className="text-sm font-medium" aria-live="polite">
             {POSE_LABEL[pose]}
             {poseSeq !== null && <span className="whitespace-nowrap font-normal text-walnut/80"> · seq {poseSeq}</span>}
           </p>
@@ -35,11 +35,6 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
               {entry.tool && <> · {entry.tool}</>}
               {entry.loanIds.length > 0 && <> · {entry.loanIds.join(", ")}</>}{" "}
               <span className="whitespace-nowrap">· seq {entry.seq}</span>
-              {entry.simulated && (
-                <span className="ml-1.5 rounded-sm bg-honey/25 px-1 py-px text-[10px] font-semibold tracking-[0.08em] text-walnut">
-                  SIMULATED
-                </span>
-              )}
             </p>
           ) : (
             <p className="mt-1 text-xs text-walnut/80">No events yet.</p>
@@ -48,9 +43,10 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
       </div>
 
       <dl className="mt-2.5 space-y-2 text-[13px] leading-snug">
+        {/* only what the row's own fields support; otherwise it says there isn't enough to go on */}
         <Note label="What I saw" text={entry?.saw} empty="Nothing recorded yet." />
-        <Note label="Why it matters" text={entry?.why} empty="Not recorded in this event." />
-        <Note label="What's next" text={entry?.next} empty="Not recorded in this event." />
+        <Note label="Why it matters" text={entry?.why} empty="This event doesn't record enough to say." />
+        <Note label="Next" text={entry?.next} empty="No next step is recorded yet." />
       </dl>
 
       <p className="mt-2.5 border-t border-dashed border-walnut/20 pt-2 text-xs">
@@ -62,7 +58,7 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
           </span>
         ) : (
           <span className="text-walnut/80">
-            {mode === "preview" ? "not tracked in PREVIEW" : "no budget recorded yet"}
+            no budget recorded yet
           </span>
         )}
       </p>

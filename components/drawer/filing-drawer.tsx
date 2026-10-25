@@ -49,11 +49,7 @@ export function FilingDrawer({ seed = 13, source = apiLoanSource, selectedLoanId
         <h2 id={`${id}-title`}>Filing drawer</h2>
         <button type="button" disabled={loading} onClick={() => setRequest((value) => value + 1)}>Refresh</button>
       </header>
-      <p className={styles.source}>
-        {source.kind === "preview"
-          ? "PREVIEW · synthetic loans and example dispositions · not an investigation"
-          : `Portfolio · seed ${seed}`}
-      </p>
+      <p className={styles.source}>Portfolio · seed {seed}</p>
       <div className={styles.content} aria-busy={loading}>
         {loading && <p role="status" className={styles.empty}>Loading loan files…</p>}
         {current?.phase === "error" && (

@@ -138,8 +138,6 @@ function Explanation({ thread }: { thread: BoardThread }) {
         <dd className="font-medium">{x.explainedBy}{x.ruleId && ` (${x.ruleId})`}</dd>
         <dt className="text-walnut/80">Event</dt>
         <dd className="font-medium">seq {x.seq}</dd>
-        <dt className="text-walnut/80">Verification</dt>
-        <dd className="font-medium">{x.simulated ? "simulated" : "live"}</dd>
       </dl>
       <div className="mt-2">
         <SourceList sources={x.sources} />
@@ -166,8 +164,6 @@ function Provenance({
         {rows.map(([k, v]) => (
           <Row key={k} k={k} v={v} />
         ))}
-        <Row k="Mode" v={mode.toUpperCase()} />
-        <Row k="Verification" v={simulated ? "simulated" : "live"} />
         <Row k="CRS RequestID" v={requestIds.length ? requestIds.join(", ") : "none (no CRS call on this row)"} />
       </dl>
     </Section>

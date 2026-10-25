@@ -1,6 +1,7 @@
 // components/board/index-card-node.tsx: what a card face says and how large it renders.
 import { describe, expect, test } from "bun:test";
-import { essentialPx, FULL_ZOOM, sourcesInWords } from "@/components/board/index-card-node";
+import { cardFinding, essentialPx, FULL_ZOOM, sourcesInWords } from "@/components/board/index-card-node";
+import type { BoardThread } from "@/lib/events";
 import { cardSize, LAYOUT } from "@/components/board/layout";
 
 describe("card face text", () => {
@@ -13,6 +14,36 @@ describe("card face text", () => {
         { kind: "crs", product: "tu_identity_verification", request_id: "r1" },
       ]),
     ).toBe("2 sources: data room, CRS");
+  });
+});
+
+const thread = (a: string, b: string, kind: string, weight: number, explained = false): BoardThread => ({
+  id: `${kind}-${a}-${b}`, kind, a, b, weight, firstSeq: 1, lastSeq: 1, tool: null, ts: "", note: null, sources: [], simulated: true,
+  explained: explained
+    ? { seq: 2, ts: "", explainedBy: "check_address", ruleId: null, reason: "apartment building", sources: [], simulated: true }
+    : null,
+});
+
+describe("why a card is on the board", () => {
+  const threads = [thread("L1", "L2", "phone", 0.33), thread("L1", "L3", "doc_fingerprint", 0.9), thread("L3", "L4", "address", 0.2, true)];
+
+  test("a lead names how many loans it is linked to and by what", () => {
+    expect(cardFinding("L1", true, threads)?.text).toBe("Linked to 2 loans by doc fingerprint, phone");
+    expect(cardFinding("L9", true, threads)?.text).toBe("No links found yet");
+  });
+
+  test("a linked card names its strongest open link, then how many more", () => {
+    expect(cardFinding("L2", false, threads)).toEqual({ text: "Shares phone with L1", explained: false });
+    expect(cardFinding("L3", false, threads)?.text).toBe("Shares doc fingerprint with L1 +1 more");
+    expect(cardFinding("L3", true, threads)?.text).toBe("Linked to 2 loans by doc fingerprint, address · 1 explained");
+  });
+
+  test("an explained link keeps its fact and is marked explained", () => {
+    expect(cardFinding("L4", false, threads)).toEqual({ text: "Shared address with L3", explained: true });
+  });
+
+  test("a card on no thread says nothing rather than inventing a reason", () => {
+    expect(cardFinding("L9", false, threads)).toBeNull();
   });
 });
 

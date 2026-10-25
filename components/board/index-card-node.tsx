@@ -3,7 +3,7 @@
 import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
-import type { BoardCard, SourceRef } from "@/lib/events";
+import type { BoardCard, BoardThread, SourceRef } from "@/lib/events";
 import { cardSize, cardTilt } from "./layout";
 import { Pushpin } from "./pushpin";
 import { StatusChip } from "./status-chip";
@@ -11,7 +11,12 @@ import { StatusChip } from "./status-chip";
 // `animate`: the card arrived after the board loaded, so it pins in; history appears in place.
 // `lead`: first pinned by lead_opened, so it is drawn as the case folder.
 // `showSeq`: the board's "event numbers" debug option.
-export type IndexCardNodeType = Node<{ card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean }, "indexCard">;
+// `finding`: why the card is on the board, from its recorded threads (cardFinding).
+export type CardFinding = { text: string; explained: boolean };
+export type IndexCardNodeType = Node<
+  { card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean; finding: CardFinding | null },
+  "indexCard"
+>;
 
 // Yarn is drawn edge to edge (see YarnEdge); React Flow still needs a handle on each card.
 const hiddenHandle = { top: "50%", left: "50%", width: 1, height: 1, opacity: 0, pointerEvents: "none" } as const;
@@ -31,6 +36,30 @@ export function sourcesInWords(sources: SourceRef[]) {
   if (sources.length === 1 && sources[0].kind === "row") return "1 data-room row";
   const kinds = [...new Set(sources.map((s) => SOURCE_WORD[s.kind]))];
   return `${sources.length} source${sources.length === 1 ? "" : "s"}: ${kinds.join(", ")}`;
+}
+
+// Why a card is on the board, in one line, from the link_found threads it is on. A lead names how many loans
+// it is linked to and by what; a linked card names its strongest link. An explained link keeps its fact and is
+// marked explained. Nothing here is inferred beyond the recorded threads.
+const kindWords = (kind: string) => kind.replace(/_/g, " ");
+export function cardFinding(id: string, lead: boolean, threads: BoardThread[]): CardFinding | null {
+  const links = threads
+    .filter((t) => t.a === id || t.b === id)
+    .sort((x, y) => Number(!!x.explained) - Number(!!y.explained) || y.weight - x.weight);
+  if (links.length === 0) return lead ? { text: "No links found yet", explained: false } : null;
+  const other = (t: BoardThread) => (t.a === id ? t.b : t.a);
+  if (lead) {
+    const loans = new Set(links.map(other)).size;
+    const kinds = [...new Set(links.map((t) => kindWords(t.kind)))];
+    const explained = links.filter((t) => t.explained).length;
+    const text = `Linked to ${loans} loan${loans === 1 ? "" : "s"} by ${kinds.join(", ")}`;
+    return { text: explained ? `${text} · ${explained} explained` : text, explained: explained === links.length };
+  }
+  const [top] = links;
+  const more = links.length > 1 ? ` +${links.length - 1} more` : "";
+  return top.explained
+    ? { text: `Shared ${kindWords(top.kind)} with ${other(top)}${more}`, explained: true }
+    : { text: `Shares ${kindWords(top.kind)} with ${other(top)}${more}`, explained: false };
 }
 
 // Level of detail. At or above FULL_ZOOM every label renders at 12px or more, so the full face shows. Below it
@@ -65,7 +94,7 @@ function Stamp({ kind, px, detail }: { kind: "simulated" | "crs"; px: number; de
 }
 
 function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
-  const { card, animate, lead, showSeq } = data;
+  const { card, animate, lead, showSeq, finding } = data;
   const reduce = useReducedMotion();
   const zoom = useStore((s) => Math.round(s.transform[2] * 40) / 40); // quantized: re-render only on real zoom steps
   const full = zoom >= FULL_ZOOM;
@@ -115,20 +144,31 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
 
           {full && (
             <>
-              <p className={`text-[13px] leading-tight text-walnut/85 ${lead ? "mt-1.5" : "mt-1"}`}>Loan application</p>
-              {/* index cards: the head rule sits under the title block; facts go on the ruled lines */}
+              {/* index cards: the head rule sits under the ID; the facts go on the ruled lines */}
               {!lead && <span aria-hidden className="mt-2 block h-[1.5px] bg-terracotta/55" />}
-              <p className={`text-[13px] leading-[22px] ${lead ? "mt-3" : "mt-1"}`}>{sourcesInWords(card.sources)}</p>
-              {showStatus && (
-                <div className="mt-1">
-                  <StatusChip status={card.status} />
-                </div>
-              )}
+              {/* 2: why this loan is on the board */}
+              <p
+                className={
+                  lead
+                    ? "mt-3 line-clamp-2 text-[14px] font-medium leading-[19px]"
+                    : "mt-1 truncate text-[13px] font-medium leading-[22px]"
+                }
+                title={finding?.text}
+              >
+                {finding?.text ?? "Loan application"}
+              </p>
+              {/* 3 and 4: its recorded status, if any, then where the card's facts come from */}
+              <div className={`flex min-w-0 flex-wrap items-center gap-x-2 ${lead ? "mt-1.5" : ""}`}>
+                {showStatus && <StatusChip status={card.status} />}
+                {!lead && finding?.explained && (
+                  <span className="rounded-sm bg-sage/25 px-1.5 text-[13px] font-medium leading-5 text-[#3f5233]">Explained</span>
+                )}
+                <p className="truncate text-[13px] leading-[22px] text-walnut/80">{sourcesInWords(card.sources)}</p>
+              </div>
             </>
           )}
 
           <div className="mt-auto flex flex-wrap items-end gap-x-2.5 gap-y-1.5">
-            {card.simulated && <Stamp kind="simulated" px={label} />}
             {crs.length > 0 && <Stamp kind="crs" px={label} detail={full ? crsDetail : undefined} />}
             {showSeq && (
               <span

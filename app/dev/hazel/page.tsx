@@ -1,8 +1,10 @@
 // Local asset preview: Hazel's four poses side by side. Development only (404 in production builds).
-// This page shows artwork, not investigation state: it reads no events and drives nothing.
+// This page shows artwork, not investigation state: it reads no run's events. The rehearsal below appends
+// made-up rows on the page itself to show how Hazel reacts.
 import { notFound } from "next/navigation";
 import { HazelAvatar } from "@/components/notebook/hazel-avatar";
 import { HAZEL_POSES, POSE_FOR_EVENT } from "@/lib/events";
+import { HazelStage } from "./stage";
 
 export default function HazelAssetPreview() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -29,6 +31,7 @@ export default function HazelAssetPreview() {
           </li>
         ))}
       </ul>
+      <HazelStage />
     </main>
   );
 }

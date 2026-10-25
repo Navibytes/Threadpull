@@ -45,9 +45,124 @@ body {
   color: var(--color-cream);
 }
 
+/* The detective's room: quiet dark wallpaper (a small ornament drawn in SVG, in the board's dusty-blue family,
+   kept darker and calmer than the board), lit by an amber lamp from the upper left. */
+.room {
+  /* a pale yellow wall with a faint ornament pattern (low-opacity strokes) */
+  background-color: #f7f0c8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='132' viewBox='0 0 96 132'%3E%3Cg fill='none' stroke='%23b8a25a' stroke-opacity='0.16' stroke-width='1.6'%3E%3Cpath d='M48 14c10 10 10 22 0 32-10-10-10-22 0-32zM48 86c10 10 10 22 0 32-10-10-10-22 0-32z'/%3E%3Cpath d='M48 46c-6 6-16 8-24 4 4-8 14-12 24-4zM48 46c6 6 16 8 24 4-4-8-14-12-24-4zM48 86c-6-6-16-8-24-4 4 8 14 12 24 4zM48 86c6-6 16-8 24-4-4 8-14 12-24 4z'/%3E%3Ccircle cx='48' cy='66' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 96px 132px;
+  color: var(--color-walnut);
+}
+
+/* The desk ledge Hazel stands on, along the bottom of the room. */
+.ledge {
+  background:
+    linear-gradient(rgb(255 226 190 / 0.18), transparent 3px),
+    linear-gradient(rgb(20 12 7 / 0.35), rgb(20 12 7 / 0.55)),
+    url("/assets/detective/wood-walnut.webp") center / 120% auto,
+    #3a2617;
+  box-shadow: 0 -2px 0 rgb(0 0 0 / 0.35), 0 -14px 28px -10px rgb(0 0 0 / 0.6);
+}
+
+/* Paper tabs above the board. The current page sits forward and lighter; a destination that is not built
+   yet is plainly marked and takes no clicks. */
+.paper-sheet {
+  position: relative;
+  rotate: var(--tilt, 0deg);
+  transform: translateY(3px);
+  /* the shadow is on the wrapper: the tab's irregular clip-path would cut its own */
+  filter: drop-shadow(0 5px 4px rgb(0 0 0 / 0.5));
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+/* a second sheet peeking out behind the tab */
+.paper-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 3px -2px 0 3px;
+  background: #cdb78f;
+  rotate: 1.6deg;
+  clip-path: polygon(0 8%, 96% 0, 100% 100%, 3% 100%);
+}
+.paper-sheet[data-active] {
+  transform: translateY(-3px);
+}
+.paper-tab {
+  position: relative;
+  background-color: #eadfc6;
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 700px auto;
+  color: var(--color-walnut);
+  clip-path: polygon(1% 9%, 12% 0, 90% 2%, 100% 12%, 99% 100%, 0 100%);
+}
+.paper-tab-kraft {
+  background-color: #cdae80;
+  background-blend-mode: multiply;
+  clip-path: polygon(0 12%, 9% 2%, 88% 0, 99% 8%, 100% 100%, 1% 100%);
+}
+.paper-tab svg {
+  color: #3a2a1d;
+}
+/* the active tab is lighter and carries a hand-drawn terracotta underline */
+.paper-sheet[data-active] .paper-tab {
+  background-color: #f8eeda;
+  background-blend-mode: normal;
+}
+.paper-sheet[data-active] .paper-tab::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 7px;
+  height: 3px;
+  background: var(--color-terracotta);
+  border-radius: 3px 1px 3px 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .paper-sheet:has(button:hover):not([data-active]) {
+    transform: translateY(0);
+  }
+}
+.paper-tab:focus-visible {
+  outline-offset: -3px;
+}
+.paper-tab[data-unbuilt] {
+  background-color: #b9ab93;
+  background-blend-mode: multiply;
+  color: var(--color-walnut); /* full walnut keeps 4.5:1 on the dimmer paper */
+  cursor: not-allowed;
+}
+.paper-sheet:has([data-unbuilt]) {
+  transform: translateY(5px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-sheet {
+    transition: none;
+  }
+}
+
+/* Brass plates for the status and the case controls. */
+.brass-plate {
+  background: linear-gradient(160deg, #e7c77e, #b8913f 55%, #8c6a26);
+  color: #2b1d0e;
+  box-shadow: inset 0 1px 0 rgb(255 245 210 / 0.6), inset 0 -1px 0 rgb(60 40 10 / 0.5), 0 6px 14px rgb(0 0 0 / 0.5);
+}
+
+/* Side panels slide over the board from either edge of the room. */
+.side-panel {
+  border: 1px solid rgb(110 80 45 / 0.35);
+  border-radius: 3px 5px 4px 3px;
+  background-color: #f6ecda;
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 900px auto;
+  color: var(--color-walnut);
+  box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.75), 0 4px 12px rgb(0 0 0 / 0.4);
+}
+
 /* The board's walnut frame: grain, a bevel (light top-left, dark bottom-right) and a drop shadow on the wall. */
 .board-frame {
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: clamp(18px, 2vw, 30px);
   background:
     linear-gradient(135deg, rgb(255 228 196 / 0.16), transparent 32%, transparent 64%, rgb(0 0 0 / 0.38)),
     url("/assets/detective/wood-walnut.webp") center / 140% auto,
@@ -55,10 +170,12 @@ body {
   box-shadow:
     0 34px 60px -24px rgb(0 0 0 / 0.75),
     0 10px 20px rgb(0 0 0 / 0.45),
-    inset 0 1px 0 rgb(255 226 190 / 0.3),
-    inset 1px 0 0 rgb(255 226 190 / 0.12),
-    inset 0 -2px 0 rgb(0 0 0 / 0.45),
-    inset -1px 0 0 rgb(0 0 0 / 0.3);
+    inset 0 2px 0 rgb(255 226 190 / 0.32),
+    inset 2px 0 0 rgb(255 226 190 / 0.14),
+    inset 0 -3px 0 rgb(0 0 0 / 0.5),
+    inset -2px 0 0 rgb(0 0 0 / 0.35),
+    inset 0 0 0 7px rgb(0 0 0 / 0.12),
+    inset 0 0 0 8px rgb(255 226 190 / 0.08);
 }
 
 /* The cork sits recessed in the frame: inner shadow drawn above the canvas, never taking clicks. */
@@ -195,20 +312,57 @@ body {
 }
 
 /* Hazel's poses are stacked; the active one fades in with a small lift. No motion when reduced. */
+/* Hazel's pose change: a short crossfade between sprites. The movement that goes with it (lean, perk, nod) is
+   on her own layers (HazelStanding), so the sprites only fade. Kept under reduced motion: it isn't movement. */
 .hazel-pose {
   opacity: 0;
-  transform: translateY(3px) scale(0.98);
-  transition:
-    opacity 220ms ease-out,
-    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .hazel-pose[data-active="true"] {
   opacity: 1;
-  transform: none;
+}
+
+/* Idle: slow breathing, and every so often a small sway; still most of the time. Predetermined loops, so CSS
+   (off the main thread, unaffected by the board re-rendering). Both pivot at her feet. */
+.hazel-breathe {
+  transform-origin: 50% 94%;
+  animation: hazel-breathe 5.2s cubic-bezier(0.37, 0, 0.63, 1) infinite; /* easeInOutSine: a breath, not a UI snap */
+}
+.hazel-sway {
+  transform-origin: 50% 94%;
+  animation: hazel-sway 17s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+@keyframes hazel-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  45% {
+    transform: scale(1.006, 1.014);
+  }
+}
+@keyframes hazel-sway {
+  0%,
+  74%,
+  100% {
+    transform: rotate(0deg);
+  }
+  81% {
+    transform: rotate(0.9deg);
+  }
+  89% {
+    transform: rotate(-0.6deg);
+  }
+  95% {
+    transform: rotate(0.2deg);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
+  .hazel-breathe,
+  .hazel-sway {
+    animation: none;
+  }
   .hazel-pose {
-    transition: none;
-    transform: none;
+    transition-duration: 120ms;
   }
 }

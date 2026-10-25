@@ -8,6 +8,16 @@ const PANE = { w: 820, h: 575 };
 const HAZEL: Box = { x: 530, y: 255, w: 290, h: 320 };
 
 describe("framing", () => {
+  test("Hazel standing at the lower left: fits go right of her or above her", () => {
+    const left: Box = { x: 0, y: 255, w: 290, h: 320 };
+    expect(safeAreas(PANE, left)).toEqual([
+      { x: 290, y: 0, w: 530, h: 575 },
+      { x: 0, y: 0, w: 820, h: 255 },
+    ]);
+    const tall = bestFit({ x: 0, y: 0, w: 300, h: 900 }, PANE, left);
+    expect(tall.x).toBeGreaterThanOrEqual(290); // the case lands right of her
+  });
+
   test("a fit never uses Hazel's corner: left of her or above her", () => {
     const areas = safeAreas(PANE, HAZEL);
     expect(areas).toEqual([

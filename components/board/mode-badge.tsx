@@ -19,14 +19,16 @@ const LABEL: Record<FeedMode, { text: string; className: string; title: string }
 };
 
 export function ModeBadge({ mode, runId }: { mode: FeedMode; runId: string }) {
+  // The synthetic fixture carries no label on screen; a recorded or live run shows its own badge.
+  if (mode === "preview") return null;
   const l = LABEL[mode];
   return (
     <span
-      title={l.title}
-      className={`inline-flex items-center gap-2 rounded border px-2.5 py-1 text-xs font-semibold tracking-[0.12em] ${l.className}`}
+      title={`${l.title} Run ${runId}.`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded border px-2.5 py-1 text-xs font-semibold tracking-[0.12em] ${l.className}`}
     >
       {l.text}
-      <span className="font-normal tracking-normal opacity-80">run {runId}</span>
+      <span className="max-w-[10rem] truncate font-normal tracking-normal opacity-80">run {runId}</span>
     </span>
   );
 }
