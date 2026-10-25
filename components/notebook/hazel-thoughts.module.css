@@ -5,9 +5,9 @@
   position: absolute;
   z-index: 25;
   pointer-events: none;
-  left: calc(40px + var(--hazel-w) * 0.5);
-  bottom: calc(var(--ledge) + 18px + var(--hazel-w) * 0.98);
-  width: min(22rem, 52vw);
+  left: calc(40px + var(--hazel-w) * 0.12);
+  bottom: calc(var(--ledge) + 8px + var(--hazel-w) * 0.82);
+  width: min(17rem, 36vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -16,8 +16,8 @@
 @media (max-width: 760px) {
   .spot {
     left: 12px;
-    bottom: calc(var(--ledge) + 18px + var(--hazel-w) * 0.9);
-    width: min(19rem, calc(100vw - 24px));
+    bottom: calc(var(--ledge) + 8px + var(--hazel-w) * 0.82);
+    width: min(15rem, calc(100vw - 24px));
   }
 }
 

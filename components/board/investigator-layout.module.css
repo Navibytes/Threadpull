@@ -3,7 +3,7 @@
   --wall: clamp(12px, 6.5vw, 150px);
   --ledge: clamp(22px, 3.4vh, 34px);
   --ledge-gap: clamp(10px, 1.8vh, 18px);
-  --hazel-w: clamp(240px, 26vw, 400px); /* Hazel's width; the filing drawer starts to the right of her */
+  --hazel-w: clamp(170px, 17vw, 260px); /* Hazel's width; the filing drawer starts to the right of her */
 }
 
 /* Hazel's spot on the ledge: a box her size (same clamp as HazelStanding), mirrored so she faces the board.
