@@ -6,6 +6,9 @@ import type { IntakeReport } from "@/lib/ingest/intake";
 /** Same limit as the route (app/api/tapes/route.ts): checked here so a too-large file isn't sent at all. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const TEMPLATE_URL = "/templates/loan-tape-template.csv";
+/** A whole portfolio as JSON: the 1,000 generated seed 13 loans with their pay stubs and applications (synthetic; no
+ * generator truth in it). Investigating it shows the ring, an injected pay stub and the innocent lookalikes. */
+export const JSON_SAMPLE_URL = "/templates/sample-tape-1000-loans.json";
 
 export type UploadState =
   | { kind: "idle" }

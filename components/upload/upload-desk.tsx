@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { replayIntroNextTime } from "@/components/board/intro-seen";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { IntakeReportView } from "./intake-report";
-import { sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
+import { JSON_SAMPLE_URL, sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
 import s from "@/components/landing/landing.module.css";
 import u from "./upload.module.css";
 
@@ -66,14 +66,14 @@ export function UploadDesk() {
     if (input.current) input.current.value = ""; // choosing the same file again still fires a change
   };
 
-  const sample = async () => {
-    setState({ kind: "sending", name: "loan-tape-template.csv" });
+  const sample = async (url: string, name: string) => {
+    setState({ kind: "sending", name });
     try {
-      const res = await fetch(TEMPLATE_URL);
+      const res = await fetch(url);
       if (!res.ok) throw new Error();
-      await send(await res.blob(), "loan-tape-template.csv");
+      await send(await res.blob(), name);
     } catch {
-      setState({ kind: "failed", name: "loan-tape-template.csv", message: "The sample tape couldn't be loaded." });
+      setState({ kind: "failed", name, message: "The sample tape couldn't be loaded." });
     }
   };
 
@@ -127,7 +127,9 @@ export function UploadDesk() {
         </div>
 
         <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3">
-          <button type="button" className={s.paperButton} onClick={sample} disabled={busy}>Use the sample tape</button>
+          <button type="button" className={s.paperButton} onClick={() => void sample(JSON_SAMPLE_URL, "sample-tape-1000-loans.json")} disabled={busy}>Use the sample portfolio (JSON, 1,000 loans)</button>
+          <button type="button" className={s.paperButton} onClick={() => void sample(TEMPLATE_URL, "loan-tape-template.csv")} disabled={busy}>Use the CSV template (3 loans)</button>
+          <a className={u.textLink} href={JSON_SAMPLE_URL} download="sample-tape-1000-loans.json">Download the JSON sample</a>
           <a className={u.textLink} href={TEMPLATE_URL} download>Download the CSV template</a>
         </p>
 
