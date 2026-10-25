@@ -19,6 +19,7 @@ import { PriceLedger } from "./price-ledger";
 import { QuestionsPanel } from "./questions";
 import { Recommendation } from "./recommendation";
 import { RiskTable } from "./risk-table";
+import { Scorecard } from "./scorecard";
 import { LoansTable, Section } from "./sections";
 import { SourceLedger } from "./source-ledger";
 import { useRunDigests } from "./use-run-digests";
@@ -131,6 +132,7 @@ export function CroScreen() {
                 <QuestionsPanel runId={r.run_id} who={who} onAnswered={() => { if (runId) void load(runId, applied); }} />
               </Section>
               <Efficiency r={r} />
+              <Scorecard runId={r.run_id} />
               <Section n="07" id="memo-title" title="Memo for the CRO" hint="Claude writes it from the report. Code keeps only the sentences it can check against the run's events, and shows the events behind each one.">
                 <MemoPanel runId={r.run_id} lastSeq={r.run.last_seq} assumptions={applied} />
               </Section>
