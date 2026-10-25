@@ -17,7 +17,7 @@ import { parseArgs } from "node:util";
 import Anthropic from "@anthropic-ai/sdk";
 import { FREEZE_TAG, freezeStatus } from "@/data/freeze";
 import { generate, type AnswerKey } from "@/data/generate";
-import { jsonlSink, runHazel, supabaseSink, type EventSink, type TraceEntry } from "@/lib/agent";
+import { jsonlSink, modelStubExtractor, runHazel, supabaseSink, type EventSink, type TraceEntry } from "@/lib/agent";
 import { serverClient } from "@/lib/db/server";
 import { defaultCrsClient } from "@/lib/crs";
 import { loadReference } from "@/lib/ingest/reference";
@@ -62,7 +62,9 @@ const sinks: EventSink[] = [jsonlSink(join(dir, "events.jsonl"))];
 const db = args["no-db"] ? null : serverClient();
 const dbErrors: string[] = [];
 if (db) sinks.push(supabaseSink(db, (e, message) => dbErrors.push(`seq ${e.seq} (${e.type}): ${message}`)));
-const out = await runHazel({ runId, loans: gen.normalized, seed: gen.seed, reference: loadReference(gen.outDir), anthropic: new Anthropic(), crs,
+const anthropic = new Anthropic();
+const out = await runHazel({ runId, loans: gen.normalized, seed: gen.seed, reference: loadReference(gen.outDir), anthropic, crs,
+  documentReader: modelStubExtractor(anthropic), // only for a stub the parser can't read; every generated stub parses
   rules: new MemoryRuleStore(), budget: Number(args.budget), sinks, trace });
 
 // ---------------------------------------------------------------- measured against the answer key

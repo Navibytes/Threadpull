@@ -72,8 +72,8 @@ lib/
   ledger.ts              ✅ acorn budget; its onSpend hook is where `budget_spent` is written   B
   event-rows.ts          ✅ budget_spent and recovery event rows from the ledger and the CRS client (pure; C may fold into events/)   B
   graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
-  evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
-  agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts  D
+  evidence/              ✅ document fingerprints, injection guard, verified pay-stub reading (extract.ts), explanation checks, withdraw  A
+  agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts, the Haiku stub reader (extractor.ts, A)  D
   rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
   deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy), CRO memo (Claude), why answers, wording rules  B
   events/                ✅ board state reducer, Supabase Realtime feed, preview fixture, Hazel's pose/notebook   C

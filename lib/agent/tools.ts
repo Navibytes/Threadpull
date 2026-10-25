@@ -7,7 +7,8 @@ import type { Loan } from "@/lib/contracts/loan";
 import { toolError, toolOk, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
 import { buildGraph, findConnections, type EvidenceGraph } from "@/lib/graph";
 import {
-  checkAddress, checkEmployer, checkHousehold, compareDocuments, dealerTimeline, safeDocumentView, templateUsage,
+  checkAddress, checkEmployer, checkHousehold, compareDocuments, dealerTimeline, PayStubReader, safeDocumentView, templateUsage,
+  type StubExtractor,
 } from "@/lib/evidence";
 import type { Reference } from "@/lib/ingest/reference";
 
@@ -19,11 +20,12 @@ export type DataRoom = {
   graph: EvidenceGraph;
   reference: Reference;
   usage: Map<string, number>; // document fingerprint → uses, for compare_documents
+  stubs: PayStubReader; // the parser, then a verified model read for stubs it can't read (when the run has a reader)
 };
 
-export function createDataRoom(loans: readonly Loan[], reference: Reference): DataRoom {
+export function createDataRoom(loans: readonly Loan[], reference: Reference, documentReader?: StubExtractor): DataRoom {
   return {
-    loans, reference, graph: buildGraph(loans), usage: templateUsage(loans),
+    loans, reference, graph: buildGraph(loans), usage: templateUsage(loans), stubs: new PayStubReader(documentReader),
     byId: new Map(loans.map((l) => [l.loan_id, l])),
     byDoc: new Map(loans.flatMap((l) => l.documents.map((d) => [d.doc_id, l] as const))),
   };
@@ -89,7 +91,7 @@ export const TOOLS = {
     run: (room, { doc_a, doc_b }) => {
       const a = room.byDoc.get(doc_a), b = room.byDoc.get(doc_b);
       if (!a || !b) return toolError("compare_documents", `document not found: ${!a ? doc_a : doc_b}`);
-      return compareDocuments({ loan: a, doc_id: doc_a }, { loan: b, doc_id: doc_b }, room.usage);
+      return compareDocuments({ loan: a, doc_id: doc_a }, { loan: b, doc_id: doc_b }, room.usage, (d) => room.stubs.read(d));
     },
   }),
 
@@ -143,6 +145,17 @@ export const TOOLS = {
 
 export type HazelToolName = keyof typeof TOOLS;
 export const isHazelTool = (name: string): name is HazelToolName => Object.hasOwn(TOOLS, name);
+
+/** The async part of a tool, before runTool: compare_documents model-reads a stub the parser can't (each once a run). */
+export async function prepareTool(room: DataRoom, name: HazelToolName, input: unknown): Promise<void> {
+  if (name !== "compare_documents") return;
+  const { doc_a, doc_b } = (input ?? {}) as { doc_a?: unknown; doc_b?: unknown };
+  const docs = [doc_a, doc_b].flatMap((id) => {
+    const doc = typeof id === "string" ? room.byDoc.get(id)?.documents.find((d) => d.doc_id === id) : undefined;
+    return doc ? [doc] : [];
+  });
+  await room.stubs.prepare(docs);
+}
 
 /** Run one tool. Input is validated first; a refused call costs nothing (toolError). */
 export function runTool(room: DataRoom, name: HazelToolName, input: unknown): ToolResult<unknown> {
