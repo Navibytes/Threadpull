@@ -13,7 +13,7 @@ import {
   crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
   type IdentityCheck,
 } from "@/lib/crs";
-import { budgetSpentRow } from "@/lib/event-rows";
+import { budgetSpentRow, recoveryRow } from "@/lib/event-rows";
 import {
   attackEvent, withdrawAddress, withdrawBursts, withdrawHousehold, type AddressCheck, type ClueExplained,
   type DealerTimeline, type EmployerCheck, type HouseholdCheck,
@@ -336,6 +336,12 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
   // A failed model request (overloaded, network) still ends the log with run_finished, so the board and the run's
   // files show where it stopped instead of a run that never ends; the error is then passed on to the caller.
   let failure: unknown = null;
+  // a 429 from CRS: the client waits out Retry-After and tries again; the board shows it as a recovery row for the
+  // paid call in progress (paid calls run one at a time, so callLoans is that call's loan). Its budget is the last row's:
+  // the ledger has reserved the call's cost, but nothing is charged until the call succeeds.
+  const stopWatching = opts.crs.watchRecovery(async (info) => {
+    await log.append(recoveryRow(info, log.last?.budget ?? budget(), { loan_ids: callLoans }));
+  });
   try {
     for await (const message of runner) {
       iterations++;
@@ -352,6 +358,8 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
   } catch (e) {
     failure = e;
     stop_reason = "error";
+  } finally {
+    stopWatching();
   }
 
   await log.append({ type: "run_finished", loan_ids: [...statuses.keys()].sort(), tool: null,
