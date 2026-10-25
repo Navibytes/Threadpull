@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
-import { threadWidth, type BoardThread } from "@/lib/events";
+import { sharedLabel, threadWidth, type BoardThread } from "@/lib/events";
 import type { IndexCardNodeType } from "./index-card-node";
 import { essentialPx, FULL_ZOOM } from "./index-card-node";
 import { LAYOUT } from "./layout";
@@ -110,13 +110,11 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const pullBack = retract && !reduce;
   const showSuspicion = !explained || pullBack;
   // The tag hangs off the thread clear of every card; a short text when the full one won't fit (details in the panel).
-  const full = explained
-    ? `${thread.kind} · explained · ${explained.ruleId ?? explained.explainedBy}`
-    : `${thread.kind} · ${thread.weight.toFixed(2)}`;
-  const short = explained ? `${thread.kind} · explained` : thread.kind;
+  const name = sharedLabel(thread.kind); // what the two loans share, in words; the weight is in the details panel
+  const texts = explained ? [`${name} · explained`, name, "Explained"] : [name, name.replace(/ (number|address)$/, "")];
   // the label sits on the thread itself, like a strip of tape holding it down; the search moves it along the
   // thread until it clears every card
-  const tag = placeLabel(at, 0, [full, short], cardBoxes(lookup), px);
+  const tag = placeLabel(at, 0, texts, cardBoxes(lookup), px);
 
   return (
     <>

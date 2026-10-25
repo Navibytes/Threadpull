@@ -26,7 +26,7 @@ export function StatusPlaque({
     <section aria-label="Investigation status" className="flex shrink-0 flex-col gap-1 text-[13px]">
       <div className="flex items-center gap-3">
         <h1 className="font-display text-xl font-semibold leading-none text-walnut">Threadpull</h1>
-        <ModeBadge mode={mode} runId={runId} />
+        {mode === "preview" ? <span className="font-medium">Sample data (made up)</span> : <ModeBadge mode={mode} runId={runId} />}
       </div>
       <p className="whitespace-nowrap text-walnut/85">
         {active ? (

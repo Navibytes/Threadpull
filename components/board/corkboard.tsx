@@ -2,7 +2,7 @@
 
 import { ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import type { BoardState } from "@/lib/events";
+import { loanName, sharedLabel, type BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
 import { cardFinding, IndexCardNode, type IndexCardNodeType } from "./index-card-node";
@@ -25,6 +25,7 @@ export function Corkboard({
   keepClear,
   focusRequest,
   onCases,
+  caseHref,
 }: {
   board: BoardState;
   animateAfterSeq: number;
@@ -32,6 +33,7 @@ export function Corkboard({
   keepClear: RefObject<HTMLElement | null>;
   focusRequest?: CardFocusRequest | null;
   onCases?: (cases: BoardCase[], activeCase: number | null) => void; // for the room's status plaque
+  caseHref?: (leadId: string) => string; // where a case's "Case details" button goes (the dashboard)
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
@@ -76,12 +78,12 @@ export function Corkboard({
           type: "indexCard",
           position,
           zIndex: lead ? 2 : 1,
-          ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${card.id}${finding ? `: ${finding.text}${finding.explained && !lead ? " (explained)" : ""}` : ""}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
-          data: { card, lead, showSeq, finding, animate: card.firstSeq > animateAfterSeq },
+          ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${loanName(card.id)} (ID ${card.id})${finding ? `: ${finding.text}` : ""}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
+          data: { card, lead, showSeq, finding, animate: card.firstSeq > animateAfterSeq, detailHref: lead && caseHref ? caseHref(card.id) : null },
         };
       }),
     );
-  }, [board.cards, board.threads, layout, animateAfterSeq, showSeq, setNodes]);
+  }, [board.cards, board.threads, layout, animateAfterSeq, showSeq, caseHref, setNodes]);
 
   useEffect(() => {
     setEdges((prev) =>
@@ -93,6 +95,7 @@ export function Corkboard({
           type: "yarn",
           source: thread.a,
           target: thread.b,
+          ariaLabel: `${sharedLabel(thread.kind)} between ${loanName(thread.a)} and ${loanName(thread.b)}${thread.explained ? ", explained" : ""}`,
           sourceHandle: "pin-out",
           targetHandle: "pin-in",
           data: {

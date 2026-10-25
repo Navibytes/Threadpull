@@ -27,26 +27,30 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
           {/* titled by the side panel it opens in */}
           <p className="text-sm font-medium" aria-live="polite">
             {POSE_LABEL[pose]}
-            {poseSeq !== null && <span className="whitespace-nowrap font-normal text-walnut/80"> · seq {poseSeq}</span>}
           </p>
           {entry ? (
-            <p className="mt-1 text-xs text-walnut/80">
-              Latest: <span className="font-medium text-walnut">{entry.type}</span>
-              {entry.tool && <> · {entry.tool}</>}
-              {entry.loanIds.length > 0 && <> · {entry.loanIds.join(", ")}</>}{" "}
-              <span className="whitespace-nowrap">· seq {entry.seq}</span>
-            </p>
+            <details className="mt-1 text-xs text-walnut/80">
+              <summary className="cursor-pointer">Technical details</summary>
+              <p className="mt-1">
+                Latest event: <span className="font-medium text-walnut">{entry.type}</span>
+                {entry.tool && <> · {entry.tool}</>}
+                {entry.loanIds.length > 0 && <> · {entry.loanIds.join(", ")}</>}{" "}
+                <span className="whitespace-nowrap">· seq {entry.seq}</span>
+                {poseSeq !== null && <> · pose from seq {poseSeq}</>}
+                {entry.simulated && <> · simulated (made-up sample data)</>}
+              </p>
+            </details>
           ) : (
-            <p className="mt-1 text-xs text-walnut/80">No events yet.</p>
+            <p className="mt-1 text-xs text-walnut/80">Nothing has happened yet.</p>
           )}
         </div>
       </div>
 
       <dl className="mt-2.5 space-y-2 text-[13px] leading-snug">
         {/* only what the row's own fields support; otherwise it says there isn't enough to go on */}
-        <Note label="What I saw" text={entry?.saw} empty="Nothing recorded yet." />
+        <Note label="What I found" text={entry?.saw} empty="Nothing recorded yet." />
         <Note label="Why it matters" text={entry?.why} empty="This event doesn't record enough to say." />
-        <Note label="Next" text={entry?.next} empty="No next step is recorded yet." />
+        <Note label="What's next" text={entry?.next} empty="No next step is recorded yet." />
       </dl>
 
       <p className="mt-2.5 border-t border-dashed border-walnut/20 pt-2 text-xs">

@@ -1,6 +1,7 @@
 // What Hazel's avatar and notebook show, read only from the run's applied event rows (in seq order).
 // Nothing here makes up a claim: a field the event doesn't carry stays null and the UI says so.
 import { ClueExplainedResultSchema } from "@/lib/contracts/event";
+import { loanName, NOT_PROOF, sharedPhrase } from "./plain";
 import type { RunEvent } from "./types";
 
 export const HAZEL_POSES = ["idle", "thinking", "discovery", "resolved"] as const;
@@ -86,7 +87,7 @@ function saw(e: RunEvent): string | null {
   const note = e.note.trim();
   if (note) return note;
   if (e.type === "link_found" && e.loan_ids.length >= 2 && str(e.result.kind))
-    return `${e.loan_ids[0]} and ${e.loan_ids[1]} share a ${words(str(e.result.kind)!)}.`;
+    return `${loanName(e.loan_ids[0])} and ${loanName(e.loan_ids[1])} share ${sharedPhrase(str(e.result.kind)!)}.`;
   return null;
 }
 
@@ -94,21 +95,21 @@ function saw(e: RunEvent): string | null {
 function why(e: RunEvent): string | null {
   switch (e.type) {
     case "link_found": {
-      const kind = str(e.result.kind), weight = num(e.result.weight);
-      if (!kind || weight === null) return null;
+      const kind = str(e.result.kind);
+      if (!kind) return null;
       // hard rule 4: a shared attribute counts in proportion to how rare it is; a connection is not proof
-      return `A shared ${words(kind)} counts in proportion to how rare it is in the pool; this one weighs ${weight.toFixed(2)}. A connection is not proof.`;
+      return `${NOT_PROOF} The rarer ${sharedPhrase(kind)} is across all the loans, the more it counts.`;
     }
     case "clue_explained": {
       const r = ClueExplainedResultSchema.safeParse(e.result);
       if (!r.success) return null;
       const by = r.data.explained_by === "rule" ? `rule ${r.data.rule_id}` : words(r.data.explained_by);
-      return `Suspicion comes down: ${r.data.reason} (${by}). The shared fact stays on the board.`;
+      return `This looked suspicious but has an innocent explanation: ${r.data.reason} (${by}). The shared detail stays on the board as a fact.`;
     }
     case "status_changed": {
       const status = str(e.result.status), reason = str(e.result.reason);
       if (!status || !reason || e.loan_ids.length === 0) return null;
-      return `${e.loan_ids[0]} is now ${status}: ${reason}`;
+      return `${loanName(e.loan_ids[0])} is now ${status}: ${reason}`;
     }
     case "attack_detected":
       // hard rule 5: document text is data; the row exists because injected text was refused
@@ -126,9 +127,9 @@ function next(e: RunEvent): string | null {
       return to ? `Waiting for an answer from ${words(to)}.` : null;
     }
     case "link_found":
-      return e.loan_ids.length >= 2 ? `Select the thread between ${e.loan_ids[0]} and ${e.loan_ids[1]} to see its sources.` : null;
+      return e.loan_ids.length >= 2 ? "Click the red thread to see the records behind this match." : null;
     case "clue_explained":
-      return "Select the dashed thread to see the check that explained it.";
+      return "Click the pale dashed thread to see which check explained it.";
     case "run_finished":
       return "The run is over; no further checks are planned in it.";
     default:

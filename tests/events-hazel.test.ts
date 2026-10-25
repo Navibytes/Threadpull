@@ -122,16 +122,17 @@ describe("Hazel's reactions", () => {
 });
 
 describe("Hazel's notebook, grounded in the row", () => {
-  test("a link: what it shares, its rarity weight, and the thread you can open", () => {
+  test("a link: what it shares, why it is only a lead, and the thread you can open", () => {
     const e = notebookEntry(events(ev(1, "link_found", { note: "", loan_ids: ["L1", "L2"], result: { kind: "phone", weight: 0.33 } })));
-    expect(e?.saw).toBe("L1 and L2 share a phone.");
-    expect(e?.why).toContain("weighs 0.33");
-    expect(e?.why).toContain("A connection is not proof.");
-    expect(e?.next).toBe("Select the thread between L1 and L2 to see its sources.");
+    expect(e?.saw).toBe("Loan L1 and Loan L2 share a phone number.");
+    expect(e?.why).toBe(
+      "A shared detail is a lead to check, not proof of fraud. The rarer a phone number is across all the loans, the more it counts.",
+    );
+    expect(e?.next).toBe("Click the red thread to see the records behind this match.");
   });
 
-  test("a link without a weight says nothing about why", () => {
-    expect(notebookEntry(events(ev(1, "link_found", { loan_ids: ["L1", "L2"], result: { kind: "phone" } })))?.why).toBeNull();
+  test("a link that doesn't say what it shares says nothing about why", () => {
+    expect(notebookEntry(events(ev(1, "link_found", { loan_ids: ["L1", "L2"], result: {} })))?.why).toBeNull();
   });
 
   test("an explained clue quotes its own reason and what explained it", () => {
@@ -143,7 +144,9 @@ describe("Hazel's notebook, grounded in the row", () => {
         }),
       ),
     );
-    expect(e?.why).toBe("Suspicion comes down: same hospital employer (rule R-001). The shared fact stays on the board.");
+    expect(e?.why).toBe(
+      "This looked suspicious but has an innocent explanation: same hospital employer (rule R-001). The shared detail stays on the board as a fact.",
+    );
   });
 
   test("a question waits on its recipient; a check records no next step", () => {
