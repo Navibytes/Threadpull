@@ -15,6 +15,8 @@ code, `data/patterns/heldout/` gitignored, and the guide `data/patterns/HELDOUT.
 repeated pattern its own answer-key entry (two buildings or two households used to overwrite each other); seed 13's
 output is byte-for-byte unchanged.
 
+**Update (Sat 23:35, checked against `main`):** C writes the spec next, following `data/patterns/HELDOUT.md`. Not done: C's spec, the `detector-frozen` tag (after 08's Haiku decision and D's 11; PR #35's prompt change already landed before it, as detection changes must), then loading and running seed 99.
+
 - [ ] The `detector-frozen` tag is created only after 07, 08 and 11 are merged. (07 done; 08 and 11 open. `bun run freeze:check` then guards it.)
 - [ ] C writes the seed 99 pattern spec using only SKELETON §5.1 fields: the same pattern types in new places, plus at least one variation (for example a ring linked by a shared bank account instead of a phone).
 - [x] The held-out answer key is stored where A and D don't read it before the proof run. (Tooling: `--keys` outside the repo, spec in the ignored `data/patterns/heldout/`, `data:check` output reveals nothing.)

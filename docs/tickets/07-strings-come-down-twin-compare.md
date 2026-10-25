@@ -9,6 +9,8 @@
 
 **Status:** done (A). The four checks (PR #4), taking strings down in the graph (PR #7), payloads checked against the event contract (PR #9), Hazel writing the rows (D, PR #13), the falling thread on C's board with a link always drawn before it falls, and Twin Compare in the evidence panel.
 
+**Update (Sat 23:35, checked against `main`):** The fall needs Hazel to reach a lookalike in a live run: the first recorded run stopped after the ring, so no thread fell. With PR #35 she keeps going, and on seed 13 the lead right after the six ring loans is the apartment-building twin (tested in `tests/hazel.test.ts`). Confirm in the next recorded run.
+
 - [x] New tools (names and costs in `lib/contracts/tool-result.ts`): `check_address` (address-type lookup, labeled simulated), `check_household`, `check_employer` (headcount and group size in the pool), and `dealer_timeline` for month-end bursts. Each returns a `ToolResult` built with `toolOk` / `toolError`.
   - `check_employer` never takes a string down by itself: it reports `large_employer` / `small_employer` / `implausible`, and clearing a large employer is R-001's or a human's job (ticket 11), so the ask-once moment stays in the demo.
   - `dealer_timeline` explains a burst only when it's at month-end and the dealer did the same in at least 3 other months. Volume alone is weak: ordinary dealers reach 5–6 loans in 10 days by chance.

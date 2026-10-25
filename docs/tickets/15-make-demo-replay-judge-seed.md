@@ -11,6 +11,8 @@
 
 **Update (Sat 23:05, checked against `main`):** Not started on `main`. What exists to build on: `/?run=<run_id>` plays a recorded Supabase run (history at once, then live rows), `bun run hazel` writes runs to Supabase and prints the board link, and `bun run data:check` verifies a seed end to end. Open: `bun run demo`, replay with speed control, the seed picker.
 
+**Update (Sat 23:35, checked against `main`):** The demo needs a fresh recorded run: the current one (`r13-20261025T053505`) has no falling thread and no seed on `run_started` (it predates PRs #26, #34, #35). D to rerun with `bun run hazel`; the board plays it at `/?run=<run_id>`.
+
 - [ ] `bun run demo` generates seed 13, runs Hazel (live, or replay of the recorded best run) and opens the board; it works three times in a row.
 - [ ] Replay reproduces the same events in order, with adjustable speed.
 - [ ] A seed picker starts a live run on any seed and falls back to replay, clearly labeled, if CRS is unavailable.
