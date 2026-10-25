@@ -3,20 +3,23 @@
 import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { cardFinding, loanName, loanShortName, type BoardCard, type CardFinding, type SourceRef } from "@/lib/events";
 
 export { cardFinding };
+import { EASE_OUT, PinPop } from "./entrance";
+import { ENTRANCE, type CardEnter } from "./entrance-plan";
 import { cardSize, cardTilt } from "./layout";
 import { Pushpin } from "./pushpin";
 import { StatusChip } from "./status-chip";
 
-// `animate`: the card arrived after the board loaded, so it pins in; history appears in place.
+// `enter`: when this card's paper drops and its pin presses in (seconds from mount, from entrance-plan.ts), or null
+// when it is simply on the wall: history appears in place, and the board's entrance plan covers the rest.
 // `lead`: first pinned by lead_opened, so it is drawn as the case folder.
 // `showSeq`: the board's "event numbers" debug option.
 // `finding`: why the card is on the board, from its recorded threads (cardFinding).
 export type IndexCardNodeType = Node<
-  { card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean; finding: CardFinding | null; detailHref: string | null },
+  { card: BoardCard; enter: CardEnter | null; lead: boolean; showSeq: boolean; finding: CardFinding | null; detailHref: string | null },
   "indexCard"
 >;
 
@@ -54,6 +57,9 @@ function hash(id: string) {
   return Math.abs(h);
 }
 
+const dropFrom = (tilt: number) => `translateY(-14px) rotate(${tilt - 3}deg) scale(1.02)`;
+const atRest = (tilt: number, lifted: boolean) => `translateY(${lifted ? -3 : 0}px) rotate(${tilt}deg) scale(1)`;
+
 const SHADOW = "drop-shadow(0px 2px 2px rgb(0 0 0 / 0.45)) drop-shadow(0px 10px 12px rgb(0 0 0 / 0.38))";
 const SHADOW_LIFTED = "drop-shadow(0px 4px 3px rgb(0 0 0 / 0.5)) drop-shadow(0px 20px 22px rgb(0 0 0 / 0.5))";
 
@@ -72,8 +78,11 @@ function Stamp({ kind, px, detail }: { kind: "simulated" | "crs"; px: number; de
 }
 
 function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
-  const { card, animate, lead, showSeq, finding, detailHref } = data;
+  const { card, lead, showSeq, finding, detailHref } = data;
   const reduce = useReducedMotion();
+  const enter = reduce ? null : data.enter; // reduced motion shows the finished board at once
+  const played = useRef(!enter); // once its entrance has played, the card answers selection with the spring below
+  const entering = !!enter && !played.current;
   const zoom = useStore((s) => Math.round(s.transform[2] * 40) / 40); // quantized: re-render only on real zoom steps
   const full = zoom >= FULL_ZOOM;
   const label = full ? 13 : essentialPx(zoom);
@@ -90,9 +99,27 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
     <motion.div
       className="relative"
       style={{ width: w, height, transformOrigin: lead ? "calc(100% - 22px) 0" : "18px 0" }}
-      initial={animate && !reduce ? { opacity: 0, y: -16, rotate: tilt - 4, scale: 1.03, filter: SHADOW_LIFTED } : false}
-      animate={{ opacity: 1, y: selected ? -3 : 0, rotate: tilt, scale: 1, filter: selected ? SHADOW_LIFTED : SHADOW }}
-      transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 24, mass: 0.8 }}
+      // Paper: a short drop, a slight tilt, a settle (a small overshoot, then rest). transform and opacity only; the
+      // shadow stays put during the drop (animating a filter on every card is the expensive part).
+      initial={enter ? { opacity: 0, transform: dropFrom(tilt), filter: SHADOW } : false}
+      animate={{
+        opacity: 1,
+        transform: entering ? [dropFrom(tilt), `translateY(1.5px) rotate(${tilt + 0.6}deg) scale(1)`, atRest(tilt, selected)] : atRest(tilt, selected),
+        filter: selected ? SHADOW_LIFTED : SHADOW,
+      }}
+      transition={
+        entering
+          ? {
+              opacity: { duration: 0.12, delay: enter.paper },
+              transform: { duration: ENTRANCE.paperMs / 1000, delay: enter.paper, ease: [EASE_OUT, "easeInOut"], times: [0, 0.72, 1] },
+            }
+          : reduce
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 420, damping: 24, mass: 0.8 }
+      }
+      onAnimationComplete={() => {
+        played.current = true;
+      }}
     >
       <Handle id="pin-in" type="target" position={Position.Top} isConnectable={false} style={hiddenHandle} />
       <Handle id="pin-out" type="source" position={Position.Top} isConnectable={false} style={hiddenHandle} />
@@ -196,7 +223,9 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
         aria-hidden
         className={`pointer-events-none absolute -translate-x-1/2 ${lead ? "left-[calc(100%-22px)] top-[-9px]" : "left-[18px] top-[-7px]"}`}
       >
-        <Pushpin color={lead ? "red" : "brass"} size={lead ? 24 : 20} />
+        <PinPop delay={enter?.pin}>
+          <Pushpin color={lead ? "red" : "brass"} size={lead ? 24 : 20} />
+        </PinPop>
       </div>
       {!lead && h % 3 === 0 && (
         <span aria-hidden className="tape pointer-events-none absolute -right-[22px] -top-[2px] h-4 w-14 rotate-45" />

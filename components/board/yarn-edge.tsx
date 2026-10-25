@@ -12,15 +12,17 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
 import { sharedLabel, threadWidth, type BoardThread } from "@/lib/events";
+import { EASE_OUT, PinPop } from "./entrance";
+import { ENTRANCE, type ThreadEnter } from "./entrance-plan";
 import type { IndexCardNodeType } from "./index-card-node";
 import { essentialPx, FULL_ZOOM } from "./index-card-node";
 import { LAYOUT } from "./layout";
 import { Pushpin } from "./pushpin";
 
-// `animate`: the thread arrived after the board loaded, so it is drawn in. `retract`: its clue_explained row
-// arrived after the board loaded, so the suspicion yarn is pulled back; otherwise an explained thread shows
-// only its fact line.
-export type YarnEdgeType = Edge<{ thread: BoardThread; animate: boolean; retract: boolean }, "yarn">;
+// `enter`: when this thread's pins press in, its yarn is drawn and its label appears (seconds from mount, from
+// entrance-plan.ts), or null when it is simply on the wall. `retract`: its clue_explained row arrived after the
+// board loaded, so the suspicion yarn is pulled back; otherwise an explained thread shows only its fact line.
+export type YarnEdgeType = Edge<{ thread: BoardThread; enter: ThreadEnter | null; retract: boolean }, "yarn">;
 
 const INSET = 6; // yarn ends this far inside a card's edge, under its pin: inside the card's margin, clear of text
 
@@ -90,7 +92,8 @@ function placeLabel(at: (u: number) => { x: number; y: number }, drop: number, t
   return { text: texts[texts.length - 1], x: p.x, y: p.y + drop };
 }
 
-const DRAW_S = 0.7;
+const DRAW_S = 0.7; // pulling the yarn back when a check explains it (clue_explained): slower than drawing it in, on purpose
+const RETRACT = { duration: DRAW_S, ease: "easeInOut" } as const;
 
 function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const a = useInternalNode(source);
@@ -99,15 +102,22 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const zoom = useStore((st) => Math.round(st.transform[2] * 40) / 40);
   const px = tagPx(zoom);
   const reduce = useReducedMotion();
-  if (!a || !b || !data) return null;
-  const { thread, animate, retract } = data;
+  // wait until both cards are measured: before that the yarn would be drawn along a guessed path and jump
+  if (!a || !b || !data || !a.measured.width || !b.measured.width) return null;
+  const { thread, retract } = data;
+  const enter = reduce ? null : data.enter; // reduced motion shows the finished board at once
   const explained = thread.explained;
   const { s, t } = endpoints(a, b);
   const { path, at } = yarnPath(s.x, s.y, t.x, t.y);
   const shadow = yarnPath(s.x + 2, s.y + 4, t.x + 2, t.y + 4).path;
   const w = threadWidth(thread.weight);
-  const drawIn = animate && !reduce;
+  const drawIn = !!enter;
+  // drawing in follows the plan; pulling back after an explanation keeps its own, slower timing
+  const drawTransition = enter ? { duration: ENTRANCE.yarnMs / 1000, delay: enter.yarn, ease: EASE_OUT } : RETRACT;
+  const pathTransition = explained ? RETRACT : drawTransition;
   const pullBack = retract && !reduce;
+  const maskId = `reveal-${id.replace(/[^\w-]/g, "_")}`;
+  const revealFact = !!enter && !pullBack; // an explained thread on the wall draws its dashed fact line in, along the same curve
   const showSuspicion = !explained || pullBack;
   // The tag hangs off the thread clear of every card; a short text when the full one won't fit (details in the panel).
   const name = sharedLabel(thread.kind); // what the two loans share, in words; the weight is in the details panel
@@ -123,9 +133,27 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
 
       {selected && <path d={path} fill="none" stroke="rgb(240 194 126 / 0.45)" strokeWidth={w + 10} strokeLinecap="round" />}
 
+      {explained && revealFact && (
+        <defs>
+          <mask id={maskId} maskUnits="userSpaceOnUse" x={-20000} y={-20000} width={40000} height={40000}>
+            <motion.path
+              d={path}
+              fill="none"
+              stroke="#fff"
+              strokeWidth={14}
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={drawTransition}
+            />
+          </mask>
+        </defs>
+      )}
+
       {/* the fact stays on the board after an explanation: a pale dashed line */}
       {explained && (
         <motion.path
+          mask={revealFact ? `url(#${maskId})` : undefined}
           d={path}
           fill="none"
           stroke="rgb(214 228 196 / 0.85)"
@@ -154,7 +182,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             strokeLinecap="round"
             initial={drawIn ? { pathLength: 0 } : false}
             animate={{ pathLength: explained ? 0 : 1 }}
-            transition={{ duration: DRAW_S, ease: "easeInOut" }}
+            transition={pathTransition}
           />
           <motion.path
             d={path}
@@ -164,7 +192,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             strokeLinecap="round"
             initial={drawIn ? { pathLength: 0 } : false}
             animate={{ pathLength: explained ? 0 : 1 }}
-            transition={{ duration: DRAW_S, ease: "easeInOut" }}
+            transition={pathTransition}
           />
           {/* fibre twist */}
           <motion.path
@@ -176,7 +204,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             strokeLinecap="round"
             initial={drawIn ? { pathLength: 0 } : false}
             animate={{ pathLength: explained ? 0 : 1 }}
-            transition={{ duration: DRAW_S, ease: "easeInOut" }}
+            transition={pathTransition}
           />
         </motion.g>
       )}
@@ -191,7 +219,9 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             style={{ transform: `translate(-50%, -62%) translate(${p.x}px, ${p.y}px)`, zIndex: 1002 }}
           >
             {/* suspicion is tied with red; an explained thread (a fact only) with brass */}
-            <Pushpin color={explained ? "brass" : "red"} size={15} />
+            <PinPop delay={enter?.pins}>
+              <Pushpin color={explained ? "brass" : "red"} size={15} />
+            </PinPop>
           </div>
         ))}
         {/* positioned by a plain wrapper: Motion owns the transform of the element it animates */}
@@ -199,20 +229,23 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
           className="nodrag nopan pointer-events-none absolute"
           style={{ transform: `translate(-50%, -50%) translate(${tag.x}px, ${tag.y}px)`, zIndex: 1001 }}
         >
-          <motion.span
-            className={`relative block whitespace-nowrap px-[1.1em] py-[0.2em] font-medium text-walnut shadow-[0_2px_4px_rgb(0_0_0/0.35)] ${
-              explained ? "bg-[#e3ecd6]" : "bg-[#fbf6e6]"
-            }`}
-            style={{ fontSize: px, rotate: explained ? "1deg" : "-1.5deg" }}
-            initial={drawIn ? { opacity: 0, y: -4 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: drawIn ? DRAW_S : 0, duration: 0.3 }}
-          >
-            {/* a strip of tape across each end holds the label onto the thread */}
-            <span aria-hidden className="tape absolute -left-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 -rotate-12" />
-            <span aria-hidden className="tape absolute -right-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 rotate-12" />
-            {tag.text}
-          </motion.span>
+          {/* the tilt sits on a plain element so the label's own transform is free for its reveal */}
+          <div style={{ rotate: explained ? "1deg" : "-1.5deg" }}>
+            <motion.span
+              className={`relative block whitespace-nowrap px-[1.1em] py-[0.2em] font-medium text-walnut shadow-[0_2px_4px_rgb(0_0_0/0.35)] ${
+                explained ? "bg-[#e3ecd6]" : "bg-[#fbf6e6]"
+              }`}
+              style={{ fontSize: px }}
+              initial={enter ? { opacity: 0, transform: "translateY(-4px)" } : false}
+              animate={{ opacity: 1, transform: "translateY(0px)" }}
+              transition={enter ? { duration: ENTRANCE.labelMs / 1000, delay: enter.label, ease: EASE_OUT } : { duration: 0 }}
+            >
+              {/* a strip of tape across each end holds the label onto the thread */}
+              <span aria-hidden className="tape absolute -left-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 -rotate-12" />
+              <span aria-hidden className="tape absolute -right-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 rotate-12" />
+              {tag.text}
+            </motion.span>
+          </div>
         </div>
       </EdgeLabelRenderer>
     </>

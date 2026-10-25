@@ -1,12 +1,15 @@
 "use client";
 
 import { ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
+import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { loanName, sharedLabel, type BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
+import { EMPTY_PLAN, planBoardEntrance } from "./entrance-plan";
 import { cardFinding, IndexCardNode, type IndexCardNodeType } from "./index-card-node";
 import { layoutBoard } from "./layout";
+import type { BoardEntry } from "./use-run-events";
 import { YarnEdge, type YarnEdgeType } from "./yarn-edge";
 
 export type Selection = { kind: "card" | "thread"; id: string } | null;
@@ -26,6 +29,7 @@ export function Corkboard({
   focusRequest,
   onCases,
   caseHref,
+  entry = null,
 }: {
   board: BoardState;
   animateAfterSeq: number;
@@ -34,6 +38,7 @@ export function Corkboard({
   focusRequest?: CardFocusRequest | null;
   onCases?: (cases: BoardCase[], activeCase: number | null) => void; // for the room's status plaque
   caseHref?: (leadId: string) => string; // where a case's "Case details" button goes (the dashboard)
+  entry?: BoardEntry | null; // the board was just entered: lay the recorded evidence out again (once per entry)
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
@@ -41,6 +46,20 @@ export function Corkboard({
   const [showSeq, setShowSeq] = useState(false); // debug: show each card's event seq on its face
 
   const layout = useMemo(() => layoutBoard(board.cards, board.threads), [board.cards, board.threads]);
+
+  // Paper → Pin → Thread (entrance-plan.ts). Two triggers share one plan: entering the board lays out what is
+  // already recorded, staggered; a live row animates only what it added. The plan is read when a card or thread
+  // first mounts and never again, so a card already on the wall is not touched by later rows, by a zoom, or by a
+  // panel opening. Reduced motion plans nothing: the finished board is shown at once.
+  const reduce = useReducedMotion();
+  const entered = useRef<BoardEntry | null>(null); // the entry already laid out, so a rebuild of the same board doesn't replay it
+  const plan = useMemo(
+    () =>
+      reduce
+        ? EMPTY_PLAN
+        : planBoardEntrance({ cards: board.cards, threads: board.threads }, { animateAfterSeq, entrySeq: entry && entered.current !== entry ? entry.seq : null }),
+    [board.cards, board.threads, animateAfterSeq, entry, reduce],
+  );
 
   // Cases in the order they were opened, each named by its lead (the first card of the case).
   const cases = useMemo<BoardCase[]>(() => {
@@ -79,11 +98,18 @@ export function Corkboard({
           position,
           zIndex: lead ? 2 : 1,
           ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${loanName(card.id)} (ID ${card.id})${finding ? `: ${finding.text}` : ""}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
-          data: { card, lead, showSeq, finding, animate: card.firstSeq > animateAfterSeq, detailHref: lead && caseHref ? caseHref(card.id) : null },
+          data: {
+            card,
+            lead,
+            showSeq,
+            finding,
+            enter: old ? (old.data.enter ?? null) : (plan.cards.get(card.id) ?? null),
+            detailHref: lead && caseHref ? caseHref(card.id) : null,
+          },
         };
       }),
     );
-  }, [board.cards, board.threads, layout, animateAfterSeq, showSeq, caseHref, setNodes]);
+  }, [board.cards, board.threads, layout, plan, showSeq, caseHref, setNodes]);
 
   useEffect(() => {
     setEdges((prev) =>
@@ -100,13 +126,18 @@ export function Corkboard({
           targetHandle: "pin-in",
           data: {
             thread,
-            animate: thread.firstSeq > animateAfterSeq,
+            enter: old ? (old.data?.enter ?? null) : (plan.threads.get(thread.id) ?? null),
             retract: !!thread.explained && thread.explained.seq > animateAfterSeq,
           },
         };
       }),
     );
-  }, [board.threads, animateAfterSeq, setEdges]);
+  }, [board.threads, animateAfterSeq, plan, setEdges]);
+
+  // After both effects above have read the plan: this entry has been laid out.
+  useEffect(() => {
+    entered.current = entry;
+  }, [entry]);
 
   const handleSelection = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) =>

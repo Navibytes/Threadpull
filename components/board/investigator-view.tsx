@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
-import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed } from "@/lib/events";
+import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed, type RunEventFeed } from "@/lib/events";
 import { useRouter } from "next/navigation";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
@@ -26,12 +26,15 @@ import { dashboardHref } from "@/lib/dashboard/links";
 // evidence inspector or Hazel's notebook from the right, over the board, instead of splitting the room.
 // With ?run=<run_id> and Supabase configured, the board follows that run's event rows (history, then
 // Realtime). Otherwise it shows the fixture board.
-export function InvestigatorView({ runId, scenario }: { runId?: string; scenario?: string }) {
+export function InvestigatorView({ runId, scenario, feed: given }: { runId?: string; scenario?: string; feed?: RunEventFeed }) {
   const router = useRouter();
   const sc = useMemo(() => scenarioById(scenario), [scenario]); // the sample situation, when no run is given
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
-  const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed(sc.events, scenarioRunId(sc))), [runId, client, sc]);
-  const { board, errors, animateAfterSeq } = useRunEvents(feed);
+  const feed = useMemo(
+    () => given ?? (runId && client ? supabaseFeed(client, runId) : previewFeed(sc.events, scenarioRunId(sc))),
+    [given, runId, client, sc],
+  );
+  const { board, errors, animateAfterSeq, entry } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
   const [selection, setSelection] = useState<Selection>(null);
@@ -178,6 +181,7 @@ export function InvestigatorView({ runId, scenario }: { runId?: string; scenario
                   focusRequest={focusRequest}
                   onCases={onCases}
                   caseHref={caseHref}
+                  entry={entry}
                 />
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
