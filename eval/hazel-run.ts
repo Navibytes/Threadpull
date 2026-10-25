@@ -43,7 +43,7 @@ mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "run.json"), JSON.stringify({ run_id: runId, spec: args.spec, seed: gen.seed, crs: args.crs,
   crs_note: args.crs === "recorded" ? "real sandbox responses recorded 2026-10-24, replayed" : "live sandbox", started_at: new Date().toISOString() }, null, 1) + "\n");
 const sink = jsonlSink(join(dir, "events.jsonl"));
-const out = await runHazel({ runId, loans: gen.normalized, reference: loadReference(gen.outDir), anthropic: new Anthropic(), crs,
+const out = await runHazel({ runId, loans: gen.normalized, seed: gen.seed, reference: loadReference(gen.outDir), anthropic: new Anthropic(), crs,
   rules: new MemoryRuleStore(), budget: Number(args.budget), sinks: [sink], trace });
 
 // ---------------------------------------------------------------- measured against the answer key

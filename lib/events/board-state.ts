@@ -1,7 +1,7 @@
 // Pure reduction of a run's event rows into what the corkboard draws. Same rows in, same board out,
 // so a refresh or a replay reproduces the board exactly. Rows already applied (seq <= lastSeq) are ignored.
 import { ClueExplainedResultSchema } from "@/lib/contracts/event";
-import type { EventType, LoanStatus, RunEvent, SourceRef } from "./types";
+import { LOAN_STATUSES, type EventType, type LoanStatus, type RunEvent, type SourceRef } from "./types";
 
 export type BoardCard = {
   id: string;
@@ -106,6 +106,17 @@ export function applyEvent(state: BoardState, e: RunEvent): BoardState {
       explained: threads.find((t) => t.id === id)?.explained ?? null,
     };
     threads = threads.some((t) => t.id === id) ? threads.map((t) => (t.id === id ? thread : t)) : [...threads, thread];
+  }
+
+  // A closed lead's status, decided by code (close_lead). Only an exact status word changes the card; a loan not
+  // yet on the board is pinned, since a decision about it is part of the run.
+  if (e.type === "status_changed") {
+    const status = LOAN_STATUSES.find((s) => s === e.result.status);
+    if (status)
+      for (const id of e.loan_ids) {
+        cards = pinCard(cards, id, e);
+        cards = cards.map((c) => (c.id === id ? { ...c, status } : c));
+      }
   }
 
   // Only the agreed payload takes a thread down; anything else is kept in the log and changes nothing.
