@@ -142,22 +142,19 @@ export function UploadDesk() {
         <div className="lg:col-span-2">
           {state.kind === "done" && (
             <IntakeReportView name={state.name} report={state.report} saved={state.saved} headingRef={result}
-              actions={<>
-                {state.saved ? <BudgetChoice budget={budget} onChange={setBudget} disabled={starting} /> : null}
-                {state.saved ? (
-                  <button type="button" className={s.paperButton} onClick={() => void investigate(state.report.tape_id)} disabled={starting}>
-                    {starting ? "Starting the investigation…" : `Investigate these ${state.report.accepted.toLocaleString("en-US")} loans`}
-                  </button>) : null}
+              actions={state.saved ? (
+                <InvestigatePanel loans={state.report.accepted} budget={budget} onBudget={setBudget} starting={starting}
+                  onInvestigate={() => void investigate(state.report.tape_id)} onAnother={() => { setRunError(null); setState({ kind: "idle" }); }}
+                  passcode={needCode ? (
+                    <label className="block text-sm font-medium text-walnut">Passcode for live runs (the team has it)
+                      <input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off"
+                        onKeyDown={(e) => { if (e.key === "Enter" && state.kind === "done") void investigate(state.report.tape_id); }}
+                        className="ml-2 rounded-sm border border-walnut/30 bg-paper px-2 py-1 text-sm" />
+                    </label>) : null}
+                  error={runError} />
+              ) : (
                 <button type="button" className={s.paperButton} onClick={() => { setRunError(null); setState({ kind: "idle" }); }}>Upload another tape</button>
-                {state.saved ? <p className="basis-full text-sm opacity-80">Hazel runs live on the CRS sandbox and Claude, within a {budget}-acorn budget; the board shows each step, and the CRO screen the decisions.</p> : null}
-                {state.saved && needCode ? (
-                  <label className="basis-full text-sm">Passcode for live runs (the team has it)
-                    <input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off"
-                      onKeyDown={(e) => { if (e.key === "Enter" && state.kind === "done") void investigate(state.report.tape_id); }}
-                      className="ml-2 rounded-sm border border-walnut/30 bg-paper px-2 py-1 text-sm" />
-                  </label>) : null}
-                {runError ? <p role="alert" className="basis-full text-sm text-red-700">{runError}</p> : null}
-              </>} />
+              )} />
           )}
           {state.kind === "failed" && (
             <div className={`${u.failure} panel-paper worn-0`} role="alert">
@@ -172,30 +169,54 @@ export function UploadDesk() {
   );
 }
 
-// How many acorns the run may spend. Code enforces it (lib/ledger.ts); Hazel can't raise it. Our measured results are
-// all at 60, so the page says so rather than promising the same at another budget.
-const BUDGET_NOTES: Record<number, string> = {
-  30: "Half the usual budget. In the proof runs the ring was complete by 14 and 17 acorns, but with less left for checking the largest balances. Not measured at 30.",
-  60: "The budget every measured result on this site was run with.",
-  120: "More left for checking the largest balances once the threads run out. Not measured at 120; takes longer.",
+// Starting the run: how many acorns it may spend, then Investigate. Code enforces the budget (lib/ledger.ts); Hazel
+// can't raise it. Every measured result on this site was run with 60, so the other two say they are not measured.
+const BUDGET_CHOICES: Record<number, { name: string; line: string; measured?: true }> = {
+  30: { name: "Tight", line: "Less left for checking the largest balances once the threads run out." },
+  60: { name: "Standard", line: "The budget every measured result on this site was run with.", measured: true },
+  120: { name: "Thorough", line: "More of the largest balances checked once the threads run out. Takes longer." },
 };
 
-function BudgetChoice({ budget, onChange, disabled }: { budget: number; onChange: (n: number) => void; disabled: boolean }) {
+function InvestigatePanel({ loans, budget, onBudget, starting, onInvestigate, onAnother, passcode, error }: {
+  loans: number; budget: number; onBudget: (n: number) => void; starting: boolean;
+  onInvestigate: () => void; onAnother: () => void; passcode: ReactNode; error: string | null;
+}) {
   return (
-    <fieldset className="basis-full text-sm text-walnut" disabled={disabled}>
-      <legend className="font-medium">Verification budget</legend>
-      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="flex overflow-hidden rounded-sm border border-walnut/35">
-          {RUN_BUDGETS.map((n) => (
-            <label key={n} className={`cursor-pointer px-3 py-1.5 tabular-nums has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-amber ${budget === n ? "bg-walnut font-semibold text-white" : "bg-paper text-walnut hover:bg-white"}`}>
-              <input type="radio" name="run-budget" value={n} checked={budget === n} onChange={() => onChange(n)} className="sr-only" />
-              {n} acorns
-            </label>
-          ))}
-        </span>
-        <span className="text-walnut/85">{BUDGET_NOTES[budget]} One loan through all four CRS checks costs 12 acorns.</span>
-      </span>
-    </fieldset>
+    <div className="w-full">
+      <fieldset disabled={starting}>
+        <legend className="font-display text-xl font-semibold text-walnut">How much may Hazel spend on checks?</legend>
+        <p className="mt-1 max-w-2xl text-sm text-walnut/85">
+          Acorns are Threadpull&apos;s unit for checking cost: one loan through all four CRS checks costs 12. The limit is
+          enforced in code, and Hazel can&apos;t raise it.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {RUN_BUDGETS.map((n) => {
+            const c = BUDGET_CHOICES[n], on = budget === n;
+            return (
+              <label key={n} className={`relative flex cursor-pointer flex-col rounded-sm border p-3 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-walnut ${on ? "border-walnut bg-walnut/[0.07] shadow-[inset_0_0_0_1px_var(--color-walnut)]" : "border-walnut/30 bg-paper hover:border-walnut/60"}`}>
+                <input type="radio" name="run-budget" value={n} checked={on} onChange={() => onBudget(n)} className="sr-only" />
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="font-display text-2xl font-semibold tabular-nums text-walnut">{n}<span className="ml-1 font-sans text-sm font-medium">acorns</span></span>
+                  <span aria-hidden className={`size-4 shrink-0 rounded-full border-2 ${on ? "border-walnut bg-walnut shadow-[inset_0_0_0_2px_#fbf6ea]" : "border-walnut/40"}`} />
+                </span>
+                <span className="mt-1 text-sm font-semibold text-walnut">{c.name}{c.measured ? " · measured" : " · not measured"}</span>
+                <span className="mt-1 text-sm leading-snug text-walnut/85">{c.line}</span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <button type="button" className={`brass-plate ${s.brass}`} onClick={onInvestigate} disabled={starting}>
+          {starting ? "Starting the investigation…" : `Investigate these ${loans.toLocaleString("en-US")} loans · ${budget} acorns`}
+        </button>
+        <button type="button" className={u.textLink} onClick={onAnother}>Upload another tape</button>
+      </div>
+      <p className="mt-2 text-sm text-walnut/80">Runs live on Claude and the CRS sandbox. The board shows each step as it happens; the CRO screen shows the decisions.</p>
+      {passcode ? <div className="mt-3">{passcode}</div> : null}
+      {error ? <p role="alert" className="mt-2 text-sm text-red-700">{error}</p> : null}
+    </div>
   );
 }
 
