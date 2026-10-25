@@ -11,10 +11,12 @@
 
 **Update (Sat 23:05, checked against `main`):** Unblocked since this was written: all CRS tools are in the loop (PR #29), runs reach Supabase (PR #28), and the freeze tooling exists (`bun run freeze:check`, PR #30). Open: `eval/baseline.ts`, `eval/evaluate.ts`, then one seed-13 run and one seed-99 run after `detector-frozen`, and the generated `docs/PROOF.md`.
 
+**Update (Sun 00:40, checked against `main`):** Evaluator built (A, this PR): `eval/baselines.ts` (check everything; fixed rules at 60 acorns) and `bun run eval --run <run_id>` scoring Hazel's recorded rows and both baselines against the answer key; `--write` updates PROOF.md only on frozen detection code. Pre-freeze measurement on `r13-20261025T072822`, live CRS (not a proof result): Hazel 6 of 6 ring, 0 innocents flagged, 10 acorns, 3 CRS calls; fixed rules 6 of 6, 4 innocents flagged (the apartment twins and the spouses), 60 acorns; check everything 3 of 6 (background ring members have no bureau file), 234 acorns, 80 CRS calls. Open: the freeze, then one seed 13 and one seed 99 run, then `bun run eval --run <id> --write` for each.
+
 - [x] A Python fixed-checklist runner exists in `backend/baseline.py` and shares the Python Hazel tool boundary and budget.
 - [x] Python proof helpers calculate the requested metrics from event records and an answer key, and can render a guarded comparison table (`backend/proof.py`).
-- [ ] Implement the authoritative TypeScript baseline in `eval/baseline.ts`, using the final production tool set and same budget as Hazel.
-- [ ] Implement `eval/evaluate.ts` as the only runtime code that reads generated answer keys; calculate ring members found, innocents left flagged, unnecessary escalations, acorns, questions, runtime, and full-check cost.
+- [x] Implement the authoritative TypeScript baseline in `eval/baseline.ts`, using the final production tool set and same budget as Hazel. (Built as `eval/baselines.ts`: fixed rules and check everything.)
+- [x] Implement `eval/evaluate.ts` as the only runtime code that reads generated answer keys; calculate ring members found, innocents left flagged, unnecessary escalations, acorns, questions, runtime, and full-check cost.
 - [ ] Run seed 13 and the held-out seed exactly once after `detector-frozen`; record commit hashes and simulated-call labels.
 - [ ] Generate `docs/PROOF.md` from those records, with no hand-entered measurements.
 

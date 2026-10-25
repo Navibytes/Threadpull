@@ -13,6 +13,8 @@
 
 **Update (Sat 23:35, checked against `main`):** The demo needs a fresh recorded run: the current one (`r13-20261025T053505`) has no falling thread and no seed on `run_started` (it predates PRs #26, #34, #35). D to rerun with `bun run hazel`; the board plays it at `/?run=<run_id>`.
 
+**Update (Sun 00:40, checked against `main`):** Demo run: `r13-20261025T072822` has every demo moment except R-001 (the falling thread, the refused pay stub, the CRO screen). Open: `bun run demo` / replay.
+
 - [ ] `bun run demo` generates seed 13, runs Hazel (live, or replay of the recorded best run) and opens the board; it works three times in a row.
 - [ ] Replay reproduces the same events in order, with adjustable speed.
 - [ ] A seed picker starts a live run on any seed and falls back to replay, clearly labeled, if CRS is unavailable.
