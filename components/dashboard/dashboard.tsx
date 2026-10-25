@@ -231,7 +231,7 @@ function Notices({ sample, m, events, loans, retry }: { sample: boolean; m: RunM
 // notes open underneath; nothing here is anything the run's own figures don't say.
 function Finding({ brief, notes, events, boardHref, sample }: { brief: Briefing | null; notes: CaseNotes | null; events: Load<unknown>; boardHref: string; sample: boolean }) {
   return (
-    <section aria-labelledby="finding-title" className="dash-finding relative mt-8 overflow-hidden px-6 pb-5 pt-5 min-[760px]:min-h-[14rem] min-[760px]:pr-[14.5rem]">
+    <section aria-labelledby="finding-title" className="dash-finding relative mt-16 px-6 pb-5 pt-5 min-[760px]:min-h-[22rem] min-[760px]:pr-[26rem]">
       <p className="dash-eyebrow">Hazel&rsquo;s finding{sample ? " · illustrative sample" : ""}</p>
       {!brief ? (
         <>
@@ -276,7 +276,7 @@ function Finding({ brief, notes, events, boardHref, sample }: { brief: Briefing 
         width={1254}
         height={1254}
         sizes="208px"
-        className="mx-auto mt-4 block h-auto w-40 max-w-full select-none min-[760px]:absolute min-[760px]:bottom-0 min-[760px]:right-5 min-[760px]:mx-0 min-[760px]:mt-0 min-[760px]:w-52"
+        className="relative z-10 mx-auto -mt-16 block h-auto w-40 max-w-full select-none min-[760px]:absolute min-[760px]:-top-16 min-[760px]:bottom-auto min-[760px]:right-3 min-[760px]:mx-0 min-[760px]:mt-0 min-[760px]:w-[25rem] drop-shadow-[0_6px_8px_rgb(0_0_0/0.22)]"
         draggable={false}
       />
     </section>
