@@ -36,6 +36,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
       <SiteHeader nav={SITE_NAV(true)} />
       <main id="main">
         <Hero />
+        <Problem />
         <Promises />
         <HowItWorks />
         <Results />
@@ -82,6 +83,65 @@ function Hero() {
         <CaseBoard />
       </div>
       </div>
+    </section>
+  );
+}
+
+// The problem, in sourced numbers only. Every figure is quoted from the Point Predictive release (April 8, 2026); the
+// due-diligence line is quoted from OCC Bulletin 2020-81. Exposure estimates, not confirmed losses, and labelled so.
+const PP_URL = "https://pointpredictive.com/press-releases/point-predictive-releases-2026-auto-lending-fraud-trends-report-fraud-exposure-reaches-record-10-4-billion/";
+const OCC_URL = "https://www.occ.gov/news-issuances/bulletins/2020/bulletin-2020-81.html";
+const FACTS: { n: string; what: string; why: string; tilt: number }[] = [
+  { n: "69%", what: "of exposure is first-party fraud: borrowers or dealers misrepresenting information", why: "Asking \u201cis this a real person?\u201d misses most of it.", tilt: -1 },
+  { n: "45%", what: "comes from income and employment misrepresentation, up 21% year over year", why: "Pay stubs have to be examined, not trusted.", tilt: 0.8 },
+  { n: "67%", what: "growth in bust-out fraud over five years", why: "Organised fraud is connected, so we follow the links between loans.", tilt: -0.6 },
+  { n: ">70%", what: "of early payment defaults contain evidence of origination fraud", why: "It shows up as losses soon after a portfolio is bought.", tilt: 1.1 },
+];
+
+function Problem() {
+  return (
+    <section id="problem" aria-labelledby="problem-title" className={`${s.gutter} scroll-mt-24 pb-24`}>
+      <div className={`${s.reveal} max-w-3xl`}>
+        <p className={s.kicker}>The problem</p>
+        <h2 id="problem-title" className={`${s.sectionTitle} mt-3`}>
+          Auto-lending fraud exposure hit a record <span className="text-[#7c3a26]">$10.4&nbsp;billion</span>.
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed">
+          Up from $9.2 billion a year earlier, and most of it hides inside applications that look fine. A bank that buys a
+          portfolio inherits that risk without having seen how the loans were made.
+        </p>
+      </div>
+      <ul className="mt-12 grid list-none gap-8 p-0 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        {FACTS.map((f) => (
+          <li key={f.n} className={`${s.sheet} ${s.reveal} min-w-0 !px-5 !pt-7 !pb-5`} style={v({ "--tilt": `${f.tilt}deg` })}>
+            <span className={`tape ${s.sheetTape}`} aria-hidden />
+            <p className="font-display text-[2.6rem] font-semibold leading-none tabular-nums text-[#7c3a26]">{f.n}</p>
+            <p className="mt-2 leading-snug">{f.what}</p>
+            <p className="mt-3 border-t border-walnut/20 pt-3 font-hand text-[1.35rem] leading-tight text-walnut/90">{f.why}</p>
+          </li>
+        ))}
+      </ul>
+      <div className={`${s.reveal} mt-12 grid gap-8 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-start`}>
+        <div>
+          <h3 className="font-display text-xl font-semibold">What a buying bank struggles with</h3>
+          <ol className="mt-3 grid list-decimal gap-2 pl-5 leading-relaxed">
+            <li><strong>Hidden risk.</strong> Bad loans sit among thousands of normal-looking ones, and rings spread across many borrowers.</li>
+            <li><strong>Costly checking.</strong> Every deep check on every loan wastes money; checking too little misses the ring.</li>
+            <li><strong>A weak negotiating position.</strong> Without evidence, the buyer can&apos;t justify excluding loans, lowering the price or asking the seller for protections.</li>
+          </ol>
+        </div>
+        <blockquote className="sticky-note m-0 rotate-[0.8deg] px-6 pt-6 pb-5 shadow-[0_14px_20px_-12px_rgb(0_0_0/0.45)]">
+          <p className="font-hand text-[1.7rem] leading-[1.15] text-[#3a2a1d]">&ldquo;A bank should perform due diligence before purchasing loans.&rdquo;</p>
+          <footer className="mt-2 text-sm text-walnut/85">
+            OCC Bulletin 2020-81, <a href={OCC_URL} className="font-semibold underline underline-offset-2">Risk Management of Loan Purchase Activities</a> (2020)
+          </footer>
+        </blockquote>
+      </div>
+      <p className={`${s.reveal} mt-8 max-w-3xl text-sm leading-relaxed text-walnut/85`}>
+        Industry estimates of fraud exposure, not confirmed losses. Source:{" "}
+        <a href={PP_URL} className="font-semibold underline underline-offset-2">Point Predictive, 2026 Auto Lending Fraud Trends Report</a>{" "}
+        (April 8, 2026), which also notes that fraudsters now generate synthetic pay stubs with AI.
+      </p>
     </section>
   );
 }
