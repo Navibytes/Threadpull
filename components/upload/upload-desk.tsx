@@ -10,7 +10,7 @@ import { replayIntroNextTime } from "@/components/board/intro-seen";
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { IntakeReportView } from "./intake-report";
 import { JSON_SAMPLE_URL, PLANTED, sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
-import { MAX_SAMPLE_SEED, SAMPLE_SIZES, sampleName, sampleProblem, sampleUrl } from "@/lib/ingest/sample";
+import { MAX_SAMPLE_LOANS, MAX_SAMPLE_SEED, MIN_SAMPLE_LOANS, SAMPLE_SIZES, sampleName, sampleProblem, sampleUrl } from "@/lib/ingest/sample";
 import { DEFAULT_RUN_BUDGET, RUN_BUDGETS } from "@/lib/runs/budgets";
 import s from "@/components/landing/landing.module.css";
 import u from "./upload.module.css";
@@ -236,9 +236,9 @@ function Option({ title, meta, children, actions }: { title: string; meta: strin
 
 function TryOurs({ busy, onUse }: { busy: boolean; onUse: (url: string, name: string) => void }) {
   const [seedText, setSeedText] = useState("4242");
-  const [loans, setLoans] = useState<number>(SAMPLE_SIZES[1]);
-  const seed = Number(seedText);
-  const problem = seedText === "" ? "enter a seed" : sampleProblem(seed, loans);
+  const [loansText, setLoansText] = useState(String(SAMPLE_SIZES[1]));
+  const seed = Number(seedText), loans = Number(loansText);
+  const problem = seedText === "" ? "enter a seed" : loansText === "" ? "enter a number of loans" : sampleProblem(seed, loans);
   const roll = () => setSeedText(String(1 + Math.floor(Math.random() * MAX_SAMPLE_SEED)));
   const own = { seed, loans };
   return (
@@ -254,7 +254,7 @@ function TryOurs({ busy, onUse }: { busy: boolean; onUse: (url: string, name: st
           Seed 13, the portfolio we built Threadpull on. Planted in it: {PLANTED}.
         </Option>
 
-        <Option title="2. A new portfolio from your seed" meta="300 to 1,000 loans · JSON"
+        <Option title="2. A new portfolio from your seed" meta={`${MIN_SAMPLE_LOANS} to ${MAX_SAMPLE_LOANS.toLocaleString("en-US")} loans · JSON`}
           actions={<>
             <label className="text-sm font-medium text-walnut">Seed
               <span className="mt-1 flex gap-1.5">
@@ -264,17 +264,19 @@ function TryOurs({ busy, onUse }: { busy: boolean; onUse: (url: string, name: st
                 <button type="button" onClick={roll} className="rounded-sm border border-walnut/35 bg-paper px-2.5 text-sm font-semibold text-walnut hover:bg-white">Random</button>
               </span>
             </label>
-            <fieldset className="text-sm font-medium text-walnut">
-              <legend>Loans</legend>
-              <span className="mt-1 flex overflow-hidden rounded-sm border border-walnut/35">
+            <label className="text-sm font-medium text-walnut">Loans ({MIN_SAMPLE_LOANS} to {MAX_SAMPLE_LOANS.toLocaleString("en-US")})
+              <span className="mt-1 flex gap-1.5">
+                <input inputMode="numeric" value={loansText} onChange={(e) => setLoansText(e.target.value.replace(/[^0-9]/g, "").replace(/^0+/, "").slice(0, 4))}
+                  aria-invalid={problem !== null} aria-describedby="seed-help"
+                  className="block w-20 rounded-sm border border-walnut/35 bg-paper px-2 py-1.5 tabular-nums" />
                 {SAMPLE_SIZES.map((n) => (
-                  <label key={n} className={`cursor-pointer px-3 py-1.5 tabular-nums has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-amber ${loans === n ? "bg-walnut font-semibold text-white" : "bg-paper text-walnut hover:bg-white"}`}>
-                    <input type="radio" name="sample-loans" value={n} checked={loans === n} onChange={() => setLoans(n)} className="sr-only" />
+                  <button key={n} type="button" onClick={() => setLoansText(String(n))} aria-label={`${n} loans`}
+                    className={`rounded-sm border px-2 text-sm tabular-nums ${loans === n ? "border-walnut bg-walnut font-semibold text-white" : "border-walnut/35 bg-paper text-walnut hover:bg-white"}`}>
                     {n.toLocaleString("en-US")}
-                  </label>
+                  </button>
                 ))}
               </span>
-            </fieldset>
+            </label>
             <button type="button" className={s.paperButton} disabled={busy || problem !== null} onClick={() => onUse(sampleUrl(own), sampleName(own))}>Generate and use</button>
             {problem === null ? <a className={u.textLink} href={sampleUrl(own)} download={sampleName(own)}>Download (JSON)</a> : null}
             <p id="seed-help" className={`basis-full text-sm ${problem ? "text-terracotta" : "text-walnut/80"}`}>

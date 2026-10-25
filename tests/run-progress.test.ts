@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 // The board's progress strip reads a run's rows only: phase, budget, counts and time (lib/events/progress.ts).
 import { describe, expect, test } from "bun:test";
 import type { Event } from "@/lib/contracts/event";
@@ -36,6 +38,13 @@ describe("runProgress", () => {
     expect([done.phase, done.stopReason, done.finishedAt! - done.startedAt!]).toEqual(["done", "end_turn", 30_000]);
   });
 
+  test("where the acorns went, on the recorded seed 99 run: leads until the sweep began, then the sweep", () => {
+    const ev = readFileSync(join(import.meta.dir, "..", "demo", "runs", "r99-20261025T102031", "events.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
+    const p = runProgress(ev);
+    expect([p.loans, p.leadAcorns, p.sweepAcorns, p.spotChecks, p.spent]).toEqual([1000, 17, 42, 6, 59]);
+    expect(p.leadAcorns + p.sweepAcorns).toBe(p.spent);
+  });
+
   test("clock", () => {
     expect([clock(0), clock(47_000), clock(66_400), clock(723_000)]).toEqual(["0:00", "0:47", "1:06", "12:03"]);
   });
@@ -51,14 +60,14 @@ describe("the strip renders", () => {
 
   test("a run still going: the full strip, with phases, acorns, counts, time and a Hide button (its last row is old here, so it says it is waiting)", async () => {
     const html = await render([started, lead, investigate, asked, sweep, clean]);
-    for (const s of ["Following leads", "Spot checks", "Done", "<b>12</b> of 60 acorns", "1,000 loans scanned", "1 case opened", "1 spot check",
+    for (const s of ["Following leads", "Spot checks", "Done", "<b>12</b> of 60 acorns", "1,000 loans scored", "1 case opened", "1 spot check",
       "2 decided (1 Investigate)", "1 question waiting", "elapsed", "Waiting for the next step", ">Hide<"]) expect(html).toContain(s);
   });
 
   test("a finished run: folded to one line in the corner (Done, acorns, time, the CRO link, Details), covering no cards", async () => {
     const html = await render([started, lead, investigate, asked, sweep, clean, finished]);
-    for (const s of [">Done<", "12 of 60 acorns", "0:30", "/cro?run=r13-x", ">Details<", "left-3 top-3"]) expect(html).toContain(s);
-    expect(html).not.toContain("loans scanned");
+    for (const s of [">Done<", "all 1,000 loans scored", "3 on leads + 9 on spot checks", "12 of 60 acorns", "0:30", "/cro?run=r13-x", ">Details<", "left-3 top-3"]) expect(html).toContain(s);
+    expect(html).not.toContain("case opened");
   });
 
   test("no rows, no strip", async () => {

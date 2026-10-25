@@ -32,9 +32,9 @@ describe("a judge's sample tape", () => {
   });
 
   test("refuses seeds and sizes it doesn't offer", () => {
-    for (const [s, n] of [[0, 300], [1.5, 300], [1_000_000, 300], [NaN, 300], [5, 200], [5, 2000]])
+    for (const [s, n] of [[0, 300], [1.5, 300], [1_000_000, 300], [NaN, 300], [5, 200], [5, 249], [5, 2001], [5, 300.5]])
       expect(sampleProblem(s, n)).not.toBeNull();
-    expect(sampleProblem(5, 500)).toBeNull();
+    for (const n of [250, 500, 777, 2000]) expect(sampleProblem(5, n)).toBeNull();
   });
 
   test("the route: 200 with a named JSON attachment, 400 for a bad request", async () => {

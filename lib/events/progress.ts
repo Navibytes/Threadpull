@@ -17,6 +17,8 @@ export type RunProgress = {
   spent: number; limit: number | null;
   cases: number; // leads Hazel opened
   spotChecks: number; // loans the sweep opened
+  leadAcorns: number; // spent before the sweep began (on Hazel's leads)
+  sweepAcorns: number; // spent by the sweep on the largest unverified balances
   decided: number; // loans with a status
   flagged: number; // loans whose latest status is Investigate
   questionsWaiting: number;
@@ -29,7 +31,8 @@ export function runProgress(events: readonly RunEvent[]): RunProgress {
   const started = rows.find((e) => e.type === "run_started");
   const finished = rows.find((e) => e.type === "run_finished");
   const opened = rows.filter((e) => e.type === "lead_opened");
-  const spot = opened.filter((e) => e.result?.sweep === true).length;
+  const sweepRows = opened.filter((e) => e.result?.sweep === true);
+  const spot = sweepRows.length;
   const status = new Map<string, string>();
   for (const e of rows) if (e.type === "status_changed" && typeof e.result?.status === "string") for (const id of e.loan_ids) status.set(id, e.result.status);
   const asked = new Set(rows.filter((e) => e.type === "question_asked").map((e) => String(e.result?.question_id ?? e.seq)));
@@ -41,6 +44,9 @@ export function runProgress(events: readonly RunEvent[]): RunProgress {
     loans: typeof loans === "number" ? loans : null,
     spent: last?.budget.spent ?? 0, limit: last?.budget.limit ?? null,
     cases: opened.length - spot, spotChecks: spot,
+    // the first sweep row carries the budget as it stood when the sweep began
+    leadAcorns: sweepRows[0]?.budget.spent ?? (last?.budget.spent ?? 0),
+    sweepAcorns: sweepRows[0] ? (last?.budget.spent ?? 0) - sweepRows[0].budget.spent : 0,
     decided: status.size, flagged: [...status.values()].filter((s) => s === "Investigate").length,
     questionsWaiting: asked.size,
     startedAt: started ? Date.parse(started.ts) : null, finishedAt: finished ? Date.parse(finished.ts) : null,

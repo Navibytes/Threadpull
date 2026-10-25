@@ -24,8 +24,8 @@ Fraud investigator on a bank's portfolio-acquisition due-diligence team.
   - Seed 13 proof run: https://threadpull.vercel.app/board?run=r13-20261025T094302
   - Ask once, remember forever (rule R-001 taking threads down): https://threadpull.vercel.app/board?run=r13-20261025T091630
 - **Measured results:** https://threadpull.vercel.app/#results (and on each proof run's CRO screen).
-- **Pick your own data** (`/upload`): use our 1,000-loan sample, generate a new portfolio from any seed (300, 500 or
-  1,000 loans; the same planted cases, your seed decides everything else), or upload a JSON or CSV tape.
+- **Pick your own data** (`/upload`): use our 1,000-loan sample, generate a new portfolio from any seed (250 to
+  2,000 loans; the same planted cases, your seed decides everything else), or upload a JSON or CSV tape.
 - **Upload a tape → Investigate** runs Hazel live on the CRS sandbox and Claude with a 30, 60 or 120-acorn budget; it
   asks for the team's passcode because it spends real API calls. Ask us at the table. An uploaded tape carries no
   building unit counts or employer headcounts, so a lookalike that needs one of those to be cleared may stay up.
