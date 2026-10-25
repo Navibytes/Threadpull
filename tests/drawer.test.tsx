@@ -127,10 +127,10 @@ describe("drawer rendering", () => {
     expect(html).not.toContain("No matching loans");
   });
 
-  test("loading is announced and preview provenance is visible before data arrives", () => {
+  test("loading is announced before data arrives, with no preview label on screen", () => {
     const html = renderToStaticMarkup(<FilingDrawer source={previewLoanSource} onSelectLoan={() => {}} />);
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Loading loan files");
-    expect(html).toContain("PREVIEW · synthetic loans and example dispositions · not an investigation");
+    expect(html).not.toContain("PREVIEW");
   });
 });

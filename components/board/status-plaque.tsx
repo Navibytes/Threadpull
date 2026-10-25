@@ -43,8 +43,6 @@ export function StatusPlaque({
           <span className="font-semibold text-walnut">
             {budget.spent} of {budget.limit} acorns
           </span>
-        ) : mode === "preview" ? (
-          "not tracked in PREVIEW"
         ) : (
           "not recorded yet"
         )}

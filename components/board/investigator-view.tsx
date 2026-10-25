@@ -5,7 +5,6 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
-import { previewLoanSource } from "@/components/drawer/preview-loan-source";
 import { hazelState, previewFeed, supabaseFeed } from "@/lib/events";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
@@ -23,7 +22,7 @@ import { useRunEvents } from "./use-run-events";
 // status plaque, and a desk ledge below where Hazel stands. The filing drawer opens from the left and the
 // evidence inspector or Hazel's notebook from the right, over the board, instead of splitting the room.
 // With ?run=<run_id> and Supabase configured, the board follows that run's event rows (history, then
-// Realtime). Otherwise it shows the PREVIEW fixture, and says why.
+// Realtime). Otherwise it shows the fixture board.
 export function InvestigatorView({ runId }: { runId?: string }) {
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
   const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
@@ -35,7 +34,6 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   // the panel that is visible. null is the plain board.
   const [open, setOpen] = useState<PanelId | null>(null);
   const [focusPanel, setFocusPanel] = useState(false); // opened from a tab: move focus into the panel
-  const [drawerPreview, setDrawerPreview] = useState(false);
   const [drawerLoanId, setDrawerLoanId] = useState<string | null>(null);
   const [drawerNotice, setDrawerNotice] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<CardFocusRequest | null>(null);
@@ -87,7 +85,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   }, []);
   const selectFromDrawer = (loan: Loan) => {
     setDrawerLoanId(loan.loan_id);
-    const result = resolveDrawerSelection(board, loan.loan_id, drawerPreview ? "preview" : "api");
+    const result = resolveDrawerSelection(board, loan.loan_id, "api");
     setDrawerNotice(result.message);
     if (!result.cardId) return;
     setSelection({ kind: "card", id: result.cardId });
@@ -137,11 +135,6 @@ export function InvestigatorView({ runId }: { runId?: string }) {
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
                 <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />
                 <div className="pointer-events-none absolute left-5 top-5 z-20 max-w-[70%] space-y-2">
-                  {feed.mode === "preview" && (
-                    <p className="w-fit rounded-sm border border-honey bg-paper px-3 py-1.5 text-xs font-medium text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.4)]">
-                      PREVIEW · synthetic fixture · not a live or recorded investigation
-                    </p>
-                  )}
                   {notices.map((n) => (
                     <p
                       key={n}
@@ -156,20 +149,6 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             </div>
 
             <SidePanel id={panelIds.drawer} side="left" title="Filing drawer" open={open === "drawer"} onClose={closeDrawer} focusOnOpen={focusPanel} bottomClear offsetLeft="calc(40px + var(--hazel-w) * 0.87 + 12px - var(--wall))">
-              <div className={styles.drawerControls}>
-                <label className={styles.previewChoice}>
-                  <input
-                    type="checkbox"
-                    checked={drawerPreview}
-                    onChange={(event) => {
-                      setDrawerPreview(event.target.checked);
-                      setDrawerLoanId(null);
-                      setDrawerNotice(null);
-                    }}
-                  />
-                  Synthetic drawer preview
-                </label>
-              </div>
               {drawerNotice && (
                 <p role="status" className={styles.notice}>
                   {drawerNotice}
@@ -177,7 +156,6 @@ export function InvestigatorView({ runId }: { runId?: string }) {
               )}
               <div className={styles.drawerBody}>
                 <FilingDrawer
-                  source={drawerPreview ? previewLoanSource : undefined}
                   selectedLoanId={drawerLoanId}
                   onSelectLoan={selectFromDrawer}
                 />

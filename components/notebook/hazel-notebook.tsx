@@ -35,11 +35,6 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
               {entry.tool && <> · {entry.tool}</>}
               {entry.loanIds.length > 0 && <> · {entry.loanIds.join(", ")}</>}{" "}
               <span className="whitespace-nowrap">· seq {entry.seq}</span>
-              {entry.simulated && (
-                <span className="ml-1.5 rounded-sm bg-honey/25 px-1 py-px text-[10px] font-semibold tracking-[0.08em] text-walnut">
-                  SIMULATED
-                </span>
-              )}
             </p>
           ) : (
             <p className="mt-1 text-xs text-walnut/80">No events yet.</p>
@@ -63,7 +58,7 @@ export function HazelNotebook({ board, mode }: { board: BoardState; mode: FeedMo
           </span>
         ) : (
           <span className="text-walnut/80">
-            {mode === "preview" ? "not tracked in PREVIEW" : "no budget recorded yet"}
+            no budget recorded yet
           </span>
         )}
       </p>

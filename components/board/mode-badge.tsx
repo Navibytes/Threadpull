@@ -19,6 +19,8 @@ const LABEL: Record<FeedMode, { text: string; className: string; title: string }
 };
 
 export function ModeBadge({ mode, runId }: { mode: FeedMode; runId: string }) {
+  // The synthetic fixture carries no label on screen; a recorded or live run shows its own badge.
+  if (mode === "preview") return null;
   const l = LABEL[mode];
   return (
     <span

@@ -169,7 +169,6 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
           )}
 
           <div className="mt-auto flex flex-wrap items-end gap-x-2.5 gap-y-1.5">
-            {card.simulated && <Stamp kind="simulated" px={label} />}
             {crs.length > 0 && <Stamp kind="crs" px={label} detail={full ? crsDetail : undefined} />}
             {showSeq && (
               <span

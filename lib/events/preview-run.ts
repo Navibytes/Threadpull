@@ -31,7 +31,7 @@ export const PREVIEW_EVENTS: RunEvent[] = [
     tool: "inspect_loan",
     result: { loan_id: "PV-01" },
     sources: [{ kind: "row", loan_id: "PV-01", field: "applicant_info" }],
-    note: "Synthetic preview application pinned to show an index card.",
+    note: "Application pinned to show an index card.",
     budget,
     simulated: true,
   },
