@@ -1,0 +1,623 @@
+/* Landing page (docs/DESIGN.md): the same cosy detective's room as the app. Tokens and component classes come
+   from app/globals.css; this file only adds what the landing page needs.
+   Motion rule: every base style is the FINAL state, and keyframes describe the way there. Reduced motion turns
+   the animations off, so it shows the finished board (thread already down) instead of a blank one. */
+
+.page {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  overflow-x: clip;
+}
+
+.gutter {
+  width: min(1200px, 100% - 2rem);
+  margin-inline: auto;
+}
+
+/* ---------- header ---------- */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgb(247 240 200 / 0.86);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgb(74 55 40 / 0.12);
+}
+
+.navLink {
+  position: relative;
+  padding: 0.35rem 0.1rem;
+  color: var(--color-walnut);
+  text-decoration: none;
+}
+.navLink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 1px 2px 1px;
+  background: var(--color-terracotta);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms var(--ease-out);
+}
+.navLink[data-current]::after {
+  transform: scaleX(1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .navLink:hover::after {
+    transform: scaleX(1);
+  }
+}
+.navLink:focus-visible {
+  outline: 2px solid var(--color-terracotta);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* A brass button, the same metal as the app's control plate. */
+.brass {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1.25rem 0.75rem;
+  border-radius: 4px 6px 5px 4px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .brass:hover {
+    transform: translateY(-2px);
+  }
+}
+.brass:active {
+  transform: translateY(1px);
+}
+.brass:focus-visible,
+.paperButton:focus-visible,
+.replay:focus-visible {
+  outline: 3px solid var(--color-walnut);
+  outline-offset: 3px;
+}
+
+/* A paper button: a secondary action on the wall. */
+.paperButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.1rem;
+  color: var(--color-walnut);
+  font-weight: 600;
+  text-decoration: none;
+  background: #fbf6ea;
+  border: 1px solid rgb(74 55 40 / 0.28);
+  border-radius: 3px 5px 4px 3px;
+  box-shadow: 0 3px 0 rgb(74 55 40 / 0.18);
+  transition: transform 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .paperButton:hover {
+    transform: translateY(-2px) rotate(-0.4deg);
+  }
+}
+
+/* ---------- hero ---------- */
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.4rem, 6vw, 4.9rem);
+  font-variation-settings: "SOFT" 60, "WONK" 1;
+}
+.headline > span {
+  display: block;
+}
+/* "Protect the innocent" carries the hand-drawn terracotta underline, the app's active-tab mark. */
+.underlined {
+  position: relative;
+  display: inline-block;
+}
+.underlined::after {
+  content: "";
+  position: absolute;
+  left: 0.04em;
+  right: 0.06em;
+  bottom: 0.02em;
+  height: 0.09em;
+  background: var(--color-terracotta);
+  border-radius: 3px 1px 4px 2px;
+  rotate: -0.6deg;
+  transform-origin: left;
+  animation: underline 700ms var(--ease-out) 600ms both;
+}
+@keyframes underline {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.rise {
+  animation: rise 640ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 80ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* The sticky note above the headline. */
+.note {
+  display: inline-block;
+  padding: 0.35rem 0.8rem 0.25rem;
+  rotate: -2deg;
+  font-family: var(--font-hand);
+  font-size: 1.45rem;
+  line-height: 1.1;
+  color: #3a2a1d;
+  box-shadow: 0 6px 10px -6px rgb(0 0 0 / 0.45);
+}
+
+/* ---------- the case board (hero illustration) ---------- */
+
+/* No clipping box on wide screens: the frame's shadow and Hazel on its corner hang over the wall freely. Only a
+   phone narrower than the board scrolls it sideways, with room inside the scroller for Hazel's overhang. */
+.boardScroll {
+  padding: 1.25rem 0 2.75rem;
+}
+.boardWrap {
+  position: relative;
+}
+@media (max-width: 720px) {
+  .boardScroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1.25rem 0.5rem 4.5rem 2.75rem;
+    margin-inline: -0.5rem;
+    scrollbar-width: thin;
+  }
+  .boardWrap {
+    min-width: 640px;
+  }
+}
+.cork {
+  position: relative;
+  aspect-ratio: 5 / 3;
+  container-type: inline-size;
+  overflow: hidden;
+  border-radius: 3px;
+  background:
+    radial-gradient(ellipse 70% 60% at 40% 0%, rgb(255 206 140 / 0.22), transparent 70%),
+    radial-gradient(ellipse 120% 95% at 50% 45%, transparent 60%, rgb(12 6 2 / 0.4) 100%),
+    url("/assets/detective/cork-dark.webp") center / 520px auto,
+    #6a4426;
+}
+
+.yarn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.thread {
+  fill: none;
+  stroke: #b8342a;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  filter: drop-shadow(0 2px 1.5px rgb(0 0 0 / 0.45));
+  animation: draw 900ms var(--ease-out) both;
+  animation-delay: var(--delay);
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* The thread that falls: drawn like the others, held, then pulled back to its pin and gone. */
+.falling {
+  fill: none;
+  stroke: #b8342a;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 2px 1.5px rgb(0 0 0 / 0.45));
+  animation: fall 4.4s both;
+  animation-delay: var(--delay);
+}
+@keyframes fall {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  22% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  72% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.75, 0.6);
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -1;
+    opacity: 0;
+  }
+}
+/* What's left after it falls: a pale dashed trace, like the app's explained thread. */
+.trace {
+  fill: none;
+  stroke: #f3f1dc;
+  stroke-opacity: 0.9;
+  stroke-linecap: round;
+  stroke-dasharray: 12 12;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.5));
+  animation: appearLate 4.8s both;
+  animation-delay: var(--delay);
+}
+@keyframes appearLate {
+  0%,
+  86% {
+    opacity: 0;
+  }
+}
+
+.card {
+  position: absolute;
+  font-size: 1.95cqw;
+  line-height: 1.3;
+  color: var(--color-walnut);
+  rotate: var(--tilt, 0deg);
+  filter: drop-shadow(0 1.2cqw 1cqw rgb(0 0 0 / 0.5));
+  animation: pin 520ms var(--ease-out) both;
+  animation-delay: var(--delay);
+}
+@keyframes pin {
+  from {
+    opacity: 0;
+    transform: translateY(-1.6cqw) scale(1.02);
+  }
+}
+.cardBody {
+  padding: 1.6cqw 1.8cqw 1.5cqw;
+}
+.cardId {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2.9cqw;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.folderTab {
+  display: inline-block;
+  margin-left: 1.4cqw;
+  padding: 0.5cqw 1.4cqw 0.3cqw;
+  font-size: 1.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.code {
+  font-weight: 600;
+  color: #7c1d14;
+}
+.stamp {
+  display: inline-block;
+  margin-top: 0.9cqw;
+  font-size: 1.5cqw;
+  rotate: -3deg;
+}
+.status {
+  display: inline-block;
+  margin-top: 0.8cqw;
+  padding: 0.2cqw 0.9cqw;
+  font-size: 1.6cqw;
+  font-weight: 600;
+  color: #fffbf4;
+  background: #8e3b2a;
+  border-radius: 2px 3px 2px 3px;
+}
+.pinAt {
+  position: absolute;
+  left: 50%;
+  top: -0.9cqw;
+  translate: -50% 0;
+  width: 3.4cqw;
+  z-index: 2;
+}
+.pinAt svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Labels taped onto the threads (the app does the same). */
+.label {
+  position: absolute;
+  translate: -50% -50%;
+  rotate: var(--tilt, 0deg);
+  padding: 0.5cqw 1.1cqw 0.4cqw;
+  font-size: 1.55cqw;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-walnut);
+  background: #fbf6ea;
+  box-shadow: 0 0.4cqw 0.6cqw rgb(0 0 0 / 0.4);
+  animation: rise 420ms var(--ease-out) both;
+  animation-delay: var(--delay);
+}
+/* The address label is struck through when its thread falls. */
+.labelFalls {
+  text-decoration: line-through;
+  text-decoration-color: rgb(143 166 126 / 0.95);
+  text-decoration-thickness: 0.3cqw;
+  animation: rise 420ms var(--ease-out) both, strike 4.6s step-end both;
+  animation-delay: var(--delay), var(--delay2);
+}
+@keyframes strike {
+  0%,
+  99% {
+    text-decoration-color: transparent;
+  }
+}
+
+/* The sage tag that explains the fall, citing the check. */
+.explained {
+  position: absolute;
+  translate: -50% 0;
+  width: 30cqw;
+  padding: 1cqw 1.4cqw;
+  font-size: 1.6cqw;
+  line-height: 1.3;
+  color: #1f2a17;
+  background: #c9d6b5;
+  border-left: 0.7cqw solid #5f7a4c;
+  box-shadow: 0 0.8cqw 1.2cqw -0.4cqw rgb(0 0 0 / 0.5);
+  rotate: 1.2deg;
+  animation: tagIn 5s both;
+  animation-delay: var(--delay);
+}
+@keyframes tagIn {
+  0%,
+  88% {
+    opacity: 0;
+    transform: translateY(-1cqw);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+/* Hazel on the frame's corner; her pose switches from idle to resolved as the thread falls. */
+.hazel {
+  position: absolute;
+  left: -5%;
+  bottom: -10%;
+  width: 21%;
+  aspect-ratio: 1219 / 1290;
+  pointer-events: none;
+  z-index: 3;
+}
+.hazel img {
+  position: absolute;
+  inset: 0;
+}
+.poseIdle {
+  opacity: 0;
+  animation: poseOut 4.6s both;
+  animation-delay: var(--delay);
+}
+.poseResolved {
+  animation: poseIn 4.6s both;
+  animation-delay: var(--delay);
+}
+@keyframes poseOut {
+  0%,
+  86% {
+    opacity: 1;
+  }
+}
+@keyframes poseIn {
+  0%,
+  86% {
+    opacity: 0;
+  }
+}
+
+.replay {
+  position: absolute;
+  right: 1.2rem;
+  bottom: -0.2rem;
+  translate: 0 50%;
+  z-index: 4;
+  padding: 0.45rem 0.85rem 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 0;
+  border-radius: 4px 6px 5px 4px;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .replay:hover {
+    transform: translateY(-1px);
+  }
+}
+.replay:active {
+  transform: scale(0.97);
+}
+
+.caption {
+  font-family: var(--font-hand);
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+/* ---------- sections ---------- */
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+}
+.kicker {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7c3a26;
+}
+
+/* Promise sheets: paper pinned to the wall with tape. */
+.sheet {
+  position: relative;
+  rotate: var(--tilt, 0deg);
+  padding: 2rem 1.6rem 1.6rem;
+  background-color: #fbf6ea;
+  background-image:
+    radial-gradient(ellipse 120% 100% at 50% 35%, transparent 62%, rgb(140 98 52 / 0.16) 100%),
+    url("/assets/detective/paper-aged.webp");
+  background-size: auto, 640px auto;
+  box-shadow: 0 22px 30px -18px rgb(0 0 0 / 0.55), 0 3px 8px rgb(0 0 0 / 0.18);
+}
+.sheetTape {
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  width: 6.5rem;
+  height: 1.5rem;
+  translate: -50% 0;
+  rotate: -3deg;
+}
+.promiseNum {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-terracotta);
+}
+
+/* "How it works" sits on a band of cork. */
+.corkBand {
+  background:
+    linear-gradient(rgb(20 12 7 / 0.18), rgb(20 12 7 / 0.32)),
+    url("/assets/detective/cork-dark.webp") center / 560px auto,
+    #6a4426;
+  box-shadow: inset 0 14px 22px -14px rgb(0 0 0 / 0.7), inset 0 -14px 22px -14px rgb(0 0 0 / 0.7);
+}
+.stepCard {
+  position: relative;
+  rotate: var(--tilt, 0deg);
+  filter: drop-shadow(0 16px 14px rgb(0 0 0 / 0.45));
+  transition: transform 220ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .stepCard:hover {
+    transform: translateY(-4px);
+  }
+}
+.stepPin {
+  position: absolute;
+  left: 50%;
+  top: -0.65rem;
+  translate: -50% 0;
+  z-index: 2;
+}
+
+/* The limits ledger on the dark desk. */
+.ledgerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: 0.5rem 2rem;
+  padding-block: 1.3rem;
+  border-top: 1px solid rgb(240 194 126 / 0.22);
+}
+@media (max-width: 720px) {
+  .ledgerRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.plate {
+  justify-self: start;
+  align-self: start;
+  padding: 0.4rem 0.75rem 0.32rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 3px;
+}
+.inkLine {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: var(--color-cream);
+}
+.mono {
+  white-space: nowrap;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  background: rgb(240 194 126 / 0.14);
+  color: #f6dcae;
+}
+.monoLight {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  background: rgb(74 55 40 / 0.08);
+}
+
+.bigNote {
+  rotate: -1.2deg;
+  padding: 1.8rem 1.6rem 1.5rem;
+  box-shadow: 0 24px 30px -18px rgb(0 0 0 / 0.5);
+}
+
+.footer {
+  background:
+    linear-gradient(rgb(255 226 190 / 0.14), transparent 3px),
+    linear-gradient(rgb(20 12 7 / 0.55), rgb(20 12 7 / 0.72)),
+    url("/assets/detective/wood-walnut.webp") center / cover,
+    #3a2617;
+  color: var(--color-cream);
+}
+.footerLink {
+  color: var(--color-amber);
+  text-underline-offset: 3px;
+}
+.footerLink:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 3px;
+}
+
+/* Sections fade up as they enter, when the browser supports scroll-driven animation. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page *,
+  .page *::before,
+  .page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

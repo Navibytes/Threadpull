@@ -6,14 +6,18 @@
 .agents/
 skills-lock.json
 data/out/
-runs/
+/runs/
 node_modules/
 __pycache__/
 .venv/
 data/keys/
+# a held-out pattern spec stays local until its proof run is done (ticket 12, data/patterns/HELDOUT.md)
+data/patterns/heldout/
 
 # Supabase local
 supabase/.temp/
 .next/
 next-env.d.ts
+# written by `next dev` (agentRules), not ours
+AGENTS.md
 *.tsbuildinfo

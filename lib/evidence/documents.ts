@@ -64,6 +64,7 @@ export type DocumentComparison = {
   doc_a: string; doc_b: string;
   same_fingerprint: boolean; template_usage: number; same_check_no: boolean; same_pay_date: boolean;
   shared_ytd_anomaly: boolean; issues_a: StubIssue[]; issues_b: StubIssue[];
+  read_by?: { a: "parser" | "model"; b: "parser" | "model" }; // only when a model read a side, verified line by line by code (extract.ts)
   match_score: number; // 0..1, a ranking of how likely the pair is one recycled source; not a probability
   verdict: "recycled_template" | "same_standard_template" | "different";
 };
@@ -75,14 +76,23 @@ export const RECYCLED_THRESHOLD = 0.6;
 
 type Side = { loan: Loan; doc_id: string };
 
+/** How a comparison reads a stub: the fixed-label parser by default, or a run's PayStubReader (extract.ts). */
+export type ReadStub = (d: Document) => { stub: PayStub; by: "parser" | "model" } | { stub: null; reason: string };
+const parserOnly: ReadStub = (d) => {
+  const stub = parsePayStub(d.text);
+  return stub ? { stub, by: "parser" } : { stub: null, reason: "the fixed-label parser can't read it" };
+};
+
 /** compare_documents(doc_a, doc_b): 1 acorn. `usage` comes from templateUsage() over the data room. */
-export function compareDocuments(a: Side, b: Side, usage: Map<string, number>): ToolResult<DocumentComparison | null> {
+export function compareDocuments(a: Side, b: Side, usage: Map<string, number>, read: ReadStub = parserOnly): ToolResult<DocumentComparison | null> {
   const da = a.loan.documents.find((d) => d.doc_id === a.doc_id), db = b.loan.documents.find((d) => d.doc_id === b.doc_id);
   if (!da || !db) return toolError("compare_documents", `document not found: ${!da ? a.doc_id : b.doc_id}`);
   if (da.doc_id === db.doc_id) return toolError("compare_documents", "cannot compare a document with itself");
   if (da.type !== "pay_stub" || db.type !== "pay_stub") return toolError("compare_documents", "only pay stubs can be compared");
-  const sa = parsePayStub(da.text), sb = parsePayStub(db.text);
-  if (!sa || !sb) return toolError("compare_documents", `unreadable pay stub: ${!sa ? da.doc_id : db.doc_id}`);
+  const ra = read(da), rb = read(db);
+  if (!ra.stub) return toolError("compare_documents", `unreadable pay stub: ${da.doc_id} (${ra.reason})`);
+  if (!rb.stub) return toolError("compare_documents", `unreadable pay stub: ${db.doc_id} (${rb.reason})`);
+  const sa = ra.stub, sb = rb.stub;
 
   const sameFp = fingerprint(da) === fingerprint(db);
   const uses = usage.get(fingerprint(da)) ?? 0;
@@ -104,6 +114,8 @@ export function compareDocuments(a: Side, b: Side, usage: Map<string, number>): 
     { kind: "document", doc_id: da.doc_id, detail: `fingerprint ${fingerprint(da)}` },
     { kind: "document", doc_id: db.doc_id, detail: `fingerprint ${fingerprint(db)}` },
   ];
+  for (const [d, r] of [[da, ra], [db, rb]] as const)
+    if (r.by === "model") sources.push({ kind: "document", doc_id: d.doc_id, detail: "values read by a model; each one checked by code against the line it is printed on" });
   if (c.same_check_no) sources.push({ kind: "document", doc_id: db.doc_id, detail: `check no ${sb.check_no} also on ${da.doc_id}` });
   for (const [side, issues] of [[a, issuesA], [b, issuesB]] as const)
     for (const i of issues) {
@@ -114,7 +126,7 @@ export function compareDocuments(a: Side, b: Side, usage: Map<string, number>): 
 
   return toolOk("compare_documents", {
     doc_a: da.doc_id, doc_b: db.doc_id, same_fingerprint: sameFp, template_usage: uses, ...c,
-    issues_a: issuesA, issues_b: issuesB, match_score,
+    issues_a: issuesA, issues_b: issuesB, ...(ra.by === "model" || rb.by === "model" ? { read_by: { a: ra.by, b: rb.by } } : {}), match_score,
     verdict: match_score >= RECYCLED_THRESHOLD ? "recycled_template" : sameFp ? "same_standard_template" : "different",
   }, sources);
 }

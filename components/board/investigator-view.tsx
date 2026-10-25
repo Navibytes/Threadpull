@@ -8,6 +8,7 @@ import { FilingDrawer } from "@/components/drawer";
 import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed, type RunEventFeed } from "@/lib/events";
 import { useRouter } from "next/navigation";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
+import { portfolioSeed } from "@/components/twin-compare/twin-compare";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
 import type { BoardCase, CardFocusRequest } from "./board-camera";
 import { Corkboard, type Selection } from "./corkboard";
@@ -37,6 +38,8 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
   const { board, errors, animateAfterSeq, entry } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
+  // the drawer lists the run's own portfolio (its run_started row names the seed), so seed 99's L0037 isn't seed 13's
+  const seed = useMemo(() => portfolioSeed(board.events, feed.mode), [board.events, feed.mode]);
   const [selection, setSelection] = useState<Selection>(null);
   // One auxiliary panel at a time: opening one replaces the other, and the tab that looks selected is always
   // the panel that is visible. null is the plain board.
@@ -78,11 +81,15 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
   const onCases = useCallback((list: BoardCase[], active: number | null) => setCases({ list, active }), []);
-  // a case the viewer picked from the panel's list; null follows the latest activity on the board
+  // The case on screen: the one picked with the case bar (or framed by the camera), else the case of the latest row.
+  const [shownCase, setShownCase] = useState<"all" | number | null>(null);
+  const onShown = useCallback((s: "all" | number | null) => setShownCase(s), []);
+  const caseIndex = typeof shownCase === "number" ? shownCase : cases.active;
+  const shownLead = caseIndex !== null ? (cases.list[caseIndex]?.lead ?? null) : null;
+  // a case the viewer picked from the panel's list wins over what the camera frames
   const [picked, setPicked] = useState<string | null>(null);
   useEffect(() => setPicked(null), [runId]);
-  const derivedLead = cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null;
-  const activeLead = picked && cases.list.some((c) => c.lead === picked) ? picked : derivedLead;
+  const activeLead = picked && cases.list.some((c) => c.lead === picked) ? picked : shownLead;
   const pickCase = useCallback((lead: string | null) => {
     setPicked(lead);
     if (lead) setFocusRequest({ cardId: lead, replay: true }); // move the camera to the case, and lay its evidence out again
@@ -180,6 +187,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
                   keepClear={hazelCorner}
                   focusRequest={focusRequest}
                   onCases={onCases}
+                  onShown={onShown}
                   caseHref={caseHref}
                   entry={entry}
                 />
@@ -213,6 +221,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
               )}
               <div className={styles.drawerBody}>
                 <FilingDrawer
+                  seed={seed ?? undefined}
                   selectedLoanId={drawerLoanId}
                   onSelectLoan={selectFromDrawer}
                 />

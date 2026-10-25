@@ -2,15 +2,24 @@
 
 **Good fit:** ML / computer vision
 
-**Your stack:** TypeScript + Bun (generator, seed script, `bun test`), faker-js, Zod (loan schema, pay-stub extraction schema), Supabase (`loans` table), Claude Haiku via the Vercel AI SDK (document extraction), Motion (falling string, with C).
+**Your stack:** TypeScript + Bun (generator, seed script, `bun test`), faker-js, Zod (loan schema, pay-stub extraction schema), Supabase (`loans` table), Claude Haiku via the Anthropic SDK (document extraction), Motion (falling string, with C).
 
 **Your tickets, in order:**
 
 | Ticket | Title | Target | Blocked by | Status |
 | --- | --- | --- | --- | --- |
 | 02 | Seeded portfolio and answer key | Sat 12:00 | None | ✅ done |
-| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | next: evidence logic first |
-| 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 | next: evidence logic first |
+| 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | ✅ done (PRs #4, #7, #9, Hazel wiring #13; falling thread + Twin Compare) |
+| 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 | ✅ done except Haiku extraction (needs an API key) (PRs #2, #3, #6, #9; Hazel wiring #13) |
+| 12 (tooling) | Held-out set tooling (C writes the spec) | Sun 02:00 | 07, 08, 11 | ✅ done (PR #30): spec validation, `bun run data:check`, `bun run freeze:check`, held-out guard in `bun run hazel`, guide `data/patterns/HELDOUT.md` |
+
+**Also done:** landing page `/landing` (#21, #27), loan-tape upload `/upload` with intake (#23, #24), Windows path fixes (#17), the code review fixes (#26: a wrong-employer check clearing the ring, card statuses, runs that never end, Twin Compare's seed).
+
+**Since 23:05:** the CRS 429 recovery row on the board (#32), notes keep decimals whole (#34), Hazel keeps working the next lead after the ring so innocents get cleared (#35), docs (#31, #33). Supabase URL and anon key are in `.env.local`; the recorded run plays on the board.
+
+**Since 23:35:** the document scan before every status (#40), the case summary follows the case on screen (#41), the fresh live run `r13-20261025T072822` (fall + refused stub, 10 acorns), and ticket 13's evaluator and baselines (`bun run eval`).
+
+**Left for A (Sun 00:40):** the Haiku decision for 08 (proposed: out of scope); after the freeze, `bun run eval --run <id> --write` for seed 13 and seed 99 with D.
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
 

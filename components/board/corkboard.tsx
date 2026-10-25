@@ -31,6 +31,7 @@ export function Corkboard({
   keepClear,
   focusRequest,
   onCases,
+  onShown,
   caseHref,
   entry = null,
 }: {
@@ -40,6 +41,7 @@ export function Corkboard({
   keepClear: RefObject<HTMLElement | null>;
   focusRequest?: CardFocusRequest | null;
   onCases?: (cases: BoardCase[], activeCase: number | null) => void; // for the room's status plaque
+  onShown?: (shown: "all" | number | null) => void; // the case on screen (the case bar or the camera chose it)
   caseHref?: (leadId: string) => string; // where a case's "Case details" button goes (the dashboard)
   entry?: BoardEntry | null; // the board was just entered: lay the recorded evidence out again (once per entry)
 }) {
@@ -195,6 +197,7 @@ export function Corkboard({
         showSeq={showSeq}
         onToggleSeq={() => setShowSeq((v) => !v)}
         onVisitCase={replayCase}
+        onShown={onShown}
       />
     </ReactFlow>
   );

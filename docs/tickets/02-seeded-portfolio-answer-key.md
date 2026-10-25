@@ -1,6 +1,6 @@
 # 02: Seeded portfolio and answer key
 
-**Owner:** A (Evidence)  
+**Owner:** A (Evidence)
 **Target:** H3, Sat 12:00
 
 **What to build:** `bun run data` generates the seed-13 messy portfolio (1,000 loans shaped like dealer credit applications: applicant, residential, employment, vehicle and loan blocks, plus funding data), the case loans built on CRS sandbox personas, the planted patterns from SKELETON §5.3, documents, and a separate answer key. It normalizes the mess and loads clean loans into the Supabase `loans` table for the filing drawer. The same seed always gives the same output.

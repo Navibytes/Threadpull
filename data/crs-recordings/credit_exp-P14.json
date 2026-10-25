@@ -1,0 +1,64 @@
+{
+  "endpoint": "credit_exp",
+  "persona": "P14",
+  "path": "/experian/credit-report/standard/exp-prequal-vantage4",
+  "status": 200,
+  "request_id": "2d38e182-d2a6-4788-88ab-9ff8393ed2db",
+  "request": {
+    "firstName": "HAROLD",
+    "lastName": "PETTIGREW",
+    "ssn": "666701014",
+    "addresses": [
+      {
+        "addressLine1": "310 ELM ST",
+        "city": "DAYTON",
+        "state": "OH",
+        "postalCode": "45402",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "HAROLD",
+      "lastName": "PETTIGREW",
+      "ssn": "666701014",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "310 ELM ST",
+          "city": "DAYTON",
+          "state": "OH",
+          "postalCode": "45402"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": false,
+      "experian": true,
+      "equifax": false
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:12:06.540099Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "errorMessages": [
+      {
+        "creditErrorMessageCode": "E1200",
+        "creditErrorMessageSourceType": "CreditBureau",
+        "creditErrorMessageText": "This is a deceased file and cannot be shared without additional addendums. Please contact CRS at support@crscreditapi.com"
+      }
+    ]
+  }
+}

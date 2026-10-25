@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P14",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "0e04022a-b835-4f28-b162-e4e576a66a93",
+  "request": {
+    "firstName": "HAROLD",
+    "lastName": "PETTIGREW",
+    "phoneNumber": "5550101014",
+    "email": "harold.pettigrew@example.com",
+    "ipAddress": "203.0.113.24",
+    "address": {
+      "addressLine1": "310 ELM ST",
+      "city": "DAYTON",
+      "state": "OH",
+      "postalCode": "45402"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2009-04-12",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 8
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 80,
+      "tumbling_risk": 0,
+      "query_id": "calhacks-P14-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "39.76",
+        "longitude": "-84.19"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "5 miles"
+      },
+      "phone": {
+        "line_type": "landline",
+        "carrier": "VERIZON WIRELESS",
+        "status": "dead",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "no_data",
+          "last_name_match": "no_data",
+          "street_match": "no_data",
+          "city_match": "no_data",
+          "zip_match": "no_data",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "harold.pettigrew@example.com",
+      "status": "invalid",
+      "status_code": 325,
+      "domain_type": "freeisp"
+    }
+  }
+}

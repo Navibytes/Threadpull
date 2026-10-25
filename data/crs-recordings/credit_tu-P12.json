@@ -1,0 +1,79 @@
+{
+  "endpoint": "credit_tu",
+  "persona": "P12",
+  "path": "/transunion/credit-report/standard/tu-prequal-fico9",
+  "status": 200,
+  "request_id": "c7fd1095-5954-42ea-b5be-169f6e19b4f6",
+  "request": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "ssn": "666701012",
+    "addresses": [
+      {
+        "addressLine1": "55 WATER ST FL 20",
+        "city": "NEW YORK",
+        "state": "NY",
+        "postalCode": "10041",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "VICTOR",
+      "lastName": "ANAND",
+      "ssn": "666701012",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "55 WATER ST FL 20",
+          "city": "NEW YORK",
+          "state": "NY",
+          "postalCode": "10041"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": true,
+      "experian": false,
+      "equifax": false
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:11:57.416184Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [
+      {
+        "borrowerSourceType": "Borrower",
+        "sourceType": "TransUnion",
+        "responseAlertMessageCategoryType": "SSNVerification",
+        "responseAlertMessageText": "SSN Alert: NO SSN ON FILE"
+      }
+    ],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileInfileDate": "2024-11-19",
+          "creditFileResultStatusType": "NoFileReturnedNoHit",
+          "sourceType": "TransUnion"
+        }
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {},
+      "derogatorySummary": {}
+    }
+  }
+}

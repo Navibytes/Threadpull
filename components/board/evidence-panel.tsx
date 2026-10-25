@@ -17,6 +17,7 @@ import {
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
+import { portfolioSeed, TwinCompare } from "@/components/twin-compare/twin-compare";
 
 export function EvidencePanel({ board, selection, mode }: { board: BoardState; selection: Selection; mode: FeedMode }) {
   const card = selection?.kind === "card" ? board.cards.find((c) => c.id === selection.id) : undefined;
@@ -38,7 +39,7 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
           transition={{ duration: 0.16 }}
         >
           {card && <CardDetails card={card} board={board} mode={mode} />}
-          {thread && <ThreadDetails thread={thread} mode={mode} />}
+          {thread && <ThreadDetails thread={thread} mode={mode} seed={portfolioSeed(board.events, mode)} />}
           {!card && !thread && <Empty board={board} />}
         </motion.div>
       </AnimatePresence>
@@ -143,7 +144,7 @@ function CardDetails({ card, board, mode }: { card: BoardCard; board: BoardState
   );
 }
 
-function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }) {
+function ThreadDetails({ thread, mode, seed }: { thread: BoardThread; mode: FeedMode; seed: number | null }) {
   const a = loanName(thread.a), b = loanName(thread.b);
   const meaning = whereFrom(thread.sources);
   return (
@@ -171,6 +172,7 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
         </p>
       </Section>
       {thread.explained && <Explanation thread={thread} />}
+      <TwinCompare thread={thread} seed={seed} />
       <Section title="Where this comes from">
         {meaning.map((m) => (
           <p key={m} className="mb-1 text-sm">

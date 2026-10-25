@@ -12,12 +12,15 @@
 import { Faker, en, en_US } from "@faker-js/faker";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RawLoanSchema, type RawLoan } from "@/lib/contracts/loan";
+import { formatTapeCsv } from "@/lib/ingest/csv";
 import { addressKey, normalizePortfolio } from "@/lib/ingest/normalize";
 import { seedSupabase } from "./seed-db";
+import { parseSpec } from "./spec";
 
-const ROOT = dirname(new URL(import.meta.url).pathname);
+const ROOT = dirname(fileURLToPath(import.meta.url)); // not URL.pathname: that gives /C:/... on Windows
 
 type Persona = {
   id: string; first_name: string; last_name: string; ssn: string; dob: string; street1: string;
@@ -360,6 +363,7 @@ class Generator {
       income: Math.round(rng.uniform(8600, 9800) / 10) * 10, months: rng.int(20, 40), tier: "prime" as Tier,
       high: true, ringLife: true });
 
+    // Tags name each planted loan for the answer key; they must be unique, so a spec may repeat a pattern type.
     for (const pat of spec.patterns) {
       switch (pat.type) {
         case "ring": {
@@ -373,7 +377,7 @@ class Generator {
           }
           const members: Record<string, Flat> = {};
           for (const pid of pat.personas)
-            members[pid] = caseLoan(pid, `${pat.ring_id}:${pid}`, { ts: ts(), dealer, broker_id: pat.broker, employer: empOf[pid], ...ringJob() });
+            members[pid] = caseLoan(pid, `${pat.ring_id}:${pid}`, { ts: ts(), dealer, broker_id: pat.broker, employer: empOf[pid] ?? PERSONA_APP[pid][0], ...ringJob() });
           for (let i = 1; i <= pat.background_members; i++)
             members[`bg${i}`] = bgLoan(`${pat.ring_id}:bg${i}`, undefined, { ts: ts(), dealer, broker_id: pat.broker,
               employer: empOf[`bg${i}`] ?? rng.choice(this.smallCompanies), ...ringJob() });
@@ -400,9 +404,9 @@ class Generator {
           const tags = [`building:${pat.persona}`];
           for (let i = 1; i <= pat.background_members; i++) {
             const unit = `${rng.int(2, 40)}${rng.choice([..."ABCDEF"])}`;
-            loans.push(bgLoan(`building:bg${i}`, this.backgroundPerson({ street: `${street} APT ${unit}`,
+            loans.push(bgLoan(`building:${pat.persona}:bg${i}`, this.backgroundPerson({ street: `${street} APT ${unit}`,
               city: anchor.city, state: anchor.state, zip: anchor.zip })));
-            tags.push(`building:bg${i}`);
+            tags.push(`building:${pat.persona}:bg${i}`);
           }
           this.key.lookalikes.push({ loan_ids: [], explanation: `same ${pat.units}-unit apartment building`, proving_check: pat.proving_check });
           this.pending.lookalikes.push({ members: tags });
@@ -418,8 +422,8 @@ class Generator {
             tags.push(`${pat.type}:${pid}`);
           }
           for (let i = 1; i <= pat.background_members; i++) {
-            loans.push(bgLoan(`${pat.type}:bg${i}`, undefined, { employer: e.name, job: rng.choice(e.job_titles) }));
-            tags.push(`${pat.type}:bg${i}`);
+            loans.push(bgLoan(`${pat.type}:${e.name}:bg${i}`, undefined, { employer: e.name, job: rng.choice(e.job_titles) }));
+            tags.push(`${pat.type}:${e.name}:bg${i}`);
           }
           this.key.lookalikes.push({ loan_ids: [], explanation: `${e.name} employs ${e.headcount.toLocaleString("en-US")}`,
             proving_check: pat.proving_check ?? "ask_human", ...(pat.truth ? { note: pat.truth } : {}) });
@@ -429,7 +433,7 @@ class Generator {
         case "household": {
           const main = caseLoan(pat.persona, `household:${pat.persona}`);
           const sp = pat.spouse;
-          const spouse = bgLoan("household:spouse", this.backgroundPerson({ first_name: sp.first_name, last_name: sp.last_name,
+          const spouse = bgLoan(`household:${pat.persona}:spouse`, this.backgroundPerson({ first_name: sp.first_name, last_name: sp.last_name,
             phone: main.phone, street: main.street, city: main.city, state: main.state, zip: main.zip }));
           main.co_applicant = { first_name: sp.first_name, last_name: sp.last_name, relationship: "Spouse" };
           spouse.co_applicant = { first_name: main.first_name, last_name: main.last_name, relationship: "Spouse" };
@@ -437,7 +441,7 @@ class Generator {
           loans.push(main, spouse);
           this.key.lookalikes.push({ loan_ids: [], explanation: "spouses: same phone, address and last name; listed co-applicants",
             proving_check: pat.proving_check });
-          this.pending.lookalikes.push({ members: [`household:${pat.persona}`, "household:spouse"] });
+          this.pending.lookalikes.push({ members: [`household:${pat.persona}`, `household:${pat.persona}:spouse`] });
           break;
         }
         case "dealer_burst": {
@@ -445,8 +449,8 @@ class Generator {
           const [y, m] = pat.month.split("-").map(Number);
           const tags: string[] = [];
           for (let i = 1; i <= pat.count; i++) {
-            loans.push(bgLoan(`burst:${i}`, undefined, { ts: this.monthEndTs(y, m), dealer }));
-            tags.push(`burst:${i}`);
+            loans.push(bgLoan(`burst:${pat.dealer}:${i}`, undefined, { ts: this.monthEndTs(y, m), dealer }));
+            tags.push(`burst:${pat.dealer}:${i}`);
           }
           // the dealer's own history: month-end heavy every month
           for (let d = utc(this.start.getUTCFullYear(), this.start.getUTCMonth() + 1, 1); d <= this.end;
@@ -472,7 +476,13 @@ class Generator {
           this.key.risky_real.push({ loan_ids: [], expected_action: pat.expected_action, fraud: false });
           this.pending.risky_real.push({ members: pat.personas.map((p: string) => `risky:${p}`) });
           break;
-        case "injection": {
+        case "injection": { // into an already planted loan, named by its tag ("RING-1:bg1"), or a persona's own loan
+          if (pat.target) {
+            const ln = loans.find((l) => l.tag === pat.target);
+            if (!ln) throw new Error(`injection target ${pat.target} is not a planted loan (list it after its pattern)`);
+            ln.inject = true;
+            break;
+          }
           const ln = caseLoan(pat.persona, `injection:${pat.persona}`);
           ln.inject = true;
           loans.push(ln);
@@ -607,22 +617,15 @@ class Generator {
   }
 }
 
-const flatten = (o: Record<string, unknown>, prefix = ""): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(o).flatMap(([k, v]) =>
-    v && typeof v === "object" && !Array.isArray(v) ? Object.entries(flatten(v as Record<string, unknown>, `${prefix}${k}.`))
-      : [[`${prefix}${k}`, v]]));
-const csvCell = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 export function generate(specPath: string, outRoot: string, keyRoot: string) {
-  const spec = JSON.parse(readFileSync(specPath, "utf8"));
+  const spec = parseSpec(JSON.parse(readFileSync(specPath, "utf8")), specPath);
   const { tape, key, reference } = new Generator(spec).run();
   const outDir = join(outRoot, `seed${spec.seed}`), keyDir = join(keyRoot, `seed${spec.seed}`);
   mkdirSync(join(outDir, "reference"), { recursive: true });
   mkdirSync(keyDir, { recursive: true });
   writeFileSync(join(outDir, "loans.json"), JSON.stringify(tape, null, 1) + "\n");
-  const rows = tape.map(({ documents: _docs, ...rest }) => flatten(rest as Record<string, unknown>));
-  const cols = Object.keys(rows[0]);
-  writeFileSync(join(outDir, "loans.csv"), [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(","))].join("\n") + "\n");
+  writeFileSync(join(outDir, "loans.csv"), formatTapeCsv(tape)); // fixed columns, so no row's fields are dropped
   writeFileSync(join(outDir, "reference", "public_lookups.json"), JSON.stringify(reference, null, 1) + "\n");
   const normalized = normalizePortfolio(tape);
   writeFileSync(join(outDir, "loans.normalized.json"), JSON.stringify(normalized, null, 1) + "\n");
