@@ -8,8 +8,11 @@ import type { Event } from "@/lib/contracts/event";
 import type { GraphEdge } from "@/lib/contracts/graph";
 import { LOAN_STATUSES, type Loan, type LoanStatus } from "@/lib/contracts/loan";
 import { QuestionTopicSchema } from "@/lib/contracts/rule";
-import { TOOL_SPECS, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
-import { crsIdentityCheck, type CrsClient, type IdentityCheck } from "@/lib/crs";
+import { toolError, TOOL_SPECS, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
+import {
+  crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
+  type IdentityCheck,
+} from "@/lib/crs";
 import { budgetSpentRow } from "@/lib/event-rows";
 import {
   attackEvent, withdrawAddress, withdrawBursts, withdrawHousehold, type AddressCheck, type ClueExplained,
@@ -88,7 +91,9 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
   const ranked = room.graph.rankLeads();
   const opened = new Set<string>();
   const budget = () => ({ spent: ledger.spent, limit: ledger.limit });
-  const evidence = (): RunEvidence => ({ identity, openQuestions });
+  const credit = new Map<string, { report: CreditReport; sources: SourceRef[] }>();
+  const fraud = new Map<string, { found: FraudFinder; sources: SourceRef[] }>();
+  const evidence = (): RunEvidence => ({ identity, credit, openQuestions });
 
   async function openLead(loanId: string, why: string) {
     opened.add(loanId);
@@ -174,6 +179,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     const ids = [input.loan_id, input.loan_a, input.loan_b].filter((x): x is string => typeof x === "string" && room.byId.has(x));
     for (const d of [input.doc_a, input.doc_b]) if (typeof d === "string" && room.byDoc.has(d)) ids.push(room.byDoc.get(d)!.loan_id);
     if (typeof input.entity_id === "string" && room.byId.has(input.entity_id)) ids.push(input.entity_id);
+    if (Array.isArray(input.loan_ids)) ids.push(...input.loan_ids.filter((x): x is string => typeof x === "string" && room.byId.has(x)));
     return [...new Set(ids)];
   };
 
@@ -211,16 +217,50 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     });
   });
 
-  const identityTool = betaZodTool({
-    name: "crs_identity_check",
-    description: `TransUnion identity verification for one loan: messages 2201 SSN not associated with the name, 2202 date of birth doesn't match, 2301 deceased, 2401 fraud alert, 2101 address mismatch; no messages = verified. ${TOOL_SPECS.crs_identity_check.acorns} acorns (${TOOL_SPECS.crs_identity_check.unit}).`,
+  // A CRS call that throws (a sandbox outage, a persona with no recorded answer in replay) becomes an uncharged
+  // refusal that is logged like any other, instead of an error the run never records. The ledger refunds a throw.
+  const crsCall = async <T,>(name: ToolName, loanIds: string[], call: () => Promise<ToolResult<T | null>>): Promise<ToolResult<T | null>> => {
+    try {
+      return await onePaidCallAtATime(loanIds, call);
+    } catch (e) {
+      return toolError(name, `CRS call failed, nothing charged: ${(e as Error).message}`);
+    }
+  };
+  const cost = (name: ToolName) => `${TOOL_SPECS[name].acorns} acorns (${TOOL_SPECS[name].unit})`;
+  const loanTool = <T,>(name: ToolName, description: string, call: (loan: Loan) => Promise<ToolResult<T | null>>,
+    keep: (loanId: string, result: T, sources: SourceRef[]) => void) => betaZodTool({
+    name, description: `${description} ${cost(name)}.`,
     inputSchema: z.object({ loan_id: z.string(), note }),
     run: async ({ loan_id, note: hazelNote }) => {
       const loan = room.byId.get(loan_id);
       if (!loan) return json({ ok: false, error: `unknown loan ${loan_id}` });
-      const result = await onePaidCallAtATime([loan_id], () => crsIdentityCheck(loan, ledger, opts.crs));
-      if (result.ok && result.result) identity.set(loan_id, { check: result.result, sources: result.sources });
-      return record("crs_identity_check", { loan_id }, hazelNote, result);
+      const result = await crsCall(name, [loan_id], () => call(loan));
+      if (result.ok && result.result) keep(loan_id, result.result, result.sources);
+      return record(name, { loan_id }, hazelNote, result);
+    },
+  });
+
+  const identityTool = loanTool("crs_identity_check",
+    "TransUnion identity verification for one loan: messages 2201 SSN not associated with the name, 2202 date of birth doesn't match, 2301 deceased, 2401 fraud alert, 2101 address mismatch; no messages = verified. Hard signals: 2201, 2202, 2301.",
+    (loan) => crsIdentityCheck(loan, ledger, opts.crs), (id, check, sources) => identity.set(id, { check, sources }));
+
+  const creditTool = loanTool("crs_credit_report",
+    "The loan's credit report from all three bureaus, merged: file age, addresses on file, tradeline depth, authorized-user share, recent inquiries, and whether a bureau is frozen, the bureaus disagree, or a file is deceased. Good score with little history (thick file, thin life) is a soft signal.",
+    (loan) => crsCreditReport(loan, ledger, opts.crs), (id, report, sources) => credit.set(id, { report, sources }));
+
+  const fraudTool = loanTool("crs_fraud_finder",
+    "AtData Fraud Finder for one loan: email age and status, phone line type and whether its owner's name matches, address type, IP distance from the address, risk score 0-100. All soft signals: they support a case, they don't make one.",
+    (loan) => crsFraudFinder(loan, ledger, opts.crs), (id, found, sources) => fraud.set(id, { found, sources }));
+
+  const phoneTool = betaZodTool({
+    name: "crs_reverse_phone",
+    description: `Who a phone number is registered to (name and address), from AccurateAppend. ${cost("crs_reverse_phone")}.`,
+    inputSchema: z.object({ phone: z.string().min(7), note }),
+    run: async ({ phone, note: hazelNote }) => {
+      const digits = phone.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+      const loanIds = opts.loans.filter((l) => l.applicant_info.phone === digits).map((l) => l.loan_id);
+      const result = await crsCall("crs_reverse_phone", loanIds, () => crsReversePhone(digits, ledger, opts.crs));
+      return record("crs_reverse_phone", { phone: digits, loan_ids: loanIds }, hazelNote, result);
     },
   });
 
@@ -288,7 +328,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     fallbacks: "default",
     cache_control: { type: "ephemeral" }, // system prompt and tools never change within a run, so each request reuses the cached prefix
     system: HAZEL_SYSTEM,
-    tools: [...dataRoomTools, identityTool, askTool, closeTool],
+    tools: [...dataRoomTools, identityTool, creditTool, fraudTool, phoneTool, askTool, closeTool],
     messages: [{ role: "user", content: `Portfolio: ${opts.loans.length} loans. Budget: ${ledger.limit} acorns. Your lead: ${first.loan_id} (rank 1, score ${first.score}). Begin.` }],
   });
 
