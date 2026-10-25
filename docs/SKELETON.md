@@ -120,7 +120,7 @@ Normalization adds `address_key` (street without unit + ZIP, so a shared apartme
 | Fraud alert on file | P16 | Ask the CRO |
 | Frozen bureau / bureaus disagree | P15 / P17 | Insufficient evidence |
 | Risky but real | P05, P07, P11 | Reprice, never fraud |
-| Prompt injection in a pay stub | 1 case loan | `attack_detected` |
+| Prompt injection in a pay stub | 1 ring loan (RING-1 `bg1`) | `attack_detected`; status stays Investigate |
 
 Seed 99 (held-out) is generated after `detector-frozen` by a teammate who writes no detection code, using only the fields above.
 
