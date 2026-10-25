@@ -1,0 +1,35 @@
+.workspace { position: relative; }
+.drawer {
+  position: absolute;
+  z-index: 30;
+  top: 16px;
+  bottom: 36px;
+  left: 16px;
+  width: 320px;
+  max-width: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--color-cream);
+  color: var(--color-walnut);
+  box-shadow: 8px 12px 24px rgb(0 0 0 / 0.35);
+}
+.drawer[hidden] { display: none; }
+.drawerControls { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.previewChoice { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.toggle { min-height: 40px; padding: 6px 10px; border: 1px solid var(--color-cork-deep); border-radius: 3px; background: var(--color-paper); color: var(--color-walnut); font-size: 13px; cursor: pointer; }
+.toggle:focus-visible, .previewChoice input:focus-visible { outline: 2px solid var(--color-honey); outline-offset: 3px; }
+.drawerBody { min-height: 0; flex: 1; }
+.notice { margin: 0; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+
+/* At laptop widths the drawer overlays the left edge rather than shrinking the camera's pane.
+   It closes on a successful card selection; all files and filters remain mounted while hidden. */
+@media (min-width: 1600px) {
+  .drawer { position: relative; inset: auto; flex: 0 0 320px; max-width: none; box-shadow: none; }
+}
+
+@media (hover: hover) {
+  .toggle:hover { background: var(--color-cork); }
+}

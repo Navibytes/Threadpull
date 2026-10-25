@@ -8,6 +8,7 @@ import type { IndexCardNodeType } from "./index-card-node";
 import { LAYOUT } from "./layout";
 
 export type BoardCase = { index: number; lead: string; ids: string[] };
+export type CardFocusRequest = { cardId: string };
 
 // A card's box on the board as drawn now (after any drag). Fitting includes a lead's hanging note; deciding
 // whether a card is on screen uses the card itself.
@@ -29,12 +30,14 @@ export function BoardCamera({
   cases,
   activeCase,
   keepClear,
+  focusRequest,
 }: {
   cases: BoardCase[];
   activeCase: number | null;
   keepClear: RefObject<HTMLElement | null>;
+  focusRequest?: CardFocusRequest | null;
 }) {
-  const { setViewport } = useReactFlow();
+  const { setViewport, setNodes, setEdges } = useReactFlow();
   const measured = useNodesInitialized();
   const reduce = useReducedMotion();
   const nodeLookup = useStore((s) => s.nodeLookup);
@@ -45,6 +48,7 @@ export function BoardCamera({
   const [following, setFollowing] = useState(true);
   const [shown, setShown] = useState<"all" | number | null>(null); // what the camera last framed
   const framedOnce = useRef(false);
+  const handledFocus = useRef<CardFocusRequest | null>(null);
 
   // Hazel's corner, in pane pixels
   const keepOut = useCallback((): Box | null => {
@@ -88,6 +92,8 @@ export function BoardCamera({
   const caseKey = activeCase === null ? "" : `${activeCase}:${cases[activeCase]?.ids.length ?? 0}`;
   const cardCount = nodeLookup.size;
   useEffect(() => {
+    // Let a pending drawer action win over automatic following in this render.
+    if (focusRequest && handledFocus.current !== focusRequest && nodeLookup.has(focusRequest.cardId)) return;
     if (!following || !measured || cardCount === 0 || paneW === 0) return;
     const pane = { w: paneW, h: paneH };
     const all = boundsOf([...boxesFor().values()]);
@@ -100,6 +106,19 @@ export function BoardCamera({
     void setViewport(plan.viewport, { duration: animate ? 450 : 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [following, measured, cardCount, caseKey, paneW, paneH]);
+
+  useEffect(() => {
+    if (!focusRequest || handledFocus.current === focusRequest || !measured || paneW === 0) return;
+    const box = boxesFor([focusRequest.cardId]).get(focusRequest.cardId);
+    if (!box) return; // Only event-backed nodes already in React Flow may be focused.
+    handledFocus.current = focusRequest;
+    setFollowing(false);
+    const caseIndex = cases.findIndex((item) => item.ids.includes(focusRequest.cardId));
+    setShown(caseIndex >= 0 ? caseIndex : null);
+    setNodes((nodes) => nodes.map((node) => ({ ...node, selected: node.id === focusRequest.cardId })));
+    setEdges((edges) => edges.map((edge) => ({ ...edge, selected: false })));
+    void setViewport(bestFit(box, { w: paneW, h: paneH }, keepOut()), { duration: reduce ? 0 : 450 });
+  }, [focusRequest, measured, paneW, paneH, boxesFor, cases, keepOut, reduce, setNodes, setEdges, setViewport]);
 
   // Viewer panned or zoomed by hand: stop following (React Flow passes an event only for user moves).
   useEffect(() => {

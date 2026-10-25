@@ -3,7 +3,7 @@
 import { Controls, Panel, ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { BoardState } from "@/lib/events";
-import { BoardCamera, type BoardCase } from "./board-camera";
+import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
 import { IndexCardNode, type IndexCardNodeType } from "./index-card-node";
 import { layoutBoard } from "./layout";
@@ -23,11 +23,13 @@ export function Corkboard({
   animateAfterSeq,
   onSelect,
   keepClear,
+  focusRequest,
 }: {
   board: BoardState;
   animateAfterSeq: number;
   onSelect: (s: Selection) => void;
   keepClear: RefObject<HTMLElement | null>;
+  focusRequest?: CardFocusRequest | null;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
@@ -123,7 +125,7 @@ export function Corkboard({
       aria-label="Corkboard: evidence cards and the threads between them"
     >
       <CorkSurface />
-      <BoardCamera cases={cases} activeCase={activeCase} keepClear={keepClear} />
+      <BoardCamera cases={cases} activeCase={activeCase} keepClear={keepClear} focusRequest={focusRequest} />
       {/* framing lives in the case bar ("Show all"), which knows to keep clear of Hazel */}
       <Controls showInteractive={false} showFitView={false} position="bottom-left" />
       {/* debug: event seq numbers live in the inspector; this puts them on the card faces too */}
