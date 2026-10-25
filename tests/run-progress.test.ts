@@ -42,13 +42,26 @@ describe("runProgress", () => {
 });
 
 describe("the strip renders", () => {
-  test("a finished run: phases, acorns, counts, time and the CRO link", async () => {
+  const render = async (events: RunEvent[]) => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { createElement } = await import("react");
     const { RunProgressStrip } = await import("@/components/board/run-progress");
-    const html = renderToStaticMarkup(createElement(RunProgressStrip, { events: [started, lead, investigate, asked, sweep, clean, finished], runId: "r13-x" }));
+    return renderToStaticMarkup(createElement(RunProgressStrip, { events, runId: "r13-x" }));
+  };
+
+  test("a run still going: the full strip, with phases, acorns, counts, time and a Hide button (its last row is old here, so it says it is waiting)", async () => {
+    const html = await render([started, lead, investigate, asked, sweep, clean]);
     for (const s of ["Following leads", "Spot checks", "Done", "<b>12</b> of 60 acorns", "1,000 loans scanned", "1 case opened", "1 spot check",
-      "2 decided (1 Investigate)", "1 question waiting", "0:30 in all", "/cro?run=r13-x"]) expect(html).toContain(s);
-    expect(renderToStaticMarkup(createElement(RunProgressStrip, { events: [], runId: "r" }))).toBe("");
+      "2 decided (1 Investigate)", "1 question waiting", "elapsed", "Waiting for the next step", ">Hide<"]) expect(html).toContain(s);
+  });
+
+  test("a finished run: folded to one line in the corner (Done, acorns, time, the CRO link, Details), covering no cards", async () => {
+    const html = await render([started, lead, investigate, asked, sweep, clean, finished]);
+    for (const s of [">Done<", "12 of 60 acorns", "0:30", "/cro?run=r13-x", ">Details<", "left-3 top-3"]) expect(html).toContain(s);
+    expect(html).not.toContain("loans scanned");
+  });
+
+  test("no rows, no strip", async () => {
+    expect(await render([])).toBe("");
   });
 });
