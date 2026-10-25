@@ -8,6 +8,7 @@ import type { ReportBundle, RunSummary } from "@/lib/deal/service";
 import { Actions, type Decide } from "./actions";
 import { plural } from "./format";
 import { MemoPanel } from "./memo";
+import { QuestionsPanel } from "./questions";
 import { Concentration, LoansTable, Section, Spend, Totals } from "./sections";
 
 const DEFAULTS = { lgd: "0.55", margin: "0.04" };
@@ -130,6 +131,9 @@ export function CroScreen() {
             </Section>
             <Section title="Memo for the CRO" hint="Claude writes it from the report. Code keeps only the sentences it can check against the run's events, and shows the events behind each one.">
               <MemoPanel runId={bundle.report.run_id} lastSeq={bundle.report.run.last_seq} assumptions={applied} />
+            </Section>
+            <Section title="Questions for you" hint="Where the run could not decide and nobody had ruled on a case like it, it asked one person once. A yes becomes a rule that later runs apply on their own, citing it.">
+              <QuestionsPanel runId={bundle.report.run_id} who={who} onAnswered={() => { if (runId) void load(runId, applied); }} />
             </Section>
             <Section title="Proposed actions" hint="Code proposes; you decide. Approve keeps the proposal, Override replaces it and needs a reason. Every decision is recorded in the run's event log.">
               <Actions bundle={bundle} busy={busy} onDecide={decide} inputs={inputs} setInputs={setInputs} onApply={apply} />

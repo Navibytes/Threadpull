@@ -21,13 +21,25 @@ bun test
 
 `bun run data --no-db` creates the seed 13 files under `data/out/seed13/` and the separate answer key under `data/keys/seed13/`. Those generated directories are gitignored. To seed Supabase instead, fill in the server-only values in `.env.local` and run `bun run data`. See [data/README.md](data/README.md) for the loan shape, patterns, and output files.
 
-The repository does not yet have a complete Next.js application or `bun run dev` command. The current HTTP route is `GET /api/loans`; the live investigation, CRO UI, and demo/replay flow remain in progress.
+`bun run dev` starts the app: the board at `/?run=<run_id>`, the CRO screen at `/cro`. `bun run hazel` runs an investigation (needs `ANTHROPIC_API_KEY` and CRS credentials, or `--crs recorded`). A one-command demo with replay speed control is still open (ticket 15).
 
 ## Claude and CRS
 
 Hazel runs on Claude Sonnet 5.5 (`claude-sonnet-5-5`) through the Anthropic TypeScript SDK's tool runner (`lib/agent/hazel.ts`), with server-side refusal fallback enabled. Claude chooses the next tool and writes short notes. Code does everything else: it opens the lead, validates every tool input, charges the acorn budget, writes each event row, takes threads down only when a check proves an innocent explanation, applies saved rules, and decides every status (`lib/agent/status.ts`). Claude never sees raw document text, only form fields, and injected instructions are flagged as `attack_detected`.
 
 CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sandbox (`lib/crs`). The persona guard builds request bodies only from `data/personas.json`, so a loan without a sandbox persona is refused before anything is sent. Every result keeps the CRS RequestID. Real sandbox responses recorded on 2026-10-24 are in `data/crs-recordings/` and back the tests and `bun run hazel --crs recorded`. Hazel also has the tri-bureau credit report (thick file, thin life features; frozen and disagreeing bureaus mean Insufficient evidence), AtData Fraud Finder and AccurateAppend reverse phone, each charged in acorns and logged with its RequestIDs. Any simulated lookup data is identified as simulated in [data/README.md](data/README.md).
+
+## Ask once, remember forever
+
+When Hazel can't decide and nobody has ruled on a case like it, she asks one person once (`ask_human`). Code routes the question (CRO, credit analyst, legal, compliance), computes the confidence and the reason from the evidence, and proposes the scope a yes would save, using only facts the run can check. The person answers on the CRO screen (`/cro?run=<run_id>`, "Questions for you"): a yes becomes a versioned rule, a no saves nothing, and either way a `question_answered` row is added to the run's log and the board. Later runs apply the rule on their own and cite it when a thread comes down; a link outside the rule's scope stays up.
+
+```sh
+bun run hazel --rules runs/rules.json                  # questions and rulings kept in runs/rules.json
+# answer on /cro?run=<run_id>, then:
+bun run hazel --rules runs/rules.json --lead L0742     # --lead: the operator picks the first leads (recorded as such)
+```
+
+Without `--rules` every run starts with no rules, as the proof runs do.
 
 ## Real versus simulated
 
@@ -40,7 +52,7 @@ The generator, normalizer, contracts, graph/agent/rule prototypes, and proof hel
 - The CRO memo is written by the model and kept as `runs/<run_id>/memo.json`. Code drops any sentence it cannot check against the run's events, but it does not check that a cited event supports the sentence.
 - There is no sign-in. The name on a decision is whatever is typed into "Deciding as", so it is not proof of who decided, and anyone who can open the page can write a memo, which spends the model API key. Run it only on a trusted machine.
 - `/dashboard` shows status counts and run metrics only.
-- Saved rules and questions live in memory for one run; the Supabase `rules`/`questions` tables are not built (ticket 11).
+- Questions and rulings are kept in `runs/rules.json` on the machine that runs Hazel and serves the CRO screen; the Supabase `rules`/`questions` tables are not built (ticket 11). Like decisions, the name on an answer is whatever is typed into "Deciding as".
 - Pay stubs in the generated layout are read by a fixed-label parser. A stub it can't read (another payroll system, a table, a scan) is read by Claude Haiku in live runs (`bun run hazel`), and code accepts it only if every value is printed on the line Haiku cites; otherwise the stub is reported unreadable. `bun run haiku:trial` measures this on 102 stubs; the generated portfolios contain no such stubs, so the demo and proof runs never call it. Text only: no PDF or image OCR.
 - Address and employer lookups are simulated stand-ins and are labeled simulated wherever they appear.
 - The Python modules in `backend/` predate the TypeScript architecture and are not used by it.

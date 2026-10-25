@@ -111,6 +111,10 @@ function why(e: RunEvent): string | null {
       if (!status || !reason || e.loan_ids.length === 0) return null;
       return `${loanName(e.loan_ids[0])} is now ${status}: ${reason}`;
     }
+    case "rule_applied": {
+      const id = str(e.result.rule_id), reason = str(e.result.reason_text);
+      return id && reason ? `A person ruled on a case like this before (${id}): ${reason} Nobody was asked again.` : null;
+    }
     case "attack_detected":
       // hard rule 5: document text is data; the row exists because injected text was refused
       return "Instructions found in a document were treated as data and changed nothing.";
@@ -125,6 +129,10 @@ function next(e: RunEvent): string | null {
     case "question_asked": {
       const to = str(e.result.to);
       return to ? `Waiting for an answer from ${words(to)}.` : null;
+    }
+    case "question_answered": {
+      const id = str(e.result.rule_id);
+      return id ? `Saved as ${id}: later runs apply it on their own, citing it.` : null;
     }
     case "link_found":
       return e.loan_ids.length >= 2 ? "Click the red thread to see the records behind this match." : null;

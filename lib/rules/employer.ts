@@ -1,5 +1,5 @@
 // A shared-employer link, turned into the facts a rule is matched on and the evidence a question is scored on.
-// Facts come only from tool results (check_employer; tenure from crs_credit_report when B's ticket 06 lands).
+// Facts come only from tool results (check_employer; tenure when a caller has it, e.g. from a credit file's employments).
 import type { EvidenceItem, RuleContext, RuleWhen } from "@/lib/contracts/rule";
 import type { SourceRef, ToolResult } from "@/lib/contracts/tool-result";
 import { LINK_MIN_WEIGHT, type EvidenceGraph } from "@/lib/graph";
@@ -43,10 +43,11 @@ export function employerLink(graph: EvidenceGraph, loanId: string, check: ToolRe
   return {
     context: { link_kind: "employer", group_size: headcount, tenure_on_credit_file: tenure?.value ?? null },
     evidence: { for: support, against },
+    // only conditions this run can check: with no tenure fact, a scope that requires one could never match
     proposed_rule: {
       link_kind: "employer",
       min_group_size: headcount !== null && headcount < LARGE_EMPLOYER_MIN_HEADCOUNT ? headcount : LARGE_EMPLOYER_MIN_HEADCOUNT,
-      tenure_on_credit_file: true,
+      ...(tenure ? { tenure_on_credit_file: true } : {}),
     },
     sources: [...check.sources.slice(0, 10), ...(tenure?.sources ?? [])],
     simulated: check.simulated,
@@ -55,4 +56,4 @@ export function employerLink(graph: EvidenceGraph, loanId: string, check: ToolRe
 
 /** Default wording for the question, if Hazel's own isn't used. */
 export const employerQuestion = (scope: RuleWhen) =>
-  `Is a shared employer with ${scope.min_group_size?.toLocaleString("en-US")}+ staff a valid explanation if tenure is on the credit file?`;
+  `Is a shared employer with ${scope.min_group_size?.toLocaleString("en-US")}+ staff a valid explanation${scope.tenure_on_credit_file ? " if tenure is on the credit file" : ""}?`;
