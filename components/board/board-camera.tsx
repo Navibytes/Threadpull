@@ -7,7 +7,7 @@ import { bestFit, boundsOf, cardsOutOfView, planFrame, type Box } from "./framin
 import type { IndexCardNodeType } from "./index-card-node";
 import { LAYOUT } from "./layout";
 
-export type BoardCase = { index: number; lead: string; ids: string[] };
+export type BoardCase = { index: number; lead: string; ids: string[]; spotCheck?: boolean };
 // `replay`: the viewer chose this case on purpose (the case picker), so its evidence is laid out again. A focus that
 // comes from anywhere else (the filing drawer) only moves the camera.
 export type CardFocusRequest = { cardId: string; replay?: boolean };
@@ -209,7 +209,7 @@ export function BoardCamera({
                 <option value="all">All {cases.length} cases</option>
                 {cases.map((c, i) => (
                   <option key={c.lead} value={i}>
-                    Case {i + 1} · {c.lead}
+                    {c.spotCheck ? "Spot check" : "Case"} {i + 1} · {c.lead}
                   </option>
                 ))}
               </select>

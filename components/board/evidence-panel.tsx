@@ -83,6 +83,8 @@ function whereFrom(sources: SourceRef[]): string[] {
   return [...new Set(sources.map((s) => s.kind))].map((k) => SOURCE_MEANING[k]).filter(Boolean);
 }
 
+const SPOT_CHECK_PINNED = "A spot check, not a suspicion. When Hazel had no lead left, the run spent the remaining budget verifying the largest balances nobody had checked (identity, then the credit report), and pinned each one here.";
+
 const PINNED_BECAUSE: Partial<Record<string, string>> = {
   lead_opened: "Hazel opened this loan as the one to investigate.",
   link_found: "It was added because it shares a detail with another loan.",
@@ -101,16 +103,18 @@ function CardDetails({ card, board, mode }: { card: BoardCard; board: BoardState
           {card.status !== "Not reviewed" ? <StatusChip status={card.status} /> : <p className="text-sm">No decision recorded yet.</p>}
         </div>
       </div>
-      {PINNED_BECAUSE[card.pinnedBy] && <p className="text-sm leading-relaxed">{PINNED_BECAUSE[card.pinnedBy]}</p>}
+      {card.spotCheck
+        ? <p className="text-sm leading-relaxed">{SPOT_CHECK_PINNED}</p>
+        : PINNED_BECAUSE[card.pinnedBy] && <p className="text-sm leading-relaxed">{PINNED_BECAUSE[card.pinnedBy]}</p>}
       {card.note && (
         <p className="text-sm leading-relaxed">
-          <span className="font-medium">Hazel&rsquo;s note: </span>
+          <span className="font-medium">{card.spotCheck ? "Run note: " : <>Hazel&rsquo;s note: </>}</span>
           {card.note}
         </p>
       )}
       <Section title="Connections">
         {links.length === 0 ? (
-          <p className="text-sm text-walnut/80">No connections found yet.</p>
+          <p className="text-sm text-walnut/80">{card.spotCheck ? "No connection to another loan." : "No connections found yet."}</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {links.map((t) => (

@@ -74,7 +74,8 @@ export function Corkboard({
       const k = layout.get(card.id)?.cluster;
       if (k !== undefined) byCase.set(k, [...(byCase.get(k) ?? []), card.id]);
     }
-    return [...byCase].sort(([a], [b]) => a - b).map(([index, ids]) => ({ index, lead: ids[0], ids }));
+    const spot = new Set(board.cards.filter((c) => c.spotCheck).map((c) => c.id));
+    return [...byCase].sort(([a], [b]) => a - b).map(([index, ids]) => ({ index, lead: ids[0], ids, ...(spot.has(ids[0]) ? { spotCheck: true } : {}) }));
   }, [board.cards, layout]);
 
   // The active case: the case of the latest row that names a card on the board.
@@ -96,7 +97,7 @@ export function Corkboard({
         const position = old && moved.current.has(card.id) ? old.position : { x: spot.x, y: spot.y };
         const lead = card.pinnedBy === "lead_opened";
         const crs = card.sources.some((s) => s.kind === "crs");
-        const finding = cardFinding(card.id, lead, board.threads);
+        const finding = cardFinding(card.id, lead, board.threads, !!card.spotCheck);
         return {
           ...old,
           id: card.id,

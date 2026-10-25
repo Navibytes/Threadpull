@@ -23,8 +23,11 @@ export function summarizeCase(board: BoardState, leadId: string | null): CaseSum
   const other = (t: BoardThread) => (t.a === leadId ? t.b : t.a);
   const loans = [...new Set(links.map(other))];
 
+  const spot = !!card.spotCheck && links.length === 0;
   const found =
-    links.length === 0
+    spot
+      ? "A spot check of one of the largest unverified balances; no connection to another loan."
+      : links.length === 0
       ? "No connections found yet."
       : loans.length === 1
         ? `Shares ${joinPhrases([...new Set(links.map((t) => sharedPhrase(t.kind)))])} with ${loanName(loans[0])}.`
@@ -32,7 +35,9 @@ export function summarizeCase(board: BoardState, leadId: string | null): CaseSum
 
   const explained = links.filter((t) => t.explained);
   const checks = board.events.filter((e) => e.type === "check_run" && e.loan_ids.includes(leadId)).length;
-  const evidence =
+  const evidence = spot
+    ? `${checks} check${checks === 1 ? "" : "s"} run on it; ${card.status === "Not reviewed" ? "no status yet" : `status: ${card.status}`}.`
+    :
     explained.length > 0
       ? `Checked: ${explained[0].explained!.reason}. ${explained.length === links.length ? "An innocent explanation." : `${explained.length} of ${links.length} matches explained.`}`
       : checks > 0
@@ -57,7 +62,7 @@ export function summarizeCase(board: BoardState, leadId: string | null): CaseSum
   return {
     who: loanName(leadId),
     found,
-    why: NOT_PROOF_SHORT,
+    why: spot ? "Not a suspicion: with no lead left, the run spends its remaining budget verifying the largest balances nobody had checked." : NOT_PROOF_SHORT,
     evidence,
     next,
     sample: simulated,
