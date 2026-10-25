@@ -2,17 +2,17 @@
 
 import { useEffect, useId, useState } from "react";
 import type { Loan } from "@/lib/contracts/loan";
-import { apiLoanSource, type LoanSource } from "./loan-source";
+import { apiLoanSource, portfolioLabel, type LoanSource, type Portfolio } from "./loan-source";
 import { LoanList, type LoanListProps } from "./loan-list";
 import styles from "./drawer.module.css";
 
 export type FilingDrawerProps = Omit<LoanListProps, "loans"> & {
-  seed?: number;
+  seed?: Portfolio;
   /** Opt in explicitly to a separate preview adapter; API failures never fall back to fixtures. */
   source?: LoanSource;
 };
 
-type LoadState = { source: LoanSource; seed: number; request: number } & (
+type LoadState = { source: LoanSource; seed: Portfolio; request: number } & (
   | { phase: "loading" }
   | { phase: "ready"; loans: Loan[] }
   | { phase: "error"; message: string }
@@ -49,7 +49,7 @@ export function FilingDrawer({ seed = 13, source = apiLoanSource, selectedLoanId
         <h2 id={`${id}-title`}>Filing drawer</h2>
         <button type="button" disabled={loading} onClick={() => setRequest((value) => value + 1)}>Refresh</button>
       </header>
-      <p className={styles.source}>Portfolio · seed {seed}</p>
+      <p className={styles.source}>Portfolio · {portfolioLabel(seed)}</p>
       <div className={styles.content} aria-busy={loading}>
         {loading && <p role="status" className={styles.empty}>Loading loan files…</p>}
         {current?.phase === "error" && (
