@@ -14,6 +14,8 @@ export function SidePanel({
   onClose,
   focusOnOpen = true,
   bottomClear = false,
+  fit = false,
+  offsetLeft,
   children,
 }: {
   id: string;
@@ -23,6 +25,8 @@ export function SidePanel({
   onClose: () => void;
   focusOnOpen?: boolean;
   bottomClear?: boolean;
+  fit?: boolean; // height follows the content (a sheet pulled out), up to the available room
+  offsetLeft?: string; // a left panel starts this far in, so it never covers Hazel
   children: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -41,9 +45,18 @@ export function SidePanel({
           onClose();
         }
       }}
-      className={`side-panel absolute top-0 z-40 flex w-[min(360px,calc(100%-24px))] flex-col rounded-md ${
-        side === "left" ? "left-0" : "right-0"
-      } ${bottomClear ? "bottom-[var(--controls-clear,148px)]" : "bottom-0"}`}
+      style={side === "left" && offsetLeft ? { left: offsetLeft } : undefined}
+      className={`side-panel absolute top-9 z-40 flex w-[min(360px,calc(100%-24px))] flex-col ${
+        side === "left" ? "left-3" : "right-3"
+      } ${
+        fit
+          ? bottomClear
+            ? "max-h-[calc(100%-var(--controls-clear,148px)-2.25rem)]"
+            : "max-h-[calc(100%-4rem)]"
+          : bottomClear
+            ? "h-[calc(100%-var(--controls-clear,148px)-2.25rem)]"
+            : "h-[calc(100%-4rem)]"
+      }`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-walnut/15 px-4 pb-2 pt-3">
         <h2 ref={heading} id={`${id}-title`} tabIndex={-1} className="font-display text-lg font-semibold outline-none">

@@ -69,24 +69,78 @@ body {
 
 /* Paper tabs above the board. The current page sits forward and lighter; a destination that is not built
    yet is plainly marked and takes no clicks. */
+.paper-sheet {
+  position: relative;
+  rotate: var(--tilt, 0deg);
+  transform: translateY(3px);
+  /* the shadow is on the wrapper: the tab's irregular clip-path would cut its own */
+  filter: drop-shadow(0 5px 4px rgb(0 0 0 / 0.5));
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+/* a second sheet peeking out behind the tab */
+.paper-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 3px -2px 0 3px;
+  background: #cdb78f;
+  rotate: 1.6deg;
+  clip-path: polygon(0 8%, 96% 0, 100% 100%, 3% 100%);
+}
+.paper-sheet[data-active] {
+  transform: translateY(-3px);
+}
 .paper-tab {
-  background-color: #e9dcc2;
+  position: relative;
+  background-color: #eadfc6;
   background-image: url("/assets/detective/paper-aged.webp");
   background-size: 700px auto;
   color: var(--color-walnut);
-  box-shadow: 0 6px 12px -4px rgb(0 0 0 / 0.55), inset 0 -2px 0 rgb(110 80 45 / 0.25);
-  clip-path: polygon(2% 6%, 98% 0, 100% 94%, 96% 100%, 3% 98%, 0 90%);
+  clip-path: polygon(1% 9%, 12% 0, 90% 2%, 100% 12%, 99% 100%, 0 100%);
 }
-.paper-tab[aria-current="page"],
-.paper-tab[aria-expanded="true"] {
-  background-color: #f6ecda;
-  transform: translateY(3px);
-  box-shadow: 0 9px 16px -4px rgb(0 0 0 / 0.6), inset 0 -3px 0 var(--color-terracotta);
+.paper-tab-kraft {
+  background-color: #cdae80;
+  background-blend-mode: multiply;
+  clip-path: polygon(0 12%, 9% 2%, 88% 0, 99% 8%, 100% 100%, 1% 100%);
+}
+.paper-tab svg {
+  color: #3a2a1d;
+}
+/* the active tab is lighter and carries a hand-drawn terracotta underline */
+.paper-sheet[data-active] .paper-tab {
+  background-color: #f8eeda;
+  background-blend-mode: normal;
+}
+.paper-sheet[data-active] .paper-tab::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 7px;
+  height: 3px;
+  background: var(--color-terracotta);
+  border-radius: 3px 1px 3px 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .paper-sheet:has(button:hover):not([data-active]) {
+    transform: translateY(0);
+  }
+}
+.paper-tab:focus-visible {
+  outline-offset: -3px;
 }
 .paper-tab[data-unbuilt] {
   background-color: #b9ab93;
+  background-blend-mode: multiply;
   color: var(--color-walnut); /* full walnut keeps 4.5:1 on the dimmer paper */
   cursor: not-allowed;
+}
+.paper-sheet:has([data-unbuilt]) {
+  transform: translateY(5px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-sheet {
+    transition: none;
+  }
 }
 
 /* Brass plates for the status and the case controls. */
@@ -98,6 +152,8 @@ body {
 
 /* Side panels slide over the board from either edge of the room. */
 .side-panel {
+  border: 1px solid rgb(110 80 45 / 0.35);
+  border-radius: 3px 5px 4px 3px;
   background-color: #f6ecda;
   background-image: url("/assets/detective/paper-aged.webp");
   background-size: 900px auto;

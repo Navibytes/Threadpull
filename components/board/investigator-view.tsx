@@ -1,7 +1,7 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
@@ -31,8 +31,9 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
   const [selection, setSelection] = useState<Selection>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [rightPanel, setRightPanel] = useState<"evidence" | "notebook" | null>(null);
+  // One auxiliary panel at a time: opening one replaces the other, and the tab that looks selected is always
+  // the panel that is visible. null is the plain board.
+  const [open, setOpen] = useState<PanelId | null>(null);
   const [focusPanel, setFocusPanel] = useState(false); // opened from a tab: move focus into the panel
   const [drawerPreview, setDrawerPreview] = useState(false);
   const [drawerLoanId, setDrawerLoanId] = useState<string | null>(null);
@@ -48,19 +49,28 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   const tabRefs = useRef<Partial<Record<PanelId, HTMLButtonElement | null>>>({});
   const hazelCorner = useRef<HTMLDivElement>(null); // the camera keeps cards out of Hazel's corner
 
-  const isOpen = (id: PanelId) => (id === "drawer" ? drawerOpen : rightPanel === id);
+  const isOpen = (id: PanelId) => open === id;
   const close = (id: PanelId) => {
-    if (id === "drawer") setDrawerOpen(false);
-    else setRightPanel(null);
+    setOpen((o) => (o === id ? null : o));
     tabRefs.current[id]?.focus(); // back to the tab that opens it
   };
   const toggle = (id: PanelId) => {
-    if (isOpen(id)) return close(id);
+    if (open === id) return close(id);
     setFocusPanel(true);
-    if (id === "drawer") setDrawerOpen(true);
-    else setRightPanel(id);
+    setOpen(id);
   };
   const closeDrawer = () => close("drawer");
+  // Escape closes the open panel from anywhere on the board (inside a panel its own handler does the same).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      setOpen(null);
+      tabRefs.current[open]?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
   const onCases = useCallback((list: BoardCase[], active: number | null) => setCases({ list, active }), []);
 
   const selectFromBoard = useCallback((next: Selection) => {
@@ -68,7 +78,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     if (next) {
       // inspecting a card or a thread opens the evidence inspector; focus stays on the board
       setFocusPanel(false);
-      setRightPanel("evidence");
+      setOpen("evidence");
     }
     if (next?.kind === "card") {
       setDrawerLoanId(next.id);
@@ -96,15 +106,12 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
-        <header className="relative z-30 flex items-end gap-x-6 px-[var(--wall)] pt-3">
+        <header className="relative z-30 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 px-[var(--wall)] pt-3">
           <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
           <RoomNav
             isOpen={isOpen}
             onToggle={toggle}
-            onBoard={() => {
-              if (drawerOpen) close("drawer");
-              if (rightPanel) close(rightPanel);
-            }}
+            onBoard={() => setOpen(null)}
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
@@ -148,7 +155,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
               </section>
             </div>
 
-            <SidePanel id={panelIds.drawer} side="left" title="Filing drawer" open={drawerOpen} onClose={closeDrawer} focusOnOpen={focusPanel}>
+            <SidePanel id={panelIds.drawer} side="left" title="Filing drawer" open={open === "drawer"} onClose={closeDrawer} focusOnOpen={focusPanel} bottomClear offsetLeft="calc(40px + var(--hazel-w) * 0.87 + 12px - var(--wall))">
               <div className={styles.drawerControls}>
                 <label className={styles.previewChoice}>
                   <input
@@ -182,10 +189,11 @@ export function InvestigatorView({ runId }: { runId?: string }) {
               id={panelIds.evidence}
               side="right"
               title="Checks & evidence"
-              open={rightPanel === "evidence"}
+              open={open === "evidence"}
               onClose={() => close("evidence")}
               focusOnOpen={focusPanel}
               bottomClear
+              fit
             >
               <EvidencePanel board={board} selection={selection} mode={feed.mode} />
             </SidePanel>
@@ -193,10 +201,11 @@ export function InvestigatorView({ runId }: { runId?: string }) {
               id={panelIds.notebook}
               side="right"
               title="Hazel's notebook"
-              open={rightPanel === "notebook"}
+              open={open === "notebook"}
               onClose={() => close("notebook")}
               focusOnOpen={focusPanel}
               bottomClear
+              fit
             >
               <div className="p-3">
                 <HazelNotebook board={board} mode={feed.mode} />
