@@ -505,3 +505,11 @@ body {
     animation: none;
   }
 }
+
+/* the finding text on a board card scrolls when it is longer than the card's lines */
+.card-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(110 80 58 / 0.45) transparent;
+}
+.card-scroll::-webkit-scrollbar { width: 4px; }
+.card-scroll::-webkit-scrollbar-thumb { background: rgb(110 80 58 / 0.45); border-radius: 2px; }
