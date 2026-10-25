@@ -185,7 +185,7 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
         {/* the lead's own note from its lead_opened row, taped to the folder's bottom margin (never over its text) */}
         {showNote && (
           <div
-            className="sticky-note absolute -bottom-[66px] -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
+            className="sticky-note absolute top-[calc(100%-14px)] -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
             style={{ transform: `rotate(${2 + (h % 4)}deg)` }}
           >
             <span aria-hidden className="tape pointer-events-none absolute -top-1 left-1/2 h-4 w-12 -translate-x-1/2 -rotate-3" />
