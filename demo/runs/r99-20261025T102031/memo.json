@@ -1,0 +1,219 @@
+{
+  "run_id": "r99-20261025T102031",
+  "based_on_seq": 138,
+  "written_at": "2026-10-25T15:28:56.664Z",
+  "model": "claude-sonnet-5-5",
+  "assumptions": {
+    "lgd": 0.55,
+    "margin": 0.04
+  },
+  "sentences": [
+    {
+      "section": "decision",
+      "text": "The run proposes a price of $27,454,337 for 987 loans, an assumption for a person to review and not an offer.",
+      "event_seqs": [
+        1,
+        138
+      ]
+    },
+    {
+      "section": "decision",
+      "text": "It proposes to exclude 8 loans with balance $319,000 and to hold out 5 more loans with balance $212,346 until a person answers; no person has decided yet.",
+      "event_seqs": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        41,
+        57,
+        58,
+        59,
+        64,
+        68,
+        72,
+        129
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "The run found 8 loans at SUMMIT RIDGE AUTO (ring-1) that are still joined by 10 links nobody has taken down.",
+      "event_seqs": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        26,
+        27,
+        28,
+        29,
+        30,
+        33,
+        35,
+        36,
+        37,
+        38,
+        41,
+        68,
+        72
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "L0709, L0859 and L0905 failed identity checks, and the other five ring-1 loans have strong unexplained links to failed-identity loans.",
+      "event_seqs": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        41,
+        68,
+        72
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "SUMMIT RIDGE AUTO has 8 flagged loans, 22.6% of its $1,412,327 book.",
+      "event_seqs": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        41,
+        68,
+        72
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "The run found ring-2 at CEDAR VALLEY AUTO: L0003, L0047, L0349 and L0984, balance $167,704, still joined by 5 links nobody has taken down.",
+      "event_seqs": [
+        45,
+        46,
+        47,
+        48,
+        49,
+        57,
+        58,
+        59,
+        64
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "L0396 and L0706 are proposed for Reprice, with identity verified and no strong unexplained link.",
+      "event_seqs": [
+        117,
+        123
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "The 5 held-out loans are not verified either way: L0003, L0047, L0349, L0984 and L0528.",
+      "event_seqs": [
+        57,
+        58,
+        59,
+        64,
+        129
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "For L0528, the bureaus disagree, and the run's status is Insufficient evidence.",
+      "event_seqs": [
+        129
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "The run investigated only 23 of 1000 loans, and the other 977 are priced at base.",
+      "event_seqs": [
+        1,
+        138
+      ]
+    },
+    {
+      "section": "money",
+      "text": "Total principal is $29,135,564, and the balance under review is $531,346.",
+      "event_seqs": [
+        1,
+        26,
+        27,
+        28,
+        29,
+        30,
+        41,
+        57,
+        58,
+        59,
+        64,
+        68,
+        72,
+        129,
+        138
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The investigation used 59 acorns of a 60-acorn budget.",
+      "event_seqs": [
+        14,
+        16,
+        18,
+        23,
+        39,
+        50,
+        52,
+        55,
+        61,
+        107,
+        109,
+        113,
+        115,
+        119,
+        121,
+        125,
+        127,
+        131,
+        135
+      ]
+    },
+    {
+      "section": "money",
+      "text": "Checking all 20 case loans with all four CRS tools would cost 240 acorns, which is 181 more than the run spent.",
+      "event_seqs": [
+        14,
+        16,
+        18,
+        23,
+        39,
+        50,
+        52,
+        55,
+        61,
+        107,
+        109,
+        113,
+        115,
+        119,
+        121,
+        125,
+        127,
+        131,
+        135
+      ]
+    }
+  ],
+  "dropped": [],
+  "basis": {
+    "text": "CRS answers: live (live sandbox).",
+    "event_seqs": [
+      1,
+      138
+    ]
+  }
+}

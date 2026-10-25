@@ -1,0 +1,162 @@
+{
+  "run_id": "r13-20261025T094302",
+  "based_on_seq": 106,
+  "written_at": "2026-10-25T15:28:50.590Z",
+  "model": "claude-sonnet-5-5",
+  "assumptions": {
+    "lgd": 0.55,
+    "margin": 0.04
+  },
+  "sentences": [
+    {
+      "section": "decision",
+      "text": "The run proposes a price of $27,661,761 for 992 loans, as an assumption for a person to review and not an offer.",
+      "event_seqs": [
+        1,
+        106
+      ]
+    },
+    {
+      "section": "decision",
+      "text": "It proposes Exclude for 6 loans, Review for 2, Reprice for 4 and Clear for 988, and no person has decided any of these yet.",
+      "event_seqs": [
+        1,
+        25,
+        26,
+        36,
+        37,
+        38,
+        41,
+        106
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "The run found 5 loans in ring-1 (L0037, L0190, L0445, L0653, L0964), balance $242,265, all at SUNLINE AUTO GROUP and still joined by 8 links nobody has taken down.",
+      "event_seqs": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        25,
+        26,
+        36,
+        37,
+        38
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "L0037 and L0190 are proposed for exclusion because of TransUnion identity results, and L0445, L0653 and L0964 because of strong unexplained links to those loans.",
+      "event_seqs": [
+        25,
+        26,
+        36,
+        37,
+        38
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "L0195 is also proposed for exclusion on a TransUnion identity result, which brings SUNLINE AUTO GROUP (D03) to 6 flagged loans, balance $283,520, 17.4% of its $1,627,579 book.",
+      "event_seqs": [
+        25,
+        26,
+        36,
+        37,
+        38,
+        41
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "L0008, L0194, L0229 and L0822 are proposed for repricing, with identity verified and no strong unexplained link.",
+      "event_seqs": [
+        81,
+        93,
+        99,
+        105
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "L0400 at COASTAL DRIVE AUTOMOTIVE (balance $61,061) has an incomplete credit picture because transunion is frozen, so it is held out for review.",
+      "event_seqs": [
+        87
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "L0742 at GOLDEN GATE AUTOMOTIVE (balance $19,998) is held out until a person answers a question, and it is not verified either way.",
+      "event_seqs": [
+        57
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "The run investigated 17 of 1000 loans, and the other 983 were not investigated and are priced at base.",
+      "event_seqs": [
+        1,
+        106
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The balance under review is $364,579, of which $283,520 is proposed exclusions and $81,059 is held out of the bid.",
+      "event_seqs": [
+        25,
+        26,
+        36,
+        37,
+        38,
+        41,
+        57,
+        87
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The portfolio is 1000 loans with total principal $29,186,302, and the price assumes loss given default 55.0% and margin 4.0%.",
+      "event_seqs": [
+        1,
+        106
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The investigation spent 59 acorns of a 60-acorn budget.",
+      "event_seqs": [
+        15,
+        17,
+        19,
+        23,
+        28,
+        30,
+        33,
+        39,
+        77,
+        79,
+        83,
+        85,
+        89,
+        91,
+        95,
+        97,
+        101,
+        103
+      ]
+    }
+  ],
+  "dropped": [],
+  "basis": {
+    "text": "CRS answers: live (live sandbox).",
+    "event_seqs": [
+      1,
+      106
+    ]
+  }
+}

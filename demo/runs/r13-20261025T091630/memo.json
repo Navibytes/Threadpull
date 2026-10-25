@@ -1,0 +1,153 @@
+{
+  "run_id": "r13-20261025T091630",
+  "based_on_seq": 128,
+  "written_at": "2026-10-25T15:28:43.741Z",
+  "model": "claude-sonnet-5-5",
+  "assumptions": {
+    "lgd": 0.55,
+    "margin": 0.04
+  },
+  "sentences": [
+    {
+      "section": "decision",
+      "text": "The run proposes a price of $27,746,670 for 994 loans, an assumption for a person to review and not an offer.",
+      "event_seqs": [
+        1,
+        128
+      ]
+    },
+    {
+      "section": "decision",
+      "text": "The run proposes excluding 5 loans (L0037, L0190, L0445, L0653, L0964) with balance $242,265, and holding L0195 out of the bid for review.",
+      "event_seqs": [
+        65,
+        66,
+        67,
+        68,
+        69,
+        70
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "The run found that L0037 and L0190 failed a TransUnion identity check, and the other three excluded loans have strong unexplained links to one of those two.",
+      "event_seqs": [
+        65,
+        66,
+        67,
+        68,
+        70
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "The 5 loans form ring-1 at SUNLINE AUTO GROUP, still joined by 8 links nobody has taken down.",
+      "event_seqs": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        65,
+        66,
+        67,
+        68,
+        70
+      ]
+    },
+    {
+      "section": "findings",
+      "text": "SUNLINE AUTO GROUP (D03) has 6 flagged loans with balance $283,520, which is 17.4% of its $1,627,579 book.",
+      "event_seqs": [
+        65,
+        66,
+        67,
+        68,
+        69,
+        70
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "L0195, balance $41,255, is held out of the bid until a person answers, and it is not verified either way.",
+      "event_seqs": [
+        69
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "No person has decided on any of the 6 flagged loans yet, whose balance under review is $283,520.",
+      "event_seqs": [
+        65,
+        66,
+        67,
+        68,
+        69,
+        70
+      ]
+    },
+    {
+      "section": "unverified",
+      "text": "The run investigated 17 of 1000 loans, and the other 983 were not investigated and are priced at base.",
+      "event_seqs": [
+        1,
+        128
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The portfolio has 1000 loans with total principal $29,186,302.",
+      "event_seqs": [
+        1,
+        128
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The price assumes loss given default 55.0% and margin 4.0%, with default risk set by credit-score tier.",
+      "event_seqs": [
+        1,
+        128
+      ]
+    },
+    {
+      "section": "money",
+      "text": "The investigation cost 12 acorns of a 60-acorn budget.",
+      "event_seqs": [
+        31,
+        46,
+        48,
+        50,
+        53,
+        58,
+        60,
+        62
+      ]
+    },
+    {
+      "section": "money",
+      "text": "Checking all 20 case loans with all four CRS tools would cost 240 acorns, which is 228 more than the run spent, and this is arithmetic over the price list and not a second run.",
+      "event_seqs": [
+        31,
+        46,
+        48,
+        50,
+        53,
+        58,
+        60,
+        62
+      ]
+    }
+  ],
+  "dropped": [],
+  "basis": {
+    "text": "CRS answers: live (live sandbox).",
+    "event_seqs": [
+      1,
+      128
+    ]
+  }
+}
