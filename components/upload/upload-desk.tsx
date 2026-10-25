@@ -10,6 +10,7 @@ import { replayIntroNextTime } from "@/components/board/intro-seen";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { IntakeReportView } from "./intake-report";
 import { JSON_SAMPLE_URL, sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
+import { MAX_SAMPLE_SEED, SAMPLE_SIZES, sampleName, sampleProblem, sampleUrl } from "@/lib/ingest/sample";
 import s from "@/components/landing/landing.module.css";
 import u from "./upload.module.css";
 
@@ -133,6 +134,8 @@ export function UploadDesk() {
           <a className={u.textLink} href={TEMPLATE_URL} download>Download the CSV template</a>
         </p>
 
+        <OwnPortfolio busy={busy} onUse={(seed, loans) => void sample(sampleUrl({ seed, loans }), sampleName({ seed, loans }))} />
+
         <p className="sr-only" role="status" aria-live="polite">
           {state.kind === "sending" ? `Reading ${state.name}.`
             : state.kind === "done" ? `${state.report.accepted} of ${state.report.received} loans accepted.`
@@ -170,5 +173,55 @@ export function UploadDesk() {
         </div>
       )}
     </>
+  );
+}
+
+// Pick a portfolio: the same kinds of planted cases (a ring, innocent lookalikes, review cases, an injected pay stub),
+// generated for any seed and size, so nobody can say the demo only works on the tape we built it on.
+function OwnPortfolio({ busy, onUse }: { busy: boolean; onUse: (seed: number, loans: number) => void }) {
+  const [seedText, setSeedText] = useState("4242");
+  const [loans, setLoans] = useState<number>(SAMPLE_SIZES[1]);
+  const seed = Number(seedText.trim());
+  const problem = seedText.trim() === "" ? "enter a seed" : sampleProblem(seed, loans);
+  const roll = () => setSeedText(String(1 + Math.floor(Math.random() * MAX_SAMPLE_SEED)));
+  return (
+    <fieldset className="mt-6 rounded-sm border border-walnut/25 bg-[#fbf6ea]/70 p-4">
+      <legend className="px-1 font-display text-lg font-semibold text-walnut">Or generate your own portfolio</legend>
+      <p className="max-w-xl text-sm leading-relaxed text-walnut/85">
+        Pick any seed and a size. You get a new synthetic tape with the same kinds of cases planted as our development set
+        (a fraud ring, innocent lookalikes, review cases and one pay stub with instructions in it), but your seed decides
+        the names, addresses, loan positions and every background loan.
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-3">
+        <label className="text-sm font-medium text-walnut">Seed
+          <span className="mt-1 flex gap-1.5">
+            <input inputMode="numeric" value={seedText} onChange={(e) => setSeedText(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+              aria-invalid={problem !== null} aria-describedby="seed-help"
+              className="block w-28 rounded-sm border border-walnut/35 bg-paper px-2 py-1.5 tabular-nums" />
+            <button type="button" onClick={roll} className="rounded-sm border border-walnut/35 bg-paper px-2.5 text-sm font-semibold text-walnut hover:bg-white">Random</button>
+          </span>
+        </label>
+        <fieldset className="text-sm font-medium text-walnut">
+          <legend>Loans</legend>
+          <span className="mt-1 flex overflow-hidden rounded-sm border border-walnut/35">
+            {SAMPLE_SIZES.map((n) => (
+              <label key={n} className={`cursor-pointer px-3 py-1.5 tabular-nums has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-amber ${loans === n ? "bg-walnut font-semibold text-white" : "bg-paper text-walnut hover:bg-white"}`}>
+                <input type="radio" name="sample-loans" value={n} checked={loans === n} onChange={() => setLoans(n)} className="sr-only" />
+                {n.toLocaleString("en-US")}
+              </label>
+            ))}
+          </span>
+        </fieldset>
+        <button type="button" className={s.paperButton} disabled={busy || problem !== null} onClick={() => onUse(seed, loans)}>
+          Generate and use
+        </button>
+        {problem === null
+          ? <a className={u.textLink} href={sampleUrl({ seed, loans })} download={sampleName({ seed, loans })}>Download it</a>
+          : null}
+      </div>
+      <p id="seed-help" className={`mt-2 text-sm ${problem ? "text-terracotta" : "text-walnut/80"}`}>
+        {problem ? problem.charAt(0).toUpperCase() + problem.slice(1) + "." : `Seed ${seed.toLocaleString("en-US")}, ${loans.toLocaleString("en-US")} loans. The same seed always gives the same tape.`}
+      </p>
+    </fieldset>
   );
 }
