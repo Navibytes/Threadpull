@@ -86,7 +86,7 @@ export function intakeTape(text: string): Intake {
   ];
   if (format === "csv") notes.push("A CSV tape carries no documents, so compare_documents and the injection guard have nothing to read. Upload JSON to include pay stubs.");
   const sandbox = loans.filter((l) => SANDBOX_SSNS.has(l.applicant_info.ssn)).length;
-  if (sandbox < loans.length) notes.push(`${loans.length - sandbox} of ${loans.length} loans have no CRS sandbox identity: a CRS check on them is refused, costs nothing and is logged.`);
+  if (sandbox < loans.length) notes.push(`${(loans.length - sandbox).toLocaleString("en-US")} of ${loans.length.toLocaleString("en-US")} loans have no CRS sandbox identity: a CRS check on them is refused, costs nothing and is logged.`);
 
   const report: IntakeReport = {
     tape_id: tapeId(loans),

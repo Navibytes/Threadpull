@@ -38,6 +38,8 @@ docs/
 app/                                                                                 C
   page.tsx               ○ filing drawer + corkboard + notebook (investigator view)
   cro/page.tsx           ○ CRO screen
+  landing/page.tsx       ✅ landing page: hero corkboard, promises, how it works, limits      A
+  upload/page.tsx        ✅ upload a loan tape: intake envelope + intake report           A
   api/loans/route.ts     ✅ GET /api/loans                                            A
   api/tapes/route.ts     ✅ POST /api/tapes: upload a loan tape (JSON or CSV), intake report  A
   api/runs/…             ○ POST /api/runs, GET /api/runs/[id]/report, /why/[loan]     D, B
@@ -52,6 +54,8 @@ components/
   drawer/                ○ filing drawer, status chips                                C
   notebook/              ○ Hazel's notebook, acorn meter                              C
   twin-compare/          ○ Twin Compare panel                                         A
+  landing/               ✅ hero case board, shared site header and footer               A
+  upload/                ✅ upload desk, intake report view, upload model                A
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
 
 lib/
@@ -83,7 +87,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger, ingest-intake (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger, ingest-intake, upload (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows

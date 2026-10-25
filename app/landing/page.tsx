@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Pushpin } from "@/components/board/pushpin";
 import { CaseBoard } from "@/components/landing/case-board";
+import { SITE_NAV, SiteFooter, SiteHeader } from "@/components/landing/site-chrome";
 import s from "@/components/landing/landing.module.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ const v = (vars: Record<string, string | number>) => vars as CSSProperties;
 export default function Landing() {
   return (
     <div className={`${s.page} room min-h-full`}>
-      <Header />
+      <SiteHeader nav={SITE_NAV(true)} />
       <main id="main">
         <Hero />
         <Promises />
@@ -28,32 +29,11 @@ export default function Landing() {
         <Limits />
         <Responsible />
       </main>
-      <Footer />
+      <SiteFooter onLanding />
     </div>
   );
 }
 
-function Header() {
-  return (
-    <header className={s.header}>
-      <div className={`${s.gutter} flex items-center justify-between gap-4 py-2.5`}>
-        <Link href="/landing" aria-label="Threadpull home" className="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-terracotta">
-          <Image src="/hazel/threadpull-full-logo.png" alt="Threadpull" width={1998} height={787} priority
-            className="h-11 w-auto sm:h-13" sizes="160px" />
-        </Link>
-        <nav aria-label="Sections" className="hidden items-center gap-7 text-[0.95rem] font-medium md:flex">
-          <a className={s.navLink} href="#promises">What it does</a>
-          <a className={s.navLink} href="#how">How it works</a>
-          <a className={s.navLink} href="#limits">Limits in code</a>
-          <a className={s.navLink} href="#responsible">Responsible design</a>
-        </nav>
-        <Link href="/" className={`brass-plate ${s.brass} !px-4 !py-2 text-sm`}>
-          Open the room
-        </Link>
-      </div>
-    </header>
-  );
-}
 
 function Hero() {
   return (
@@ -78,7 +58,7 @@ function Hero() {
           <Link href="/" className={`brass-plate ${s.brass}`}>
             Open the investigator room <span aria-hidden>→</span>
           </Link>
-          <a href="#how" className={s.paperButton}>See how Hazel works</a>
+          <Link href="/upload" className={s.paperButton}>Upload a loan tape</Link>
         </div>
       </div>
       <div className={s.rise} style={v({ "--i": 5 })}>
@@ -253,26 +233,5 @@ function Responsible() {
           className="hazel-breathe pointer-events-none absolute -right-4 -bottom-16 w-32 md:-right-10" />
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className={`${s.footer} mt-10 pt-10 pb-12`}>
-      <div className={`${s.gutter} flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center`}>
-        <div className="flex items-center gap-4">
-          <Image src="/hazel/threadpull-icon.png" alt="" width={1254} height={1254} sizes="64px" className="h-14 w-14" />
-          <div>
-            <p className="font-display text-xl font-semibold">Threadpull</p>
-            <p className="text-sm text-cream/80">Built at Cal Hacks 13.0 with the CRS Credit API sandbox and Claude.</p>
-          </div>
-        </div>
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          <Link className={s.footerLink} href="/">Investigator room</Link>
-          <a className={s.footerLink} href="#how">How it works</a>
-          <a className={s.footerLink} href="#responsible">Responsible design</a>
-        </nav>
-      </div>
-    </footer>
   );
 }

@@ -43,6 +43,9 @@
   transform-origin: left;
   transition: transform 220ms var(--ease-out);
 }
+.navLink[data-current]::after {
+  transform: scaleX(1);
+}
 @media (hover: hover) and (pointer: fine) {
   .navLink:hover::after {
     transform: scaleX(1);
