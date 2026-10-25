@@ -62,7 +62,7 @@ components/
   twin-compare/          ✅ Twin Compare panel (in the evidence panel)                 A
   landing/               ✅ hero case board, shared site header and footer               A
   upload/                ✅ upload desk, intake report view, upload model                A
-  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions, questions to answer (questions.tsx, A), memo, why (neutral Tailwind, not the cork look)  B
+  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions, questions to answer (questions.tsx, A), memo, why (Tailwind plus `cro.module.css`, in the board's walnut and cream palette after C's redesign)  B
 
 lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
