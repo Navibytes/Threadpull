@@ -192,22 +192,22 @@ function Icon({ d }: { d: string }) {
 
 function Notices({ sample, m, events, loans, retry }: { sample: boolean; m: RunMetrics | null; events: Load<{ invalid: number; truncated: boolean }>; loans: Load<unknown>; retry: () => void }) {
   const items: ReactNode[] = [];
-  const base = "rounded-md border-l-4 px-3 py-2 text-[13px]";
+  const base = "rounded-md border px-3 py-2 text-[13px]";
   if (sample)
     items.push(
-      <p key="sample" className={`${base} border-[#b8913f] bg-honey/20 font-medium`}>
+      <p key="sample" className={`${base} border-[#b8913f]/70 bg-honey/20 font-medium`}>
         SAMPLE RUN: a hand-written example with made-up loans. It is not an investigation, and none of these figures is a result.
       </p>,
     );
   else if (m && m.simulatedRows > 0)
     items.push(
-      <p key="sim" className={`${base} border-terracotta bg-terracotta/10 font-medium`}>
+      <p key="sim" className={`${base} border-terracotta/50 bg-terracotta/10 font-medium`}>
         This run includes simulated rows: {nf(m.simulatedRows)} of {nf(m.rows)} are made-up sample data, not real lookups.
       </p>,
     );
   if (events.state === "error" || events.state === "off" || loans.state === "error")
     items.push(
-      <p key="err" role="status" className={`${base} border-walnut/50 bg-paper`}>
+      <p key="err" role="status" className={`${base} border-walnut/30 bg-paper`}>
         {events.state === "error" || events.state === "off" ? events.message : ""} {loans.state === "error" ? loans.message : ""}{" "}
         {(events.state === "error" || loans.state === "error") && (
           <button type="button" onClick={retry} className="font-semibold underline">
@@ -218,7 +218,7 @@ function Notices({ sample, m, events, loans, retry }: { sample: boolean; m: RunM
     );
   if (events.state === "ok" && (events.data.invalid > 0 || events.data.truncated))
     items.push(
-      <p key="rows" className={`${base} border-walnut/50 bg-paper`}>
+      <p key="rows" className={`${base} border-walnut/30 bg-paper`}>
         {events.data.invalid > 0 && `${events.data.invalid} rows didn't match the event contract and were left out. `}
         {events.data.truncated && "Only the first 2,000 rows of this run are counted."}
       </p>,
