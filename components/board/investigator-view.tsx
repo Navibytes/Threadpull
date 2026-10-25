@@ -104,8 +104,14 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
-        <header className="relative z-30 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 px-[var(--wall)] pt-3">
-          <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
+        <header className="relative z-30 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 px-[var(--wall)] pb-1 pt-2">
+          {/* the logo replaces the visible status text; the same status stays available to screen readers */}
+          <div className="flex justify-center self-center">
+            <img src="/brand/threadpull-logo.png" alt="Threadpull" className="h-[clamp(96px,15vh,150px)] w-auto select-none" draggable={false} />
+          </div>
+          <div className="sr-only">
+            <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
+          </div>
           <RoomNav
             isOpen={isOpen}
             onToggle={toggle}
@@ -118,7 +124,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
           </p>
         </header>
 
-        <main className="relative flex min-h-0 flex-1 justify-center px-[var(--wall)] pb-[var(--ledge-gap)] pt-3">
+        <main className="relative flex min-h-0 flex-1 justify-center px-[var(--wall)] pb-[clamp(36px,6vh,64px)] pt-2">
           <div className="relative flex w-full">
             {/* the frame stays still; the board pans and zooms inside the cork, clipped at the frame */}
             <div className="board-frame flex min-w-0 flex-1">
