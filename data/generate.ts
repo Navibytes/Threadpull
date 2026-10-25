@@ -18,6 +18,7 @@ import { RawLoanSchema, type RawLoan } from "@/lib/contracts/loan";
 import { formatTapeCsv } from "@/lib/ingest/csv";
 import { addressKey, normalizePortfolio } from "@/lib/ingest/normalize";
 import { seedSupabase } from "./seed-db";
+import personasFile from "./personas.json";
 import { parseSpec } from "./spec";
 
 const ROOT = dirname(fileURLToPath(import.meta.url)); // not URL.pathname: that gives /C:/... on Windows
@@ -26,8 +27,9 @@ type Persona = {
   id: string; first_name: string; last_name: string; ssn: string; dob: string; street1: string;
   city: string; state: string; zip: string; phone: string; email: string; ip_address: string;
 };
+// imported, not read from disk, so the generator also runs inside the app's server bundle (data/sample-tape.ts)
 export const PERSONAS: Record<string, Persona> = Object.fromEntries(
-  (JSON.parse(readFileSync(join(ROOT, "personas.json"), "utf8")).personas as Persona[]).map((p) => [p.id, p]),
+  (personasFile.personas as Persona[]).map((p) => [p.id, p]),
 );
 
 type Tier = "prime" | "near" | "sub";
@@ -208,7 +210,7 @@ export type AnswerKey = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Spec = any;
 
-class Generator {
+export class Generator {
   rng: Rng; fake: Faker; tapeDate: Date; start: Date; end: Date;
   usedPhones = new Set(Object.values(PERSONAS).map((p) => p.phone));
   usedSsns = new Set(Object.values(PERSONAS).map((p) => p.ssn));
