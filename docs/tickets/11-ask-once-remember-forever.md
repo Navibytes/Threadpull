@@ -7,7 +7,7 @@
 
 **Blocked by:** 07 Strings come down: explanations and Twin Compare; 10 CRO screen and deal engine
 
-**Status:** in-progress (D, A). Questions, rulings and the CRO screen work end to end (A, #46: `components/cro/questions.tsx`, `app/api/runs/[id]/questions`, `FileRuleStore` in `runs/rules.json`); R-001 cleared employer links live on A's runs. P16 exercised live (r13-20261025T102626, lead L0279 chosen by the operator): TU 2401, code set Investigate "fraud alert on file: needs the CRO"; Hazel proposed clearing it and asked no question. Her prompt is frozen detection code, so that is left as is. Remaining (optional): Supabase `rules`/`questions` tables.
+**Status:** done (D, A). Questions, rulings and the CRO screen work end to end (A, #46: `components/cro/questions.tsx`, `app/api/runs/[id]/questions`, `FileRuleStore` in `runs/rules.json`); R-001 cleared employer links live on A's runs. P16 exercised live (r13-20261025T102626, lead L0279 chosen by the operator): TU 2401, code set Investigate "fraud alert on file: needs the CRO"; Hazel proposed clearing it and asked no question. Her prompt is frozen detection code, so that is left as is. Questions and rulings live in `runs/rules.json` on the demo machine (Supabase tables not needed, see below).
 
 **Update (Sat 23:05, checked against `main`):** R-001 now applies only to the employer actually checked (A, PR #26: a hospital check with a ring loan's id used to clear the ring). Open as listed below; the CRO screen part depends on ticket 10.
 
@@ -27,7 +27,7 @@ Live, seed 13:
 - [x] The Python prototype routes questions, computes confidence from evidence weights, and distinguishes `no precedent` from `sources disagree`.
 - [x] Answers can become scoped, versioned drafts; confirmed rules persist and matching clues emit rule/explanation events.
 - [x] Port rule schemas, matching and event payloads to TypeScript (`lib/contracts/rule.ts`, `lib/rules`); code sets recipient, confidence and reason; storage behind a `RuleStore` interface (in-memory now).
-- [ ] Supabase `rules`/`questions` tables behind `RuleStore` (migrations: C/B). For now: `FileRuleStore`, `runs/rules.json`.
+- [x] ~~Supabase `rules`/`questions` tables behind `RuleStore`~~ Not needed (team decision, Sun 2026-10-25 03:40): the demo runs on one machine, where `FileRuleStore` (`runs/rules.json`) already serves Hazel's runs (`bun run hazel --rules`) and the CRO screen. A Supabase store would only matter for a hosted or multi-machine deployment.
 - [x] Wire question display, answer, and confirmation through the CRO screen/API from issue 10 (`components/cro/questions.tsx`, `app/api/runs/[id]/questions`, `lib/deal/questions.ts`).
 - [x] Integrate issue 07 explanation contexts so all scope fields have evidence-backed values; out-of-scope cases must ask again (`employerLink` over `check_employer`; tenure fact plugs in from `crs_credit_report`).
 - [x] Exercise P16 fraud-alert routing with the issue 02 seed and issue 03 CRS integration. (r13-20261025T102626: routed to the CRO by status; no question asked.)
