@@ -1,0 +1,196 @@
+{
+  "endpoint": "identity",
+  "persona": "P16",
+  "path": "/transunion/identity-manager-verification/basic",
+  "status": 200,
+  "request_id": "0f12bd30-d97d-4de3-b0c9-67fc5214e34a",
+  "request": {
+    "firstName": "SAMUEL",
+    "lastName": "OYELARAN",
+    "ssn": "666701016",
+    "dob": "1977-06-12",
+    "street1": "1200 BRICKELL BAY DR APT 2203",
+    "city": "MIAMI",
+    "state": "FL",
+    "zip": "33131"
+  },
+  "response": {
+    "fileNumber": "01",
+    "fileSummary": {
+      "fileHitIndicator": "SUBJECT_HIT",
+      "creditDataStatus": {
+        "suppressed": false,
+        "doNotPromote": {
+          "indicator": false
+        },
+        "freeze": {
+          "indicator": false
+        },
+        "minor": false,
+        "disputed": false
+      }
+    },
+    "indicative": {
+      "names": [
+        {
+          "person": {
+            "first": "SAMUEL",
+            "middle": "K",
+            "last": "OYELARAN"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "addresses": [
+        {
+          "status": "CURRENT",
+          "street": {
+            "unparseds": [],
+            "number": "1200",
+            "name": "BRICKELL BAY DR APT 2203"
+          },
+          "location": {
+            "city": "MIAMI",
+            "state": "FL",
+            "zipCode": "33131"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "socialSecurities": [
+        {
+          "number": "666701016",
+          "identificationIssuance": {
+            "type": "SSN",
+            "status": "ISSUED_AFTER_21",
+            "yearRange": {
+              "startYear": "2001",
+              "endYear": "2001"
+            },
+            "state": "KY",
+            "ageObtained": {
+              "rangeStart": "+35",
+              "rangeEnd": "+36"
+            }
+          },
+          "source": "INPUT",
+          "masked": false
+        },
+        {
+          "number": "666701016",
+          "source": "FILE",
+          "masked": false
+        }
+      ],
+      "dateOfBirths": [
+        {
+          "value": "1977-06-12T00:00:00.000+00:00",
+          "source": "INPUT"
+        }
+      ],
+      "ages": [],
+      "phones": [
+        {
+          "number": {
+            "qualifier": "PERSONAL"
+          },
+          "source": "INPUT"
+        }
+      ],
+      "employments": [],
+      "creditCards": [],
+      "genders": [],
+      "vehicles": []
+    },
+    "originalInputs": [],
+    "custom": {
+      "idmanagerVerAnalysisV2": {
+        "verificationSummary": {
+          "riskIndicator": "MEDIUM",
+          "bestMatch": "FILE",
+          "verificationPoint": 30,
+          "lowerThreshold": 5,
+          "upperThreshold": 49,
+          "keyMessages": {
+            "keyMessages": [
+              {
+                "code": "KMSG07",
+                "text": "ADDRESS RELATED ALERT"
+              }
+            ]
+          }
+        },
+        "fraudAnalysis": {
+          "region": {
+            "zipVsCity": "INVALID",
+            "zipVsState": "VALID",
+            "phoneVsState": "NOT_AVAILABLE",
+            "phoneVsZIP": "NOT_AVAILABLE",
+            "phoneVsZIPDistance": "0000.000",
+            "source": "INPUT"
+          },
+          "employment": {},
+          "distance": {
+            "minimum": {
+              "noAnalysisReason": "NOT_AVAILABLE"
+            },
+            "maximum": {
+              "noAnalysisReason": "NOT_AVAILABLE"
+            },
+            "source": "INPUT"
+          }
+        },
+        "verificationAnalysises": [
+          {
+            "verificationStatus": "SUBJECT_FOUND",
+            "firstNameVerification": "MATCH",
+            "middleNameVerification": "INPUT_NOT_AVAILABLE",
+            "lastNameVerification": "MATCH",
+            "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+            "currentAddressVerification": "NO_MATCH",
+            "previousAddressVerification": "INPUT_NOT_AVAILABLE",
+            "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+            "ssnVerification": "MATCH",
+            "dateOfBirthVerification": "NOT_FOUND",
+            "source": "FILE"
+          },
+          {
+            "verificationStatus": "SUBJECT_NOT_FOUND",
+            "firstNameVerification": "NOT_FOUND",
+            "middleNameVerification": "MATCH_NOT_PERFORMED",
+            "lastNameVerification": "NOT_FOUND",
+            "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+            "currentAddressVerification": "NOT_FOUND",
+            "previousAddressVerification": "MATCH_NOT_PERFORMED",
+            "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+            "ssnVerification": "NOT_FOUND",
+            "dateOfBirthVerification": "NOT_FOUND",
+            "source": "VENDOR_FILE"
+          }
+        ]
+      }
+    },
+    "addOnProducts": [
+      {
+        "code": "FRDMS",
+        "status": "DELIVERED",
+        "idMismatchAlerts": [],
+        "addressAnalysises": [],
+        "idManagerVerification": {
+          "messages": [
+            {
+              "code": "2401",
+              "text": "IDENTITY VERIFIED - STEP-UP AUTHENTICATION RECOMMENDED (FRAUD ALERT ON FILE)",
+              "source": "INPUT"
+            }
+          ],
+          "deceases": [],
+          "identificationIssuances": [],
+          "returnMessage": "CODES_AND_TEXT",
+          "searchStatus": "HIT"
+        },
+        "creditorContacts": []
+      }
+    ]
+  }
+}

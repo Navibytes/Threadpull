@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P10",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "416899b8-a086-40e5-951a-07a1913792f2",
+  "request": {
+    "firstName": "LAUREN",
+    "lastName": "KOWALCZYK",
+    "phoneNumber": "5550101010",
+    "email": "lauren.kowalczyk@example.com",
+    "ipAddress": "203.0.113.20",
+    "address": {
+      "addressLine1": "1181 WOODWARD AVE",
+      "city": "DETROIT",
+      "state": "MI",
+      "postalCode": "48226"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2016-05-14",
+      "longevity": 9,
+      "velocity": 1,
+      "popularity": 6
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 10,
+      "tumbling_risk": 0,
+      "query_id": "calhacks-P10-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "42.33",
+        "longitude": "-83.05"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "5 miles"
+      },
+      "phone": {
+        "line_type": "mobile",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "match",
+          "last_name_match": "match",
+          "street_match": "match",
+          "city_match": "match",
+          "zip_match": "match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "lauren.kowalczyk@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}

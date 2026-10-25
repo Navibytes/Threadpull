@@ -1,0 +1,80 @@
+{
+  "endpoint": "fraud",
+  "persona": "P02",
+  "path": "/fraud-finder/fraud-finder",
+  "status": 200,
+  "request_id": "db8b9cd1-3e53-400d-801b-afd19b2eb222",
+  "request": {
+    "firstName": "DANIEL",
+    "lastName": "WHITFIELD",
+    "phoneNumber": "5550101002",
+    "email": "daniel.whitfield@example.com",
+    "ipAddress": "203.0.113.12",
+    "address": {
+      "addressLine1": "88 LAKESHORE BLVD",
+      "city": "AUSTIN",
+      "state": "TX",
+      "postalCode": "78746"
+    }
+  },
+  "response": {
+    "eam": {
+      "date_first_seen": "2012-07-19",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 7
+    },
+    "dam": {
+      "date_first_seen": "1995-08-13",
+      "longevity": 10,
+      "velocity": 1,
+      "popularity": 10
+    },
+    "risk": {
+      "score": 9,
+      "tumbling_risk": 0,
+      "query_id": "calhacks-P02-0001",
+      "domain": {
+        "domain_risk_score": 0
+      },
+      "ip": {
+        "routing_type": "fixed",
+        "organization": "comcast cable communications llc",
+        "proxy_type": "",
+        "hosting_facility": false,
+        "latitude": "30.27",
+        "longitude": "-97.74"
+      },
+      "postal": {
+        "first_name_match": "match",
+        "last_name_match": "match",
+        "street_match": "match",
+        "city_match": "match",
+        "zip_match": "match",
+        "address_type": "Street",
+        "deliverability": "deliverable",
+        "ip_postal_distance": "5 miles"
+      },
+      "phone": {
+        "line_type": "mobile",
+        "carrier": "VERIZON WIRELESS",
+        "status": "valid",
+        "prepaid": false,
+        "owner": {
+          "first_name_match": "match",
+          "last_name_match": "match",
+          "street_match": "match",
+          "city_match": "match",
+          "zip_match": "match",
+          "type": "person"
+        }
+      }
+    },
+    "email_validation": {
+      "address": "daniel.whitfield@example.com",
+      "status": "valid",
+      "status_code": 50,
+      "domain_type": "freeisp"
+    }
+  }
+}
