@@ -45,9 +45,70 @@ body {
   color: var(--color-cream);
 }
 
+/* The detective's room: quiet dark wallpaper (a small ornament drawn in SVG, in the board's dusty-blue family,
+   kept darker and calmer than the board), lit by an amber lamp from the upper left. */
+.room {
+  background-color: #1b222b;
+  background-image:
+    radial-gradient(ellipse 70% 60% at 30% 8%, rgb(255 190 110 / 0.16), transparent 62%),
+    radial-gradient(ellipse 140% 110% at 50% 45%, transparent 55%, rgb(6 8 12 / 0.7) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='132' viewBox='0 0 96 132'%3E%3Cg fill='none' stroke='%23324051' stroke-width='1.6'%3E%3Cpath d='M48 14c10 10 10 22 0 32-10-10-10-22 0-32zM48 86c10 10 10 22 0 32-10-10-10-22 0-32z'/%3E%3Cpath d='M48 46c-6 6-16 8-24 4 4-8 14-12 24-4zM48 46c6 6 16 8 24 4-4-8-14-12-24-4zM48 86c-6-6-16-8-24-4 4 8 14 12 24 4zM48 86c6-6 16-8 24-4-4 8-14 12-24 4z'/%3E%3Ccircle cx='48' cy='66' r='4'/%3E%3Cpath d='M0 0v132M96 0v132' stroke='%23222a35' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: auto, auto, 96px 132px;
+  color: var(--color-cream);
+}
+
+/* The desk ledge Hazel stands on, along the bottom of the room. */
+.ledge {
+  background:
+    linear-gradient(rgb(255 226 190 / 0.18), transparent 3px),
+    linear-gradient(rgb(20 12 7 / 0.35), rgb(20 12 7 / 0.55)),
+    url("/assets/detective/wood-walnut.webp") center / 120% auto,
+    #3a2617;
+  box-shadow: 0 -2px 0 rgb(0 0 0 / 0.35), 0 -14px 28px -10px rgb(0 0 0 / 0.6);
+}
+
+/* Paper tabs above the board. The current page sits forward and lighter; a destination that is not built
+   yet is plainly marked and takes no clicks. */
+.paper-tab {
+  background-color: #e9dcc2;
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 700px auto;
+  color: var(--color-walnut);
+  box-shadow: 0 6px 12px -4px rgb(0 0 0 / 0.55), inset 0 -2px 0 rgb(110 80 45 / 0.25);
+  clip-path: polygon(2% 6%, 98% 0, 100% 94%, 96% 100%, 3% 98%, 0 90%);
+}
+.paper-tab[aria-current="page"],
+.paper-tab[aria-expanded="true"] {
+  background-color: #f6ecda;
+  transform: translateY(3px);
+  box-shadow: 0 9px 16px -4px rgb(0 0 0 / 0.6), inset 0 -3px 0 var(--color-terracotta);
+}
+.paper-tab[data-unbuilt] {
+  background-color: #b9ab93;
+  color: var(--color-walnut); /* full walnut keeps 4.5:1 on the dimmer paper */
+  cursor: not-allowed;
+}
+
+/* Brass plates for the status and the case controls. */
+.brass-plate {
+  background: linear-gradient(160deg, #e7c77e, #b8913f 55%, #8c6a26);
+  color: #2b1d0e;
+  box-shadow: inset 0 1px 0 rgb(255 245 210 / 0.6), inset 0 -1px 0 rgb(60 40 10 / 0.5), 0 6px 14px rgb(0 0 0 / 0.5);
+}
+
+/* Side panels slide over the board from either edge of the room. */
+.side-panel {
+  background-color: #f6ecda;
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 900px auto;
+  color: var(--color-walnut);
+  box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.75), 0 4px 12px rgb(0 0 0 / 0.4);
+}
+
 /* The board's walnut frame: grain, a bevel (light top-left, dark bottom-right) and a drop shadow on the wall. */
 .board-frame {
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: clamp(18px, 2vw, 30px);
   background:
     linear-gradient(135deg, rgb(255 228 196 / 0.16), transparent 32%, transparent 64%, rgb(0 0 0 / 0.38)),
     url("/assets/detective/wood-walnut.webp") center / 140% auto,
@@ -55,10 +116,12 @@ body {
   box-shadow:
     0 34px 60px -24px rgb(0 0 0 / 0.75),
     0 10px 20px rgb(0 0 0 / 0.45),
-    inset 0 1px 0 rgb(255 226 190 / 0.3),
-    inset 1px 0 0 rgb(255 226 190 / 0.12),
-    inset 0 -2px 0 rgb(0 0 0 / 0.45),
-    inset -1px 0 0 rgb(0 0 0 / 0.3);
+    inset 0 2px 0 rgb(255 226 190 / 0.32),
+    inset 2px 0 0 rgb(255 226 190 / 0.14),
+    inset 0 -3px 0 rgb(0 0 0 / 0.5),
+    inset -2px 0 0 rgb(0 0 0 / 0.35),
+    inset 0 0 0 7px rgb(0 0 0 / 0.12),
+    inset 0 0 0 8px rgb(255 226 190 / 0.08);
 }
 
 /* The cork sits recessed in the frame: inner shadow drawn above the canvas, never taking clicks. */

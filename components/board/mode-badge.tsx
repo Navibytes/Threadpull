@@ -23,7 +23,7 @@ export function ModeBadge({ mode, runId }: { mode: FeedMode; runId: string }) {
   return (
     <span
       title={l.title}
-      className={`inline-flex items-center gap-2 rounded border px-2.5 py-1 text-xs font-semibold tracking-[0.12em] ${l.className}`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded border px-2.5 py-1 text-xs font-semibold tracking-[0.12em] ${l.className}`}
     >
       {l.text}
       <span className="font-normal tracking-normal opacity-80">run {runId}</span>

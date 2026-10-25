@@ -1,6 +1,6 @@
 "use client";
 
-import { Controls, Panel, ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
+import { ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
@@ -24,12 +24,14 @@ export function Corkboard({
   onSelect,
   keepClear,
   focusRequest,
+  onCases,
 }: {
   board: BoardState;
   animateAfterSeq: number;
   onSelect: (s: Selection) => void;
   keepClear: RefObject<HTMLElement | null>;
   focusRequest?: CardFocusRequest | null;
+  onCases?: (cases: BoardCase[], activeCase: number | null) => void; // for the room's status plaque
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
@@ -56,6 +58,8 @@ export function Corkboard({
     }
     return null;
   }, [board.events, layout, cases]);
+
+  useEffect(() => onCases?.(cases, activeCase), [cases, activeCase, onCases]);
 
   useEffect(() => {
     setNodes((prev) =>
@@ -118,27 +122,21 @@ export function Corkboard({
       edgeTypes={edgeTypes}
       nodesConnectable={false}
       deleteKeyCode={null}
-      attributionPosition="bottom-center"
+      attributionPosition="top-right"
       minZoom={0.3}
       maxZoom={2}
       style={{ background: "transparent" }}
       aria-label="Corkboard: evidence cards and the threads between them"
     >
       <CorkSurface />
-      <BoardCamera cases={cases} activeCase={activeCase} keepClear={keepClear} focusRequest={focusRequest} />
-      {/* framing lives in the case bar ("Show all"), which knows to keep clear of Hazel */}
-      <Controls showInteractive={false} showFitView={false} position="bottom-left" />
-      {/* debug: event seq numbers live in the inspector; this puts them on the card faces too */}
-      <Panel position="bottom-left" className="!mb-[84px]">
-        <button
-          type="button"
-          aria-pressed={showSeq}
-          onClick={() => setShowSeq((v) => !v)}
-          className="rounded-sm bg-[#2c1e14] px-2 py-1 text-xs font-medium text-cream shadow-[0_6px_14px_rgb(0_0_0/0.5)] hover:bg-[#3d2a1c] focus-visible:outline-2 focus-visible:outline-amber"
-        >
-          Event numbers: {showSeq ? "on" : "off"}
-        </button>
-      </Panel>
+      <BoardCamera
+        cases={cases}
+        activeCase={activeCase}
+        keepClear={keepClear}
+        focusRequest={focusRequest}
+        showSeq={showSeq}
+        onToggleSeq={() => setShowSeq((v) => !v)}
+      />
     </ReactFlow>
   );
 }

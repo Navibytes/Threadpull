@@ -31,13 +31,17 @@ export function BoardCamera({
   activeCase,
   keepClear,
   focusRequest,
+  showSeq,
+  onToggleSeq,
 }: {
   cases: BoardCase[];
   activeCase: number | null;
   keepClear: RefObject<HTMLElement | null>;
   focusRequest?: CardFocusRequest | null;
+  showSeq: boolean;
+  onToggleSeq: () => void;
 }) {
-  const { setViewport, setNodes, setEdges } = useReactFlow();
+  const { setViewport, setNodes, setEdges, zoomIn, zoomOut } = useReactFlow();
   const measured = useNodesInitialized();
   const reduce = useReducedMotion();
   const nodeLookup = useStore((s) => s.nodeLookup);
@@ -146,7 +150,7 @@ export function BoardCamera({
     [vx, vy, zoom, paneW, paneH, nodeLookup, cardCount],
   );
 
-  if (cardCount === 0 || (cases.length <= 1 && outOfView.length === 0)) return null;
+  if (cardCount === 0) return null;
 
   const current = typeof shown === "number" ? shown : null;
   const step = (d: number) => {
@@ -155,64 +159,62 @@ export function BoardCamera({
     setFollowing(false);
     go(next);
   };
+  const zoomBy = (dir: 1 | -1) => {
+    setFollowing(false);
+    void (dir > 0 ? zoomIn : zoomOut)({ duration: reduce ? 0 : 200 });
+  };
+  const btn =
+    "grid min-h-8 min-w-8 place-items-center rounded-[3px] px-1.5 font-semibold hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-walnut";
+  const lens = current !== null ? `${current + 1}/${cases.length}` : cases.length > 1 ? "all" : "1/1";
 
+  // The case plate, in the board's lower-right corner: a brass magnifier with the case number, then the
+  // case controls, the zoom and the event-numbers debug toggle. The out-of-view count sits just above it.
   return (
-    <Panel position="top-right" className="!m-3">
-      <nav
-        aria-label="Cases on the board"
-        className="flex items-center gap-1.5 rounded-sm border border-walnut/20 bg-paper px-2 py-1.5 text-xs text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.4)]"
-      >
-        {cases.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => step(-1)}
-              aria-label="Previous case"
-              className="grid h-6 w-6 place-items-center rounded-sm hover:bg-cream focus-visible:outline-2 focus-visible:outline-amber"
-            >
-              <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
-            </button>
-            <span className="min-w-[8.5rem] text-center font-medium" aria-live="polite">
-              {current !== null
-                ? `Case ${current + 1} of ${cases.length} · ${cases[current]?.lead}`
-                : `All ${cases.length} cases`}
-            </span>
-            <button
-              type="button"
-              onClick={() => step(1)}
-              aria-label="Next case"
-              className="grid h-6 w-6 place-items-center rounded-sm hover:bg-cream focus-visible:outline-2 focus-visible:outline-amber"
-            >
-              <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
-            </button>
-            <span aria-hidden className="mx-1 h-4 w-px bg-walnut/20" />
-          </>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            setFollowing(false);
-            go("all");
-          }}
-          className="rounded-sm px-1.5 py-0.5 hover:bg-cream focus-visible:outline-2 focus-visible:outline-amber"
-        >
-          Show all
-        </button>
-        {!following && (
-          <button
-            type="button"
-            onClick={() => setFollowing(true)}
-            className="rounded-sm px-1.5 py-0.5 hover:bg-cream focus-visible:outline-2 focus-visible:outline-amber"
-          >
-            Follow latest
-          </button>
-        )}
+    <Panel position="bottom-right" className="!m-3">
+      <div className="flex flex-col items-end gap-2">
         {outOfView.length > 0 && (
-          <span className="ml-1 rounded-sm bg-honey/30 px-1.5 py-0.5 font-medium" role="status">
+          <p role="status" className="brass-plate rounded-[3px] px-2.5 py-1 text-[13px] font-semibold">
             {outOfView.length} {outOfView.length === 1 ? "card" : "cards"} out of view
-          </span>
+          </p>
         )}
-      </nav>
+        <nav aria-label="Cases on the board" className="brass-plate flex items-center gap-1 rounded-md py-1 pl-1 pr-2 text-[13px]">
+          <span aria-hidden className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-[#6b4f1c] bg-[radial-gradient(circle_at_35%_30%,#f3f6f4,#b9c6c8_70%)] text-[13px] font-bold text-walnut shadow-[inset_0_2px_4px_rgb(0_0_0/0.25)]">
+            {lens}
+          </span>
+          {cases.length > 1 && (
+            <>
+              <button type="button" onClick={() => step(-1)} aria-label="Previous case" className={btn}>
+                <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+              </button>
+              <span className="min-w-[9.5rem] text-center font-semibold" aria-live="polite">
+                {current !== null ? `Case ${current + 1} of ${cases.length} · ${cases[current]?.lead}` : `All ${cases.length} cases`}
+              </span>
+              <button type="button" onClick={() => step(1)} aria-label="Next case" className={btn}>
+                <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+              </button>
+            </>
+          )}
+          <span aria-hidden className="mx-1 h-5 w-px bg-black/25" />
+          <button type="button" onClick={() => { setFollowing(false); go("all"); }} className={btn}>
+            Show all
+          </button>
+          {!following && (
+            <button type="button" onClick={() => setFollowing(true)} className={btn}>
+              Follow latest
+            </button>
+          )}
+          <span aria-hidden className="mx-1 h-5 w-px bg-black/25" />
+          <button type="button" onClick={() => zoomBy(-1)} aria-label="Zoom out" className={btn}>
+            <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2.5 6h7" /></svg>
+          </button>
+          <button type="button" onClick={() => zoomBy(1)} aria-label="Zoom in" className={btn}>
+            <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2.5 6h7M6 2.5v7" /></svg>
+          </button>
+          <button type="button" aria-pressed={showSeq} onClick={onToggleSeq} className={btn}>
+            Event numbers: {showSeq ? "on" : "off"}
+          </button>
+        </nav>
+      </div>
     </Panel>
   );
 }
