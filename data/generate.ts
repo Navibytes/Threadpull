@@ -12,12 +12,13 @@
 import { Faker, en, en_US } from "@faker-js/faker";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RawLoanSchema, type RawLoan } from "@/lib/contracts/loan";
 import { addressKey, normalizePortfolio } from "@/lib/ingest/normalize";
 import { seedSupabase } from "./seed-db";
 
-const ROOT = dirname(new URL(import.meta.url).pathname);
+const ROOT = dirname(fileURLToPath(import.meta.url)); // not URL.pathname: that gives /C:/... on Windows
 
 type Persona = {
   id: string; first_name: string; last_name: string; ssn: string; dob: string; street1: string;
