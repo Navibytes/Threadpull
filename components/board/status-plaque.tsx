@@ -25,22 +25,22 @@ export function StatusPlaque({
   return (
     <section aria-label="Investigation status" className="flex shrink-0 flex-col gap-1 text-[13px]">
       <div className="flex items-center gap-3">
-        <h1 className="font-display text-xl font-semibold leading-none text-cream">Threadpull</h1>
+        <h1 className="font-display text-xl font-semibold leading-none text-walnut">Threadpull</h1>
         <ModeBadge mode={mode} runId={runId} />
       </div>
-      <p className="whitespace-nowrap text-cream/85">
+      <p className="whitespace-nowrap text-walnut/85">
         {active ? (
           <>
-            Case <span className="font-semibold text-cream">{active.lead}</span>
+            Case <span className="font-semibold text-walnut">{active.lead}</span>
             {cases.length > 1 && ` (${activeCase! + 1} of ${cases.length})`}
           </>
         ) : (
           "No case open yet"
         )}
-        <span aria-hidden className="mx-2 text-cream/40">·</span>
+        <span aria-hidden className="mx-2 text-walnut/35">·</span>
         Budget{" "}
         {budget ? (
-          <span className="font-semibold text-cream">
+          <span className="font-semibold text-walnut">
             {budget.spent} of {budget.limit} acorns
           </span>
         ) : mode === "preview" ? (

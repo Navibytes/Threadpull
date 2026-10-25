@@ -115,7 +115,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
-          <p className="hidden max-w-[15rem] shrink-0 pb-2 text-right text-[13px] text-cream/75 min-[1600px]:block">
+          <p className="hidden max-w-[15rem] shrink-0 pb-2 text-right text-[13px] text-walnut/75 min-[1600px]:block">
             Find the ring. Protect the innocent. Decide the deal.
           </p>
         </header>
