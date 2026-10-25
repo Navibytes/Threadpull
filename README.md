@@ -138,6 +138,5 @@ A connection is a lead, not proof. Threadpull's output is a recommendation for h
 | `docs/` | [PROOF.md](docs/PROOF.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md), [SKELETON.md](docs/SKELETON.md) (contracts), [DESIGN.md](docs/DESIGN.md) |
 | `supabase/migrations/` | `loans`, `events`, `crs_cache`, `dispositions` |
 | `tests/` | 868 tests, including architecture rules (e.g. only `eval/` may read answer keys) |
-| `backend/` | Earlier Python prototype, kept for reference; not used by the app |
 
 Never commit `.env.local`, keys or generated data.
