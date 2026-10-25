@@ -11,20 +11,20 @@ import type { ReportBundle } from "@/lib/deal/service";
 
 type Status = "live" | "in code" | "next";
 const Tag = ({ status }: { status: Status }) => (
-  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${status === "live" ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200" : status === "next" ? "bg-sky-50 text-sky-800 ring-1 ring-sky-200" : "bg-slate-100 text-slate-600 ring-1 ring-slate-200"}`}>
+  <span className={`rounded px-1.5 py-0.5 text-[12px] font-semibold uppercase tracking-wide ${status === "live" ? "bg-sage/25 text-[#3f5233] ring-1 ring-sage" : status === "next" ? "bg-dusty/20 text-[#2f4a63] ring-1 ring-dusty/60" : "bg-walnut/10 text-walnut/85 ring-1 ring-walnut/20"}`}>
     {status === "live" ? "live in this build" : status === "next" ? "next step" : "in code, not yet a setting"}
   </span>
 );
 
 function Card({ title, status, children, now }: { title: string; status: Status; children: React.ReactNode; now?: React.ReactNode }) {
   return (
-    <div className="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="flex flex-col rounded-sm border border-walnut/20 bg-paper p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <h3 className="text-base font-semibold text-walnut">{title}</h3>
         <Tag status={status} />
       </div>
-      <div className="mt-2 flex-1 text-sm leading-relaxed text-slate-700">{children}</div>
-      {now ? <div className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-600">{now}</div> : null}
+      <div className="mt-2 flex-1 text-sm leading-relaxed text-walnut/90">{children}</div>
+      {now ? <div className="mt-3 border-t border-walnut/15 pt-3 text-sm text-walnut/85">{now}</div> : null}
     </div>
   );
 }
@@ -48,7 +48,7 @@ export function AdaptPanel({ bundle }: { bundle: ReportBundle }) {
 
   return (
     <div className="space-y-4">
-      <p className="max-w-4xl text-sm text-slate-700">
+      <p className="max-w-4xl text-sm text-walnut/90">
         A bank fits Threadpull to its own book by configuring it, not by retraining a model. Every change below is a
         record a person can read, approve and roll back; a fine-tuned model would carry the same policy hidden in its
         weights, which a risk officer can&apos;t show a regulator. (The Claude API offers no fine-tuning today, and this
@@ -62,7 +62,7 @@ export function AdaptPanel({ bundle }: { bundle: ReportBundle }) {
           When the run can&apos;t decide and nobody has ruled on a case like it, it asks the right person once. A yes is saved as a
           versioned rule naming who approved it; later runs apply it on their own and cite it. A case outside the rule asks again.
         </Card>
-        <Card title="Your loan tape, as it comes" status="live" now={<>This run read {portfolio}. <a className="font-medium text-slate-900 underline" href="/upload">Upload a tape</a></>}>
+        <Card title="Your loan tape, as it comes" status="live" now={<>This run read {portfolio}. <a className="font-medium text-walnut underline" href="/upload">Upload a tape</a></>}>
           JSON or CSV in the dealer-application shape, validated row by row, with a report of every rejected row and why.
           An SSN that could belong to a real person is refused at the door.
         </Card>

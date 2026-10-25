@@ -1,0 +1,349 @@
+/* The CRO page: an investment-committee memorandum on a walnut desk. A dark masthead (the dashboard's walnut), then ONE
+   sheet of paper that runs the length of the page. Structure comes from numbered parts in a margin column, hairline
+   rules, a tabular money grid and a few weights of two typefaces: no cards, no tiles, no pills. The only tactile object
+   is the rubber stamp that says whether anyone has decided. Tokens come from app/globals.css; every texture keeps a plain
+   colour under it. Motion: the review panel slides in, a source entry fades open, a button presses. Reduced motion keeps
+   the fades. */
+
+.ground {
+  min-height: 100vh;
+  color: var(--color-walnut);
+  background: #e9dcc7;
+}
+
+/* ---------- masthead ---------- */
+.masthead {
+  color: var(--color-cream);
+  background:
+    radial-gradient(ellipse 60% 120% at 12% -30%, rgb(255 196 120 / 0.2), transparent 60%),
+    linear-gradient(rgb(26 16 9 / 0.82), rgb(18 11 6 / 0.94)),
+    url("/assets/detective/wood-walnut.webp") center / cover,
+    #2a1a10;
+  border-bottom: 1px solid #b8913f;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.5);
+}
+.mastSelect {
+  min-height: 2.5rem;
+  max-width: 100%;
+  padding: 0 0.6rem;
+  font-size: 0.9375rem;
+  color: var(--color-cream);
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(184 145 63 / 0.7);
+  border-radius: 3px;
+}
+.mastSelect option {
+  color: #1d140e;
+  background: #fffbf4;
+}
+.mastLink {
+  color: var(--color-cream);
+  text-decoration: underline;
+  text-decoration-color: rgb(240 194 126 / 0.5);
+  text-underline-offset: 5px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mastLink:hover {
+    text-decoration-color: var(--color-amber);
+  }
+}
+
+/* ---------- the sheet ---------- */
+.sheet {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 4vw, 3.25rem);
+  background-color: var(--color-paper);
+  background-image: url("/assets/detective/paper-aged.webp");
+  background-size: 900px auto;
+  background-blend-mode: soft-light;
+  border-left: 1px solid rgb(74 55 40 / 0.25);
+  border-right: 1px solid rgb(74 55 40 / 0.25);
+  box-shadow: 0 30px 50px -34px rgb(74 55 40 / 0.6);
+}
+
+/* a numbered part of the memorandum: the numeral sits in the margin, the content beside it */
+.part {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  column-gap: 2rem;
+  padding-block: 3.4rem;
+  border-top: 1px solid rgb(74 55 40 / 0.3);
+}
+.part[data-first] {
+  border-top: 0;
+  padding-block: 2.6rem 3.4rem;
+}
+.numeral {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.9;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-terracotta);
+}
+.h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.6rem, 2.4vw, 1.95rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.lead {
+  max-width: 44rem;
+  margin-top: 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: rgb(74 55 40 / 0.92);
+}
+@media (max-width: 860px) {
+  .part {
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 2.4rem;
+  }
+  .numeral {
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* the one big figure */
+.figure {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(3rem, 7vw, 4.75rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.caps {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the rubber stamp: whether anyone has decided. One object, one meaning. */
+.stamp {
+  display: inline-block;
+  padding: 0.35rem 0.8rem 0.3rem;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-terracotta);
+  border: 2.5px solid currentColor;
+  border-radius: 3px;
+  rotate: -3deg;
+  opacity: 0.92;
+}
+.stamp[data-tone="partial"] {
+  color: #8a5f10;
+}
+.stamp[data-tone="confirmed"] {
+  color: #3f5233;
+}
+.stamp[data-tone="none"] {
+  color: rgb(74 55 40 / 0.8);
+}
+
+/* ---------- actions ---------- */
+.cta {
+  display: inline-flex;
+  min-height: 3.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0 1.7rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  background: linear-gradient(#e7c77e, #c9a24f);
+  border: 1px solid #8a6a26;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgb(255 245 215 / 0.7), 0 3px 0 rgb(74 55 40 / 0.4);
+  transition:
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.cta:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgb(255 245 215 / 0.7), 0 1px 0 rgb(74 55 40 / 0.4);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cta:hover {
+    transform: translateY(-1px);
+  }
+}
+.primary,
+.secondary {
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.primary {
+  color: var(--color-paper);
+  background: var(--color-walnut);
+  border: 1px solid var(--color-walnut);
+}
+.secondary {
+  color: var(--color-walnut);
+  background: var(--color-paper);
+  border: 1px solid rgb(74 55 40 / 0.45);
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (hover: hover) and (pointer: fine) {
+  .primary:not(:disabled):hover {
+    background: #5a4231;
+  }
+  .secondary:not(:disabled):hover {
+    background: #fff;
+  }
+}
+.cta:focus-visible,
+.primary:focus-visible,
+.secondary:focus-visible,
+.ground a:focus-visible,
+.ground button:focus-visible,
+.ground summary:focus-visible,
+.ground select:focus-visible,
+.ground input:focus-visible,
+.ground textarea:focus-visible {
+  outline: 3px solid var(--color-terracotta);
+  outline-offset: 2px;
+}
+.masthead a:focus-visible,
+.masthead select:focus-visible {
+  outline-color: var(--color-amber);
+}
+
+/* a text link that looks like an editor's marginal note */
+.note {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(74 55 40 / 0.4);
+  text-underline-offset: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .note:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* ---------- footnote references and the source ledger ---------- */
+.ref {
+  display: inline-block;
+  min-width: 1.4rem;
+  padding: 0 0.15rem;
+  margin-left: 0.2rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  font-variant-numeric: lining-nums;
+  color: var(--color-terracotta);
+  vertical-align: super;
+  text-decoration: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ref:hover {
+    text-decoration: underline;
+  }
+}
+.entry > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.entry > summary::-webkit-details-marker {
+  display: none;
+}
+.entry[open] > .entryBody {
+  animation: reveal 170ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.entry:target {
+  background: rgb(217 164 65 / 0.14);
+}
+.chev {
+  display: inline-block;
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.entry[open] .chev {
+  transform: rotate(90deg);
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---------- the decision drawer ---------- */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(29 20 14 / 0.55);
+  animation: fade 160ms ease-out both;
+}
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(46rem, 100vw);
+  color: var(--color-walnut);
+  background: #f3e9dc;
+  box-shadow: -20px 0 40px -20px rgb(0 0 0 / 0.5);
+  animation: slide 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes slide {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: fade 120ms ease-out both;
+  }
+  .entry[open] > .entryBody {
+    animation: fade 120ms ease-out both;
+  }
+  .cta,
+  .cta:active,
+  .cta:hover,
+  .chev {
+    transition: none;
+    transform: none;
+  }
+}

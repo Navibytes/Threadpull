@@ -17,33 +17,33 @@ const when = (iso: string) => `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
 export function MemoView({ stored }: { stored: Stored }) {
   const { memo, stale } = stored;
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-xs text-slate-500">
+    <article className="rounded-sm border border-walnut/20 bg-paper p-6">
+      <p className="text-xs text-walnut/80">
         Written by {memo.model} on {when(memo.written_at)} from the run's events up to #{memo.based_on_seq}, under assumed loss given default {pct(memo.assumptions.lgd)} and margin {pct(memo.assumptions.margin)}.
       </p>
-      {stale ? <p role="status" className="mt-2 inline-block rounded-md bg-amber-50 px-3 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200">The run has new events since this memo was written. Write it again to include them.</p> : null}
-      {memo.sentences.length === 0 ? <p className="mt-4 text-sm text-slate-700">No sentence passed the checks, so there is nothing to show. Write the memo again.</p> : null}
+      {stale ? <p role="status" className="mt-2 inline-block rounded-sm bg-honey/20 px-3 py-1.5 text-sm text-[#6b4a0a] ring-1 ring-honey/60">The run has new events since this memo was written. Write it again to include them.</p> : null}
+      {memo.sentences.length === 0 ? <p className="mt-4 text-sm text-walnut/90">No sentence passed the checks, so there is nothing to show. Write the memo again.</p> : null}
       {ORDER.map((section) => {
         const own = memo.sentences.filter((s) => s.section === section);
         return own.length ? (
           <section key={section} className="mt-5">
-            <h3 className="text-sm font-semibold text-slate-900">{TITLES[section]}</h3>
+            <h3 className="text-sm font-semibold text-walnut">{TITLES[section]}</h3>
             <ul className="mt-1 space-y-2">
               {own.map((s, i) => (
-                <li key={i} className="text-sm leading-6 text-slate-800">{s.text} <span className="whitespace-nowrap text-xs text-slate-500">({eventRefs(s.event_seqs)})</span></li>
+                <li key={i} className="text-sm leading-6 text-walnut">{s.text} <span className="whitespace-nowrap text-xs text-walnut/80">({eventRefs(s.event_seqs)})</span></li>
               ))}
             </ul>
           </section>
         ) : null;
       })}
-      {memo.basis ? <p className="mt-5 border-t border-slate-100 pt-3 text-sm text-slate-700"><b>Basis of this run:</b> {memo.basis.text} <span className="whitespace-nowrap text-xs text-slate-500">({eventRefs(memo.basis.event_seqs)})</span></p> : null}
+      {memo.basis ? <p className="mt-5 border-t border-walnut/15 pt-3 text-sm text-walnut/90"><b>Basis of this run:</b> {memo.basis.text} <span className="whitespace-nowrap text-xs text-walnut/80">({eventRefs(memo.basis.event_seqs)})</span></p> : null}
       {memo.dropped.length ? (
-        <details className="mt-4 text-sm text-slate-600">
+        <details className="mt-4 text-sm text-walnut/85">
           <summary className="cursor-pointer font-medium">{plural(memo.dropped.length, "sentence")} left out because code could not check {memo.dropped.length === 1 ? "it" : "them"}</summary>
           <ul className="mt-2 space-y-1 text-xs">{memo.dropped.map((d, i) => <li key={i}><b>{d.reason}:</b> {d.text}</li>)}</ul>
         </details>
       ) : null}
-      <p className="mt-5 text-xs text-slate-500">A recommendation for a person to review. It is not a decision and not an action against any borrower. Prices are assumptions, not offers.</p>
+      <p className="mt-5 text-xs text-walnut/80">A recommendation for a person to review. It is not a decision and not an action against any borrower. Prices are assumptions, not offers.</p>
     </article>
   );
 }
@@ -82,12 +82,12 @@ export function MemoPanel({ runId, lastSeq, assumptions }: { runId: string; last
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={write} disabled={busy}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50">
+          className="rounded-sm bg-walnut px-3 py-1.5 text-sm font-medium text-white hover:bg-[#5a4231] disabled:opacity-50">
           {busy ? "Claude is writing the memo…" : stored ? "Write it again" : "Write the memo"}
         </button>
-        <span className="text-xs text-slate-500">Uses the loss given default and margin shown under Proposed actions.</span>
+        <span className="text-xs text-walnut/80">Uses the loss given default and margin shown under From principal to bid.</span>
       </div>
-      <div aria-live="polite" className="mt-2 min-h-5 text-sm">{error ? <span role="alert" className="text-red-700">{error}</span> : null}</div>
+      <div aria-live="polite" className="mt-2 min-h-5 text-sm">{error ? <span role="alert" className="text-terracotta">{error}</span> : null}</div>
       {stored ? <div className="mt-2"><MemoView stored={stored} /></div> : null}
     </div>
   );
