@@ -4,7 +4,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { uploadRoots } from "@/lib/demo";
+import { serverClient } from "@/lib/db/server";
 import { TAPE_ID } from "@/lib/ingest/intake";
+import { fetchTapeLoans, type LoansTable } from "@/lib/ingest/tapes";
 
 export async function GET(req: Request) {
   const tape = new URL(req.url).searchParams.get("tape");
@@ -14,7 +16,9 @@ export async function GET(req: Request) {
       try { return Response.json(JSON.parse(await readFile(join(/*turbopackIgnore: true*/ root, tape, "loans.normalized.json"), "utf8"))); }
       catch { /* not in this folder */ }
     }
-    return Response.json({ error: `no uploaded tape ${tape} on this server` }, { status: 404 });
+    const db = serverClient();
+    const kept = db ? await fetchTapeLoans(db as unknown as LoansTable, tape) : null; // a run elsewhere kept them in Supabase
+    return kept ? Response.json(kept) : Response.json({ error: `no uploaded tape ${tape}` }, { status: 404 });
   }
   const seed = Number(new URL(req.url).searchParams.get("seed") ?? 13);
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;

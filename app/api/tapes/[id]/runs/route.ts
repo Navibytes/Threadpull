@@ -9,6 +9,8 @@
 import { after } from "next/server";
 import { demoRefusal, PASSCODE_HEADER, passcodeOk, publicDemo } from "@/lib/demo";
 import { IntakeError, intakeTape } from "@/lib/ingest/intake";
+import { serverClient } from "@/lib/db/server";
+import { storeTapeLoans, type LoansTable } from "@/lib/ingest/tapes";
 import { startTapeRun, tapeRun } from "@/lib/runs/tape-run";
 
 export const runtime = "nodejs";
@@ -38,7 +40,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const out = startTapeRun(id, { tape });
   if (!out.ok) return Response.json({ error: out.error }, { status: out.status });
-  after(() => out.done); // serverless: keep running after the answer, until the run ends
+  // the tape's loans go to Supabase too, so the CRO screen and the drawer can read them from any server of a deployment
+  const db = serverClient();
+  const kept = db && tape ? storeTapeLoans(db as unknown as LoansTable, id, tape.loans)
+    .then((err) => { if (err) console.error(`tape ${id}: loans not kept in Supabase: ${err}`); }) : Promise.resolve();
+  after(() => Promise.all([out.done, kept])); // serverless: keep running after the answer, until the run ends
   return Response.json(out.run, { status: 201 });
 }
 

@@ -59,3 +59,30 @@ describe("no shared disk", () => {
     expect(out.done).toBeInstanceOf(Promise);
   });
 });
+
+describe("a run made on another server", () => {
+  test("findRun reads it from the events table, with the tape it read as its meta", async () => {
+    const { findRun } = await import("@/lib/deal/service");
+    const rows = [
+      { run_id: "rt-abc123-x", seq: 2, ts: "2026-10-25T12:38:24Z", type: "lead_opened", loan_ids: ["L0037"], tool: null, result: {}, sources: [], note: "", budget: { spent: 0, limit: 60 }, simulated: false },
+      { run_id: "rt-abc123-x", seq: 1, ts: "2026-10-25T12:38:23Z", type: "run_started", loan_ids: [], tool: null, result: { tape_id: "t-abc123456789", loans: 1000 }, sources: [], note: "", budget: { spent: 0, limit: 60 }, simulated: false },
+    ];
+    const db = { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: rows.sort((a, b) => a.seq - b.seq), error: null }) }) }) }) }) };
+    const run = await findRun("rt-abc123-x", undefined, db as never);
+    expect(run?.meta).toMatchObject({ run_id: "rt-abc123-x", tape_id: "t-abc123456789" });
+    expect(run?.events.map((e) => e.seq)).toEqual([1, 2]);
+    expect(await findRun("../etc", undefined, db as never)).toBeNull();
+  });
+
+  test("a tape's Supabase seed is negative and stable; its loans come back in pages of 1,000", async () => {
+    const { fetchTapeLoans, tapePortfolioSeed } = await import("@/lib/ingest/tapes");
+    expect(tapePortfolioSeed("t-8be99367fefa")).toBe(-(parseInt("8be9936", 16) + 1));
+    expect(tapePortfolioSeed("t-8be99367fefa")).toBe(tapePortfolioSeed("t-8be99367fefa"));
+    const g = generate(join(import.meta.dir, "..", "data", "patterns", "seed13.json"), mkdtempSync(join(tmpdir(), "tp-")), mkdtempSync(join(tmpdir(), "tp-")));
+    const all = [...g.normalized, ...g.normalized.slice(0, 200)].map((l) => ({ record: l })); // 1,200 rows: two pages
+    const pages: number[] = [];
+    const db = { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ range: async (a: number, b: number) => { pages.push(a); return { data: all.slice(a, b + 1), error: null }; } }) }) }) }) };
+    const loans = await fetchTapeLoans(db as never, "t-8be99367fefa");
+    expect([loans?.length, pages]).toEqual([1200, [0, 1000]]);
+  });
+});
