@@ -7,6 +7,7 @@ import type { Mirror } from "@/lib/deal/dispositions-db";
 import type { ReportBundle, RunSummary } from "@/lib/deal/service";
 import { Actions, type Decide } from "./actions";
 import { plural } from "./format";
+import { MemoPanel } from "./memo";
 import { Concentration, LoansTable, Section, Spend, Totals } from "./sections";
 
 const DEFAULTS = { lgd: "0.55", margin: "0.04" };
@@ -127,11 +128,14 @@ export function CroScreen() {
             <Section title="Where the risk sits" hint="Loans the run flagged, grouped by dealer and by the links that still join them.">
               <Concentration r={bundle.report} />
             </Section>
+            <Section title="Memo for the CRO" hint="Claude writes it from the report. Code keeps only the sentences it can check against the run's events, and shows the events behind each one.">
+              <MemoPanel runId={bundle.report.run_id} lastSeq={bundle.report.run.last_seq} assumptions={applied} />
+            </Section>
             <Section title="Proposed actions" hint="Code proposes; you decide. Approve keeps the proposal, Override replaces it and needs a reason. Every decision is recorded in the run's event log.">
               <Actions bundle={bundle} busy={busy} onDecide={decide} inputs={inputs} setInputs={setInputs} onApply={apply} />
             </Section>
             <Section title="Every investigated loan" hint={`${plural(bundle.report.totals.reviewed, "loan")} closed by the run. The other ${bundle.report.totals.not_reviewed.toLocaleString("en-US")} were not investigated and are counted at base price.`}>
-              <LoansTable loans={bundle.report.loans} />
+              <LoansTable loans={bundle.report.loans} runId={bundle.report.run_id} />
             </Section>
           </>
         ) : null}

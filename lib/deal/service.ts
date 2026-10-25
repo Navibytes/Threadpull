@@ -1,15 +1,18 @@
 // Server side of the CRO screen (ticket 10): find a run's files, load its loans, build the report, record a decision.
 // Server-only (reads and appends files under runs/<run_id>/); the route handlers in app/api stay thin and call these.
 // A run is what eval/hazel-run.ts writes: runs/<run_id>/run.json and events.jsonl. Supabase `events` replaces the file later.
-import { appendFileSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import Anthropic from "@anthropic-ai/sdk";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import { LoanSchema, type Loan } from "@/lib/contracts/loan";
 import { buybackDemands, documentRequests, type BuybackDemand, type DocumentRequest } from "./drafts";
 import { DispositionInputSchema, dispositionRow } from "./dispositions";
 import { defaultDispositionsDb, mirrorDisposition, type DispositionsTable, type Mirror } from "./dispositions-db";
+import { writeMemo, type Memo } from "./memo";
 import { type Assumptions, DEFAULT_ASSUMPTIONS, withInputs } from "./pricing";
 import { buildReport, type DealReport } from "./report";
+import { whyLoan, type Why } from "./why";
 
 /** `spec` is whatever the run's writer recorded; this module never opens it (only data/ and eval/ read pattern specs). */
 export type RunMeta = { run_id: string; spec?: string; seed: number; crs?: string; crs_note?: string; model_note?: string; started_at?: string };
@@ -71,8 +74,11 @@ export type ReportBundle = {
   run: RunMeta;
 };
 
-/** `db`: the Supabase copy of decisions. Omit it for the hosted client (never under bun test), pass null to switch the copy off. */
-type Deps = { root?: string; loans?: Loan[]; db?: DispositionsTable | null };
+/**
+ * `db`: the Supabase copy of decisions. Omit it for the hosted client (never under bun test), pass null to switch the copy off.
+ * `anthropic`: the memo writer's client. Omit it for the real one (needs ANTHROPIC_API_KEY, never under bun test), null for none.
+ */
+type Deps = { root?: string; loans?: Loan[]; db?: DispositionsTable | null; anthropic?: Anthropic | null };
 
 /** The report for a run, with the drafts, under the analyst's assumptions (defaults are the brief's). Null when there is no such run. */
 export async function loadReport(
@@ -114,4 +120,48 @@ export async function recordDisposition(raw: unknown, deps: Deps = {}): Promise<
   const event = EventSchema.parse({ run_id: input.run_id, seq: (last?.seq ?? 0) + 1, ts: new Date().toISOString(), ...built.row });
   appendFileSync(/*turbopackIgnore: true*/ join(deps.root ?? runsRoot(), input.run_id, "events.jsonl"), `${JSON.stringify(event)}\n`);
   return { ok: true, event, mirror: await mirrorDisposition(event, deps.db === undefined ? defaultDispositionsDb() : deps.db) };
+}
+
+// ---- ticket 14: the CRO memo and the "why" answer
+export type StoredMemo = { memo: Memo; stale: boolean };
+export type MemoResult = ({ ok: true } & StoredMemo) | { ok: false; status: number; error: string };
+const memoFile = (runId: string, root: string) => join(/*turbopackIgnore: true*/ root, runId, "memo.json");
+
+/** The memo last written for a run; `stale` once the run's log has rows the memo was not written from (a decision, say). */
+export function readMemo(runId: string, root = runsRoot()): StoredMemo | null {
+  const run = readRun(runId, root);
+  if (!run) return null;
+  try {
+    const memo = JSON.parse(readFileSync(/*turbopackIgnore: true*/ memoFile(runId, root), "utf8")) as Memo;
+    return { memo, stale: memo.based_on_seq !== (run.events.at(-1)?.seq ?? 0) };
+  } catch { return null; } // no memo yet
+}
+
+const defaultAnthropic = () => (process.env.NODE_ENV === "test" || !process.env.ANTHROPIC_API_KEY ? null : new Anthropic());
+
+/** Have Claude write the memo for a run, under the analyst's assumptions, and save it beside the run's events. */
+export async function makeMemo(runId: string, input: { lgd?: number; margin?: number } = {}, deps: Deps = {}): Promise<MemoResult> {
+  const run = readRun(runId, deps.root);
+  if (!run) return { ok: false, status: 404, error: `no run ${runId}` };
+  if (!run.events.length) return { ok: false, status: 422, error: `run ${runId} has no events to write about` };
+  const anthropic = deps.anthropic === undefined ? defaultAnthropic() : deps.anthropic;
+  if (!anthropic) return { ok: false, status: 503, error: "the memo needs ANTHROPIC_API_KEY in .env.local, and none is set" };
+  try {
+    const bundle = await loadReport(runId, input, deps);
+    if (!bundle) return { ok: false, status: 404, error: `no run ${runId}` };
+    const memo = await writeMemo(anthropic, bundle.report, run.events);
+    writeFileSync(/*turbopackIgnore: true*/ memoFile(runId, deps.root ?? runsRoot()), `${JSON.stringify(memo, null, 2)}\n`);
+    return { ok: true, memo, stale: false };
+  } catch (e) {
+    return { ok: false, status: 502, error: e instanceof Error ? e.message : "the memo could not be written" };
+  }
+}
+
+/** Why a loan has the verdict it has, from the run's own events; refuses when the run has none for it. */
+export async function whyFor(runId: string, loanId: string, deps: Deps = {}): Promise<{ ok: true; why: Why } | { ok: false; status: number; error: string }> {
+  if (!/^L\d{4}$/.test(loanId)) return { ok: false, status: 400, error: "a loan id looks like L0037" };
+  const run = readRun(runId, deps.root);
+  if (!run) return { ok: false, status: 404, error: `no run ${runId}` };
+  const report = buildReport({ run_id: runId, loans: deps.loans ?? (await loansFor(run.meta)), events: run.events });
+  return whyLoan(report, run.events, loanId);
 }
