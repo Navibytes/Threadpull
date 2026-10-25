@@ -45,7 +45,9 @@ app/                                                                            
   api/tapes/route.ts     ✅ POST /api/tapes: upload a loan tape (JSON or CSV), intake report  A
   api/runs/route.ts      ✅ GET /api/runs: the runs on disk, newest first             B
   api/runs/[id]/report/  ✅ GET /api/runs/[id]/report: report + drafts under the analyst's assumptions  B
-  api/runs/…             ○ POST /api/runs (D), GET /api/runs/[id]/why/[loan] (B, ticket 14)
+  api/runs/[id]/memo/    ✅ GET/POST /api/runs/[id]/memo: Claude writes the CRO memo, code keeps the sentences it can check   B
+  api/runs/[id]/why/…    ✅ GET /api/runs/[id]/why/[loan_id]: a loan's verdict explained from the run's events only   B
+  api/runs/…             ○ POST /api/runs (D)
   api/questions/…        ○ POST /api/questions/[id]/answer                           D
   api/dispositions/…     ✅ POST /api/dispositions: record an approve or override       B
 
@@ -60,7 +62,7 @@ components/
   twin-compare/          ✅ Twin Compare panel (in the evidence panel)                 A
   landing/               ✅ hero case board, shared site header and footer               A
   upload/                ✅ upload desk, intake report view, upload model                A
-  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions (neutral Tailwind, not the cork look)  B
+  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions, memo, why (neutral Tailwind, not the cork look)  B
 
 lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
@@ -73,7 +75,7 @@ lib/
   evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
   agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts  D
   rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
-  deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy)  B
+  deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy), CRO memo (Claude), why answers, wording rules  B
   events/                ✅ board state reducer, Supabase Realtime feed, preview fixture, Hazel's pose/notebook   C
   dashboard/             ✅ dashboard metrics from loans + one run's rows (no estimates)   C
 
