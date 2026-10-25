@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toolError, toolOk, type ToolResult } from "@/lib/contracts/tool-result";
 import type { Ledger } from "@/lib/ledger";
 import { CrsError, defaultCrsClient, type CrsClient } from "./client";
+import { refuseIfHalted } from "./halt";
 import { bodyForLoan, GuardRefused } from "./persona-guard";
 
 const TOOL = "crs_fraud_finder";
@@ -54,13 +55,15 @@ function ownerMatch(owner?: { first_name_match?: string | null; last_name_match?
   return parts.every((p) => p === "match") ? "match" : "no_data";
 }
 
-/** crs_fraud_finder: 2 acorns. A loan with no sandbox persona is refused before any request. */
+/** crs_fraud_finder: 2 acorns. A loan with no sandbox persona, or one halted by a deceased result, is refused before any request. */
 export function crsFraudFinder(
   loan: Parameters<typeof bodyForLoan>[1],
   ledger: Ledger,
   client: CrsClient = defaultCrsClient(),
   now = Date.now(),
 ): Promise<ToolResult<FraudFinder | null>> {
+  const halted = refuseIfHalted(TOOL, loan.loan_id, ledger);
+  if (halted) return Promise.resolve(halted);
   return ledger.run(TOOL, async (): Promise<ToolResult<FraudFinder | null>> => {
     let body: ReturnType<typeof bodyForLoan>;
     try {

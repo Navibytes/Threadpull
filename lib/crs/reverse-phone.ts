@@ -23,7 +23,10 @@ export type ReversePhoneRecord = { first_name: string | null; last_name: string 
 /** `records` is empty when the number is registered to no one we can see: that is an answer, not an error. */
 export type ReversePhone = { phone: string; records: ReversePhoneRecord[] };
 
-/** crs_reverse_phone: 1 acorn. A phone that is not a sandbox persona's is refused before any request. */
+/**
+ * crs_reverse_phone: 1 acorn. A phone that is not a sandbox persona's is refused before any request.
+ * It takes a phone, not a loan, so the deceased halt (which is per loan) does not apply to it.
+ */
 export function crsReversePhone(phone: string, ledger: Ledger, client: CrsClient = defaultCrsClient()): Promise<ToolResult<ReversePhone | null>> {
   return ledger.run(TOOL, async (): Promise<ToolResult<ReversePhone | null>> => {
     let body: ReturnType<typeof bodyForPhone>;
