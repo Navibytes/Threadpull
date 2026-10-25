@@ -9,6 +9,8 @@
 
 **Status:** in-progress (Python baseline/metric prototypes exist; authoritative Bun evaluator and measured runs remain)
 
+**Update (Sat 23:05, checked against `main`):** Unblocked since this was written: all CRS tools are in the loop (PR #29), runs reach Supabase (PR #28), and the freeze tooling exists (`bun run freeze:check`, PR #30). Open: `eval/baseline.ts`, `eval/evaluate.ts`, then one seed-13 run and one seed-99 run after `detector-frozen`, and the generated `docs/PROOF.md`.
+
 - [x] A Python fixed-checklist runner exists in `backend/baseline.py` and shares the Python Hazel tool boundary and budget.
 - [x] Python proof helpers calculate the requested metrics from event records and an answer key, and can render a guarded comparison table (`backend/proof.py`).
 - [ ] Implement the authoritative TypeScript baseline in `eval/baseline.ts`, using the final production tool set and same budget as Hazel.

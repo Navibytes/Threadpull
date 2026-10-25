@@ -9,10 +9,12 @@
 
 **Status:** code done and checked against the real sandbox (B, Sat 2026-10-24). Left: apply the `crs_cache` migration to a Supabase project, and append the rows from `lib/event-rows.ts` (the ledger's `onSpend`, the client's `onRecovery`) once C's events module exists.
 
+**Update (Sat 23:05, checked against `main`):** Hazel's ledger rows now reach Supabase too: `supabaseSink` (D, PR #28) writes every row, `budget_spent` included. Open: confirm the `crs_cache` migration is applied to the team project (if not, the cache falls back to memory and repeated runs re-hit the sandbox).
+
 - [x] Login happens once per process and the token is reused; a failed login raises an error and is never retried in a loop.
 - [x] Persona guard: the request body built from a loan must contain every field of a persona body; otherwise the call is refused, logged, and nothing is sent.
 - [x] Results use the tool-result shape in SKELETON §7 with `sources` holding the CRS RequestID and `simulated: false`.
-- [ ] The acorn ledger refuses calls over budget and every spend produces a `budget_spent` event. (Refusal, the `onSpend(Spend)` hook and the row mapper `budgetSpentRow` in `lib/event-rows.ts` are done and tested; appending the row waits for `lib/events`.) Update (D): Hazel's loop now appends a `budget_spent` row for every spend through `lib/agent/event-log.ts` (to `runs/<run_id>/events.jsonl`); a Supabase sink is still open.
+- [x] The acorn ledger refuses calls over budget and every spend produces a `budget_spent` event. (Refusal, the `onSpend(Spend)` hook and the row mapper `budgetSpentRow` in `lib/event-rows.ts` are done and tested; appending the row waits for `lib/events`.) Update (D): Hazel's loop now appends a `budget_spent` row for every spend through `lib/agent/event-log.ts` (to `runs/<run_id>/events.jsonl`); a Supabase sink is still open.
 - [x] The CRS client is server-only TypeScript (`lib/crs/`), called from route handlers / the agent loop; request and response bodies are validated with Zod.
 - [ ] Responses are cached by request body (a Supabase `crs_cache` table) so repeated demo runs don't re-hit the sandbox. (Cache and migration `20261024160000_crs_cache.sql` are written and tested against a fake; the migration is not applied to a Supabase project yet.)
 - [x] `bun test` (codes verified live 2026-10-24; passes against a fake sandbox replaying these codes and against the real responses recorded that day in `data/crs-recordings/`, see `tests/crs-recorded.test.ts`; the optional live block is gated behind `CRS_LIVE=1`): P13 → 2201 + 2202 + 2101, P12 → 2201 + 2202 + 2101, P14 → 2301 + 2101, P16 → 2401, P01 and P15 → no messages, background loan refused, over-budget refused.

@@ -11,6 +11,11 @@
 | 02 | Seeded portfolio and answer key | Sat 12:00 | None | ✅ done |
 | 07 | Strings come down: explanations and Twin Compare | Sat 18:00 | 05, 06 | ✅ done (PRs #4, #7, #9, Hazel wiring #13; falling thread + Twin Compare) |
 | 08 | Document fingerprints and injection guard | Sat 21:00 | 02, 05 | ✅ done except Haiku extraction (needs an API key) (PRs #2, #3, #6, #9; Hazel wiring #13) |
+| 12 (tooling) | Held-out set tooling (C writes the spec) | Sun 02:00 | 07, 08, 11 | ✅ done (PR #30): spec validation, `bun run data:check`, `bun run freeze:check`, held-out guard in `bun run hazel`, guide `data/patterns/HELDOUT.md` |
+
+**Also done:** landing page `/landing` (#21, #27), loan-tape upload `/upload` with intake (#23, #24), Windows path fixes (#17), the code review fixes (#26: a wrong-employer check clearing the ring, card statuses, runs that never end, Twin Compare's seed).
+
+**Left for A (Sat 23:05):** the Haiku decision for 08 (proposed: out of scope, so the detector can freeze); check the recorded run on the board once the anon key is in `.env.local`; then help where the demo needs it (15 replay, or the `recovery` row from 06).
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
 

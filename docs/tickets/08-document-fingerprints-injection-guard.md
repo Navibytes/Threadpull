@@ -9,6 +9,8 @@
 
 **Status:** in progress (A). Done: fingerprints (PR #2), injection guard (PR #3), the text-free `attack_detected` payload (PR #6, checked against the event contract in PR #9), Hazel writing the row (D, PR #13) and the agent-level test. Left: Haiku pay-stub extraction, which needs an `ANTHROPIC_API_KEY`; the demo works without it.
 
+**Update (Sat 23:05, checked against `main`):** Everything but Haiku extraction is done and in Hazel's loop. A proposes declaring Haiku extraction out of scope so the detector can be frozen (ticket 12): fingerprints and the injection guard already cover the demo, and adding a model call to the detector now is risk without a demo moment.
+
 - [x] Fingerprint from template id, font and creating tool, plus arithmetic checks (net below gross, net/gross ratio, year-to-date consistent with pay periods and time at employer). `lib/evidence/documents.ts`
 - [x] Returns a match score and the specific differences as sources, at 1 acorn per pair.
 - [x] Deterministic guard: `scanDocument` flags instruction-like text and off-form lines; `safeDocumentView` gives Hazel only the form fields and withholds any field carrying instructions. `lib/evidence/injection.ts`
