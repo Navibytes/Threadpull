@@ -13,6 +13,8 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
   const p = useMemo(() => runProgress(events), [events]);
   const lastTs = events.length ? Date.parse(events[events.length - 1].ts) : null;
   const [now, setNow] = useState(() => Date.now());
+  // open while the run is going, folded to one line once it is done (so it covers no cards); the viewer can flip it
+  const [open, setOpen] = useState<boolean | null>(null);
   useEffect(() => {
     if (p.phase === "done" || p.startedAt === null) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -25,10 +27,32 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
   const quiet = !done && lastTs !== null ? now - lastTs : 0; // time since the last row arrived
   const share = p.limit ? Math.min(1, p.spent / p.limit) : 0;
   const current = PHASES.findIndex((x) => x.id === p.phase);
+  const expanded = open ?? !done;
+  const toggle = (
+    <button type="button" onClick={() => setOpen(!expanded)} aria-expanded={expanded}
+      className="rounded-sm border border-walnut/25 px-1.5 py-0.5 text-[11px] font-semibold text-walnut/80 hover:bg-walnut/5 focus-visible:outline-2 focus-visible:outline-terracotta">
+      {expanded ? "Hide" : "Details"}
+    </button>
+  );
+
+  if (!expanded) return (
+    <div role="status" aria-live="polite" aria-label="Run progress"
+      className="pointer-events-auto absolute left-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-[3px] border border-walnut/20 bg-paper/95 px-3 py-1.5 text-[12px] text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.3)]">
+      <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full bg-terracotta ${done ? "" : "animate-pulse"}`} />
+      <span className="whitespace-nowrap font-semibold">{done ? "Done" : PHASES[Math.max(0, current)].label}</span>
+      <span aria-hidden className="text-walnut/40">·</span>
+      <span className="whitespace-nowrap tabular-nums">{p.spent} of {p.limit ?? "?"} acorns</span>
+      <span aria-hidden className="text-walnut/40">·</span>
+      <span className="whitespace-nowrap tabular-nums">{clock(elapsed)}</span>
+      {done && <><span aria-hidden className="text-walnut/40">·</span>
+        <Link href={`/cro?run=${encodeURIComponent(runId)}`} className="whitespace-nowrap font-semibold text-terracotta underline underline-offset-2">CRO screen →</Link></>}
+      {toggle}
+    </div>
+  );
 
   return (
     <div role="status" aria-live="polite" aria-label="Run progress"
-      className="pointer-events-auto absolute left-1/2 top-3 z-20 w-[min(46rem,calc(100%-2rem))] -translate-x-1/2 rounded-[3px] border border-walnut/20 bg-paper/95 px-4 py-2.5 text-[12.5px] text-walnut shadow-[0_6px_14px_rgb(0_0_0/0.35)]">
+      className="pointer-events-auto absolute left-3 top-3 z-20 w-[min(44rem,calc(100%-1.5rem))] rounded-[3px] border border-walnut/20 bg-paper/95 px-4 py-2.5 text-[12.5px] text-walnut shadow-[0_6px_14px_rgb(0_0_0/0.35)]">
       <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-1.5">
         <ol className="flex items-center gap-1.5" aria-label="Phase">
           {PHASES.map((x, i) => {
@@ -50,6 +74,7 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
             <div className="h-full rounded-full bg-terracotta transition-[width] duration-500" style={{ width: `${Math.max(share * 100, p.spent ? 2 : 0)}%` }} />
           </div>
           <span className="whitespace-nowrap tabular-nums"><b>{p.spent}</b> of {p.limit ?? "?"} acorns</span>
+          {toggle}
         </div>
       </div>
       <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-walnut/80">
