@@ -1,0 +1,102 @@
+.drawer {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-walnut);
+  border-radius: 6px;
+  color: var(--color-walnut);
+  background: var(--color-cream);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color-scheme: light;
+  scrollbar-color: var(--color-milk) var(--color-cream);
+}
+
+.drawer *, .drawer *::before, .drawer *::after { box-sizing: border-box; }
+.drawer ::selection { color: var(--color-walnut); background: var(--color-honey); }
+.drawer button, .drawer input, .drawer select { font: inherit; color: inherit; }
+.drawer button { cursor: pointer; }
+.drawer button:disabled { cursor: default; opacity: 0.5; }
+.drawer button:focus-visible, .drawer input:focus-visible, .drawer select:focus-visible {
+  outline: 2px solid var(--color-walnut);
+  outline-offset: 2px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px;
+  background: var(--color-cork);
+  border-bottom: 1px solid var(--color-cork-deep);
+}
+.header h2 { margin: 0; font: 600 24px/1.2 var(--font-display); }
+.header button, .pagination button, .empty button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-milk);
+  border-radius: 3px;
+  background: var(--color-paper);
+}
+.source { margin: 0; padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--color-cork-deep); overflow-wrap: anywhere; }
+.content { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: auto; }
+.filters { display: grid; gap: 5px; padding: 14px 16px 0; }
+.filters label { font-size: 12px; font-weight: 600; }
+.filters input, .filters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-bottom: 5px;
+  padding: 8px;
+  border: 1px solid var(--color-milk);
+  border-radius: 3px;
+  background: var(--color-paper);
+  font-size: 16px;
+  caret-color: var(--color-walnut);
+}
+.filters input::placeholder { color: var(--color-walnut); opacity: 0.8; }
+.textButton { justify-self: start; min-height: 44px; padding: 6px 0; border: 0; background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.reviewNote { margin: 0; padding: 0 16px 12px; font-size: 12px; }
+.count { margin: 0; padding: 10px 16px; border-block: 1px solid var(--color-cork-deep); font-size: 12px; font-weight: 600; }
+.list { list-style: none; padding: 0; margin: 0; flex: 1 0 120px; overflow-y: auto; scrollbar-gutter: stable; }
+.list li + li { border-top: 1px solid var(--color-cork-deep); }
+.loan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  text-align: left;
+  background: var(--color-paper);
+  overflow-wrap: anywhere;
+}
+.loan[aria-pressed="true"] { background: var(--color-cork); }
+.drawer .loan:focus-visible { outline-offset: -4px; }
+.loanHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; width: 100%; }
+.loanId { font-weight: 600; }
+.selectedLabel, .dealer { font-size: 12px; }
+.borrower { font-weight: 500; }
+.chip { margin-top: 5px; max-width: 100%; padding: 3px 7px; border: 1px solid transparent; border-radius: 3px; font-size: 12px; line-height: 1.4; }
+.unreviewed { border-color: var(--color-milk); border-style: dashed; background: var(--color-cream); }
+.investigate { background: var(--color-terracotta); color: var(--color-paper); }
+.resolved { background: var(--color-sage); color: var(--color-ink); }
+.insufficient { background: var(--color-honey); color: var(--color-ink); }
+.confirmed { background: var(--color-dusty); color: var(--color-ink); }
+.empty { padding: 24px 16px; flex: 1; }
+.empty h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+.empty p { margin: 0 0 16px; }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-top: 1px solid var(--color-cork-deep); font-size: 12px; }
+
+@media (hover: hover) {
+  .drawer button:not(:disabled):hover { background: var(--color-cork); }
+  .drawer .textButton:not(:disabled):hover { background: transparent; text-decoration-thickness: 2px; }
+}
