@@ -367,149 +367,125 @@ body {
   }
 }
 
-/* Portfolio Intelligence (/dashboard): Hazel's report room. A dark walnut desk under a lamp, a cream paper report
-   on it, a walnut filing-cabinet sidebar, dossier folders for the figures and a ledger for the audit trail. Same
-   materials as the board room, but calm: no wallpaper, no cork, no motion. */
+/* Portfolio Intelligence (/dashboard): Hazel's report. A walnut desk under a lamp with one sheet of aged paper on it.
+   The sheet is flat: type, hairlines and space carry the hierarchy, not boxes, tabs or stacked shadows. */
 @layer components {
   .dash-bg {
     background:
-      radial-gradient(ellipse 70% 55% at 12% -5%, rgb(255 196 120 / 0.28), transparent 62%),
-      linear-gradient(rgb(26 16 9 / 0.78), rgb(18 11 6 / 0.9)),
+      radial-gradient(ellipse 70% 45% at 50% -8%, rgb(255 196 120 / 0.26), transparent 62%),
+      linear-gradient(rgb(26 16 9 / 0.8), rgb(18 11 6 / 0.92)),
       url("/assets/detective/wood-walnut.webp") center / cover,
       #2a1a10;
   }
-  .dash-shell {
-    background-color: #f4ead8;
-    background-image: url("/assets/detective/paper-aged.webp");
-    background-size: 1100px auto;
-    background-blend-mode: soft-light;
-    box-shadow:
-      0 40px 70px -30px rgb(0 0 0 / 0.75),
-      0 4px 10px rgb(0 0 0 / 0.4),
-      inset 0 0 0 1px rgb(184 145 63 / 0.55),
-      inset 0 0 0 5px rgb(244 234 216 / 0.9),
-      inset 0 0 0 6px rgb(184 145 63 / 0.25);
-  }
-  /* the filing-cabinet side of the room */
-  .dash-side {
-    color: var(--color-cream);
-    background:
-      linear-gradient(rgb(28 17 10 / 0.55), rgb(20 12 7 / 0.7)),
-      url("/assets/detective/wood-walnut.webp") center / 220% auto,
-      #3a2617;
-    border-right: 1px solid rgb(184 145 63 / 0.55);
-    box-shadow: inset -6px 0 12px -8px rgb(0 0 0 / 0.6);
-  }
-  .dash-plaque {
-    background: #fbf5e6;
-    border: 1px solid rgb(184 145 63 / 0.7);
-    border-radius: 6px;
-    box-shadow: inset 0 0 0 2px rgb(251 245 230), inset 0 0 0 3px rgb(184 145 63 / 0.35), 0 3px 6px rgb(0 0 0 / 0.4);
-  }
-  /* brass hairline under headings */
-  .dash-rule {
-    height: 2px;
-    background: linear-gradient(90deg, #b8913f, rgb(184 145 63 / 0.15));
-    border-radius: 2px;
-  }
-
-  /* a dossier: a manila-edged paper folder with its label tab on top */
-  .dossier {
-    position: relative;
-    background-color: #fffaf0;
-    background-image: url("/assets/detective/paper-aged.webp");
-    background-size: 900px auto;
-    background-blend-mode: soft-light;
-    border: 1px solid rgb(110 80 45 / 0.3);
-    border-radius: 2px 7px 7px 7px;
-    box-shadow:
-      inset 0 3px 0 rgb(214 190 140 / 0.65),
-      0 1px 2px rgb(74 55 40 / 0.2),
-      0 8px 14px -9px rgb(74 55 40 / 0.45);
-  }
-  .dossier-tab {
-    position: absolute;
-    top: -17px;
-    left: 12px;
-    height: 17px;
-    padding: 0 11px;
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-walnut);
-    background: #e4d0a6;
-    border: 1px solid rgb(110 80 45 / 0.3);
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    box-shadow: inset 0 1px 0 rgb(255 245 215 / 0.7);
-  }
-  .dossier-tab-brass {
-    background: linear-gradient(#e7c77e, #c9a24f);
-  }
-  /* a typed rule under a dossier's heading */
-  .dossier-head {
-    border-bottom: 1px dashed rgb(74 55 40 / 0.35);
-  }
-
-  /* Hazel's desk: the illustration stands on a walnut edge that runs along the bottom of the notes */
-  .desk-edge {
-    height: 14px;
-    border-radius: 0 0 6px 6px;
-    background:
-      linear-gradient(rgb(255 226 190 / 0.25), transparent 3px),
-      linear-gradient(rgb(20 12 7 / 0.2), rgb(20 12 7 / 0.45)),
-      url("/assets/detective/wood-walnut.webp") center / 160% auto,
-      #3a2617;
-    box-shadow: 0 6px 10px -6px rgb(0 0 0 / 0.55);
-  }
-
-  /* the audit trail: a ledger with a brass-edged margin */
-  .dash-ledger {
-    background-color: #fffaf0;
-    background-image:
-      linear-gradient(to right, transparent 17px, rgb(181 83 60 / 0.22) 17px 18px, transparent 18px),
-      url("/assets/detective/paper-aged.webp");
-    background-size: auto, 900px auto;
+  .dash-sheet {
+    color: #3a2a1d;
+    background-color: #f2e7cf;
+    background-image: linear-gradient(rgb(255 226 170 / 0.22), transparent 220px), url("/assets/detective/paper-aged.webp");
+    background-size: auto, 1100px auto;
     background-blend-mode: normal, soft-light;
-    border: 1px solid rgb(110 80 45 / 0.35);
-    border-top: 4px solid #b8913f;
-    border-radius: 3px 3px 10px 10px;
-    box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.5), 0 2px 4px rgb(74 55 40 / 0.25);
+    border-radius: 18px;
+    /* one brass hairline and one soft drop: the only shadow on the page */
+    box-shadow:
+      0 0 0 1px rgb(184 145 63 / 0.5),
+      0 30px 60px -30px rgb(0 0 0 / 0.7);
+  }
+  .dash-muted {
+    color: #6b5643; /* 5.6:1 on the paper */
+  }
+  .dash-eyebrow {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9c4630;
+  }
+  .dash-rule {
+    border-color: rgb(74 55 40 / 0.16);
+  }
+  /* Hazel's finding: the one tinted surface on the page; her desk stands at its edge */
+  .dash-finding {
+    border-radius: 14px;
+    background: rgb(184 145 63 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(184 145 63 / 0.28);
   }
 
-  .dash-pill {
+  /* controls: one pill, two weights. 40px tall so they are easy to hit */
+  .dash-btn {
     display: inline-flex;
-    min-height: 2.25rem;
+    min-height: 2.5rem;
     align-items: center;
-    border: 1px solid rgb(74 55 40 / 0.3);
+    gap: 0.4rem;
+    border: 1px solid rgb(74 55 40 / 0.28);
     border-radius: 9999px;
-    padding: 0 0.9rem;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-walnut);
+    padding: 0 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3a2a1d;
+    background: rgb(255 250 240 / 0.6);
+    transition:
+      background-color 150ms ease,
+      transform 150ms ease;
   }
-  .dash-pill:hover {
-    background-color: rgb(74 55 40 / 0.07);
-  }
-  .dash-pill-dark {
+  .dash-btn-dark {
     border-color: #2f2116;
-    background: linear-gradient(#5a4130, #46321f);
-    color: var(--color-cream);
-    box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.25);
+    color: #f6edda;
+    background: #4a3728;
   }
-  .dash-pill-dark:hover {
-    background: linear-gradient(#654a37, #4f3924);
+  .dash-select {
+    max-width: 14rem;
+    padding-right: 0.5rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
   }
-  .dash-pill:focus-visible,
-  .dash-shell a:focus-visible,
-  .dash-shell summary:focus-visible,
-  .dash-shell button:focus-visible,
-  .dash-shell select:focus-visible {
-    outline: 2px solid var(--color-terracotta);
+  .dash-btn:active {
+    transform: scale(0.97);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .dash-btn:hover {
+      background: #fffaf0;
+    }
+    .dash-btn-dark:hover {
+      background: #5a4231;
+    }
+  }
+
+  /* a section that opens: the chevron turns, nothing else moves */
+  .dash-more > summary {
+    list-style: none;
+    cursor: pointer;
+  }
+  .dash-more > summary::-webkit-details-marker {
+    display: none;
+  }
+  .dash-chev {
+    transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .dash-more[open] > summary .dash-chev {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dash-btn,
+    .dash-chev {
+      transition: none;
+    }
+    .dash-btn:active {
+      transform: none;
+    }
+  }
+
+  .dash-sheet a:focus-visible,
+  .dash-sheet button:focus-visible,
+  .dash-sheet select:focus-visible,
+  .dash-sheet summary:focus-visible {
+    outline: 2px solid #9c4630;
     outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .dash-balance {
+    text-wrap: balance;
+  }
+  .dash-pretty {
+    text-wrap: pretty;
   }
 }
 

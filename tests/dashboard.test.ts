@@ -5,7 +5,7 @@ import { LOAN_STATUSES } from "@/lib/contracts/loan";
 import { createPreviewLoans } from "@/components/drawer/preview-loan-source";
 import { computeDashboard, runMetrics, statusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
-import { caseNotes } from "@/lib/dashboard/notes";
+import { briefing, caseNotes } from "@/lib/dashboard/notes";
 import { dashboardHref } from "@/lib/dashboard/links";
 import { PREVIEW_EVENTS, type RunEvent } from "@/lib/events";
 
@@ -166,5 +166,32 @@ describe("board and dashboard links", () => {
     expect(dashboardHref({ run: null })).toBe("/dashboard?sample=1");
     expect(dashboardHref({ run: "run 7/a" }, "L0001")).toBe("/dashboard?run=run+7%2Fa&case=L0001");
     expect(dashboardHref({ run: null }, "PV-01")).toBe("/dashboard?sample=1&case=PV-01");
+  });
+});
+
+describe("the briefing at the top of the page", () => {
+  const m = runMetrics(run)!;
+
+  test("no run means no briefing", () => {
+    expect(briefing(null, { sample: false })).toBeNull();
+  });
+
+  test("headline, found and unknown are read from the run's figures", () => {
+    const b = briefing(m, { sample: false })!;
+    expect(b.headline).toBe("2 connections found across 1 case: 1 explained by a cited check, 1 still open.");
+    expect(b.found).toBe("Hazel ran 2 checks, 1 with a CRS lookup. The connections are shared address (1) and shared phone number (1).");
+    expect(b.unknown).toBe("1 connection has no explanation yet. A shared detail is a lead to check, not proof. 1 loan has a recorded human decision.");
+  });
+
+  test("with no connections, nothing is claimed; an unfinished or sample run says so", () => {
+    const bare = runMetrics([ev(1, "run_started"), ev(2, "lead_opened", { loan_ids: ["L0001"] })])!;
+    const b = briefing(bare, { sample: true })!;
+    expect(b.headline).toBe("No connections found yet across 1 case.");
+    expect(b.unknown).toBe("There is nothing to weigh yet. No human decision is recorded yet. The run has not finished, so this may change. This is the built-in sample run, so none of this is a result.");
+  });
+
+  test("never says fraudster, guilty, criminal or that anything is proven", () => {
+    const b = briefing(m, { sample: true })!;
+    for (const line of [b.headline, b.found, b.unknown]) expect(line).not.toMatch(/fraudster|guilty|criminal|proves?/i);
   });
 });

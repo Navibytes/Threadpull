@@ -50,3 +50,32 @@ export function caseNotes(run: RunMetrics | null, opts: { sample: boolean }): Ca
 
   return { found, means, next };
 }
+
+// The short version for the top of the page: one headline, what was found, what is still unknown. Same rule as the
+// full notes: every clause is read from the run's own figures, and nothing says a connection is fraud.
+export type Briefing = { headline: string; found: string; unknown: string };
+
+export function briefing(run: RunMetrics | null, opts: { sample: boolean }): Briefing | null {
+  if (!run) return null;
+  const open = run.linksFound - run.linksExplained;
+  const kinds = Object.entries(run.linkKinds).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const headline =
+    run.linksFound === 0
+      ? `No connections found yet across ${plural(run.casesInvestigated, "case")}.`
+      : `${plural(run.linksFound, "connection")} found across ${plural(run.casesInvestigated, "case")}: ${n(run.linksExplained)} explained by a cited check, ${n(open)} still open.`;
+  const found = [
+    `Hazel ran ${plural(run.checks, "check")}${run.crsChecks ? `, ${n(run.crsChecks)} with a CRS lookup` : ""}.`,
+    ...(run.linksFound > 0 ? [`The connections are ${kinds.map(([k, c]) => `${sharedLabel(k).toLowerCase()} (${n(c)})`).join(" and ")}.`] : []),
+  ].join(" ");
+  const unknown = [
+    open > 0
+      ? `${plural(open, "connection")} ${open === 1 ? "has" : "have"} no explanation yet. A shared detail is a lead to check, not proof.`
+      : run.linksFound > 0
+        ? "Every connection found has an explanation."
+        : "There is nothing to weigh yet.",
+    run.dispositions === 0 ? "No human decision is recorded yet." : `${plural(run.dispositions, "loan")} ${run.dispositions === 1 ? "has" : "have"} a recorded human decision.`,
+    ...(run.finished ? [] : ["The run has not finished, so this may change."]),
+    ...(opts.sample ? ["This is the built-in sample run, so none of this is a result."] : []),
+  ].join(" ");
+  return { headline, found, unknown };
+}
