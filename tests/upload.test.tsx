@@ -150,8 +150,9 @@ describe("the report view", () => {
 test("upload components import intake only as a type (intake is server code)", () => {
   for (const f of ["upload-model.ts", "intake-report.tsx", "upload-desk.tsx"]) {
     const src = readFileSync(join(import.meta.dir, "..", "components", "upload", f), "utf8");
-    // lib/ingest/sample is the one exception: the sample-tape limits, a module with no imports at all (checked below)
-    for (const line of src.split("\n").filter((l) => l.includes("@/lib/") && !l.endsWith('from "@/lib/ingest/sample";'))) expect(line).toMatch(/^import type /);
+    // the exceptions are modules with no imports at all (checked below): the sample-tape limits and the run budgets
+    for (const line of src.split("\n").filter((l) => l.includes("@/lib/") && !/from "@\/lib\/(ingest\/sample|runs\/budgets)";$/.test(l))) expect(line).toMatch(/^import type /);
   }
-  expect(readFileSync(join(import.meta.dir, "..", "lib", "ingest", "sample.ts"), "utf8")).not.toMatch(/^\s*import /m);
+  for (const m of [["ingest", "sample.ts"], ["runs", "budgets.ts"]])
+    expect(readFileSync(join(import.meta.dir, "..", "lib", ...m), "utf8")).not.toMatch(/^\s*import /m);
 });
