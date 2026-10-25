@@ -104,11 +104,9 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
-        <header className="relative z-30 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 px-[var(--wall)] pb-1 pt-2">
-          {/* the logo replaces the visible status text; the same status stays available to screen readers */}
-          <div className="flex justify-center self-center">
-            <img src="/brand/threadpull-logo.png" alt="Threadpull" className="h-[clamp(96px,15vh,150px)] w-auto select-none" draggable={false} />
-          </div>
+        <header className="relative z-30 flex flex-col items-center gap-1 px-[var(--wall)] pt-2">
+          {/* the wordmark is the visible brand; the status line is for screen readers only */}
+          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="h-[clamp(84px,15vh,140px)] w-auto select-none" />
           <div className="sr-only">
             <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
           </div>
@@ -119,7 +117,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
-          <p className="hidden max-w-[15rem] shrink-0 pb-2 text-right text-[13px] text-walnut/75 min-[1600px]:block">
+          <p className="absolute right-[var(--wall)] top-4 hidden max-w-[15rem] text-right text-[13px] text-walnut/75 min-[1600px]:block">
             Find the ring. Protect the innocent. Decide the deal.
           </p>
         </header>
