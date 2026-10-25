@@ -5,7 +5,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
-import { hazelState, previewFeed, supabaseFeed } from "@/lib/events";
+import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed } from "@/lib/events";
+import { useRouter } from "next/navigation";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
 import type { BoardCase, CardFocusRequest } from "./board-camera";
@@ -25,9 +26,11 @@ import { dashboardHref } from "@/lib/dashboard/links";
 // evidence inspector or Hazel's notebook from the right, over the board, instead of splitting the room.
 // With ?run=<run_id> and Supabase configured, the board follows that run's event rows (history, then
 // Realtime). Otherwise it shows the fixture board.
-export function InvestigatorView({ runId }: { runId?: string }) {
+export function InvestigatorView({ runId, scenario }: { runId?: string; scenario?: string }) {
+  const router = useRouter();
+  const sc = useMemo(() => scenarioById(scenario), [scenario]); // the sample situation, when no run is given
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
-  const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
+  const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed(sc.events, scenarioRunId(sc))), [runId, client, sc]);
   const { board, errors, animateAfterSeq } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
@@ -82,7 +85,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     if (lead) setFocusRequest({ cardId: lead }); // move the camera to the case as well
   }, []);
   // a case's detail page on the dashboard: the same run, with that case's lead loan
-  const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId }, leadId), [runId]);
+  const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId, scenario: runId ? undefined : sc.id }, leadId), [runId, sc.id]);
 
   const selectFromBoard = useCallback((next: Selection) => {
     setSelection(next);
@@ -136,11 +139,28 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             isOpen={isOpen}
             onToggle={toggle}
             onBoard={() => setOpen(null)}
-            dashboardHref={dashboardHref({ run: runId })}
+            dashboardHref={dashboardHref({ run: runId, scenario: runId ? undefined : sc.id })}
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
-          <p className="absolute right-[var(--wall)] top-4 hidden max-w-[15rem] text-right text-[13px] text-walnut/75 min-[1600px]:block">
+          {!runId && (
+            <label className="absolute right-[var(--wall)] top-3 z-30 flex items-center gap-2 rounded-sm border border-walnut/20 bg-paper/90 px-2 py-1 text-[12px] text-walnut shadow-[0_3px_8px_rgb(0_0_0/0.2)]">
+              <span className="font-semibold">Sample situation</span>
+              <select
+                value={sc.id}
+                title={sc.summary}
+                onChange={(e) => router.push(`/?scenario=${e.target.value}`)}
+                className="rounded-sm border border-walnut/25 bg-paper px-1 py-0.5"
+              >
+                {SCENARIOS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <p className="absolute right-[var(--wall)] top-14 hidden max-w-[15rem] text-right text-[13px] text-walnut/75 min-[1600px]:block">
             Find the ring. Protect the innocent. Decide the deal.
           </p>
         </header>

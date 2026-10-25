@@ -7,3 +7,4 @@ export { supabaseFeed } from "./supabase-feed";
 export { PREVIEW_EVENTS, PREVIEW_RUN_ID } from "./preview-run";
 export * from "./plain";
 export * from "./case-summary";
+export { DEFAULT_SCENARIO, SCENARIOS, scenarioById, scenarioRunId, type Scenario } from "./scenarios";

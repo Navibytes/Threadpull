@@ -8,7 +8,7 @@ import type { LoanStatus } from "@/lib/contracts/loan";
 import { computeDashboard, OFFICIAL_STATUSES, type RunMetrics, type StatusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
 import { caseNotes, type CaseNotes } from "@/lib/dashboard/notes";
-import { describeSource, loanName, reduceEvents, summarizeCase, type CaseSummary, type RunEvent } from "@/lib/events";
+import { describeSource, loanName, reduceEvents, SCENARIOS, scenarioById, summarizeCase, type CaseSummary, type RunEvent } from "@/lib/events";
 import { dashboardHref } from "@/lib/dashboard/links";
 import { useDashboardData, type Load } from "./use-dashboard-data";
 
@@ -45,9 +45,10 @@ const DOT: Partial<Record<RunEvent["type"], string>> = {
   question_asked: "bg-dusty",
 };
 
-export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: number; sample: boolean; caseId?: string }) {
+export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: string; seed: number; sample: boolean; caseId?: string; scenario?: string }) {
   const router = useRouter();
-  const { loans, events, runs, retry } = useDashboardData({ run, seed, sample });
+  const scenId = sample ? scenarioById(scenario).id : undefined; // which sample situation the page is showing
+  const { loans, events, runs, retry } = useDashboardData({ run, seed, sample, scenario: scenId });
   const loanRows = loans.state === "ok" && loans.data.length > 0 ? loans.data : null;
   const noLoanFiles = loans.state === "ok" && loans.data.length === 0;
   const eventRows = events.state === "ok" ? events.data.rows : null;
@@ -56,7 +57,7 @@ export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: n
   const runId = runs.selected;
   // the cases on this run's board, so the viewer can switch between them without going back to the board
   const leads = useMemo(() => (eventRows ? reduceEvents(eventRows).cards.filter((c) => c.pinnedBy === "lead_opened").map((c) => c.id) : []), [eventRows]);
-  const boardHref = sample || !runId ? "/" : `/?run=${encodeURIComponent(runId)}`;
+  const boardHref = sample ? `/?scenario=${scenId}` : !runId ? "/" : `/?run=${encodeURIComponent(runId)}`;
   // one case: its summary from the run's rows, and every row that names its loan (newest first)
   const caseSum = useMemo(() => (caseId && eventRows ? summarizeCase(reduceEvents(eventRows), caseId) : null), [caseId, eventRows]);
   const caseRows = useMemo(() => (caseId && eventRows ? eventRows.filter((e) => e.loan_ids.includes(caseId)).reverse() : []), [caseId, eventRows]);
@@ -100,13 +101,29 @@ export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: n
                     <span className="font-medium">Case</span>
                     <select
                       value={caseId ?? ""}
-                      onChange={(e) => router.push(dashboardHref({ run: sample ? null : runId }, e.target.value || undefined))}
+                      onChange={(e) => router.push(dashboardHref({ run: sample ? null : runId, scenario: scenId }, e.target.value || undefined))}
                       className="dash-pill max-w-[13rem] truncate bg-paper"
                     >
                       <option value="">Whole run</option>
                       {leads.map((l) => (
                         <option key={l} value={l}>
                           {loanName(l)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {sample && (
+                  <label className="flex items-center gap-2 text-[13px]">
+                    <span className="font-medium">Sample situation</span>
+                    <select
+                      value={scenId}
+                      onChange={(e) => router.push(`/dashboard?sample=1&scenario=${e.target.value}`)}
+                      className="dash-pill max-w-[13rem] truncate bg-paper"
+                    >
+                      {SCENARIOS.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
                         </option>
                       ))}
                     </select>
@@ -130,7 +147,7 @@ export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: n
               sum={caseSum}
               rows={caseRows}
               state={events.state}
-              overviewHref={dashboardHref({ run: sample ? null : runId })}
+              overviewHref={dashboardHref({ run: sample ? null : runId, scenario: scenId })}
               sample={sample}
             />
           )}

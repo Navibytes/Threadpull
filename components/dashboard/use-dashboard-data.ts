@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiLoanSource } from "@/components/drawer/loan-source";
 import type { Loan } from "@/lib/contracts/loan";
 import { browserClient } from "@/lib/db/browser";
-import { EventSchema, PREVIEW_EVENTS, PREVIEW_RUN_ID, type RunEvent } from "@/lib/events";
+import { EventSchema, scenarioById, scenarioRunId, type RunEvent } from "@/lib/events";
 
 export type Load<T> = { state: "loading" } | { state: "ok"; data: T } | { state: "error"; message: string } | { state: "off"; message: string };
 
@@ -14,7 +14,7 @@ const ROW_LIMIT = 2000;
 
 // Reads only what the app already exposes: the loan files through /api/loans, and the run's event rows through
 // the browser (anon) Supabase client, which can read the events table. No new queries, tables or routes.
-export function useDashboardData({ run, seed, sample }: { run?: string; seed: number; sample: boolean }) {
+export function useDashboardData({ run, seed, sample, scenario }: { run?: string; seed: number; sample: boolean; scenario?: string }) {
   const [loans, setLoans] = useState<Load<Loan[]>>({ state: "loading" });
   const [events, setEvents] = useState<Load<{ rows: RunEvent[]; invalid: number; truncated: boolean }>>({ state: "loading" });
   const [runs, setRuns] = useState<RunsInfo>({ runs: [], selected: null });
@@ -37,8 +37,9 @@ export function useDashboardData({ run, seed, sample }: { run?: string; seed: nu
     let cancelled = false;
     setEvents({ state: "loading" });
     if (sample) {
-      setRuns({ runs: [PREVIEW_RUN_ID], selected: PREVIEW_RUN_ID });
-      setEvents({ state: "ok", data: { rows: PREVIEW_EVENTS, invalid: 0, truncated: false } });
+      const sc = scenarioById(scenario);
+      setRuns({ runs: [scenarioRunId(sc)], selected: scenarioRunId(sc) });
+      setEvents({ state: "ok", data: { rows: sc.events, invalid: 0, truncated: false } });
       return;
     }
     const client = browserClient();
@@ -79,7 +80,7 @@ export function useDashboardData({ run, seed, sample }: { run?: string; seed: nu
     return () => {
       cancelled = true;
     };
-  }, [run, sample, tick]);
+  }, [run, sample, scenario, tick]);
 
   return { loans, events, runs, retry };
 }
