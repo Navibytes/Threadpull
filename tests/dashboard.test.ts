@@ -173,25 +173,41 @@ describe("the briefing at the top of the page", () => {
   const m = runMetrics(run)!;
 
   test("no run means no briefing", () => {
-    expect(briefing(null, { sample: false })).toBeNull();
+    expect(briefing(null)).toBeNull();
   });
 
-  test("headline, found and unknown are read from the run's figures", () => {
-    const b = briefing(m, { sample: false })!;
+  test("a headline and two sentences, read from the run's figures", () => {
+    const b = briefing(m)!;
     expect(b.headline).toBe("2 connections found across 1 case: 1 explained by a cited check, 1 still open.");
-    expect(b.found).toBe("Hazel ran 2 checks, 1 with a CRS lookup. The connections are shared address (1) and shared phone number (1).");
-    expect(b.unknown).toBe("1 connection has no explanation yet. A shared detail is a lead to check, not proof. 1 loan has a recorded human decision.");
+    expect(b.found).toBe("She ran 2 checks and linked loans by shared address (1) and shared phone number (1).");
+    expect(b.unknown).toBe("1 connection has no explanation yet, and a shared detail is a lead to check, not proof.");
   });
 
-  test("with no connections, nothing is claimed; an unfinished or sample run says so", () => {
+  test("with no connections, nothing is claimed; an unfinished run says so", () => {
     const bare = runMetrics([ev(1, "run_started"), ev(2, "lead_opened", { loan_ids: ["L0001"] })])!;
-    const b = briefing(bare, { sample: true })!;
+    const b = briefing(bare)!;
     expect(b.headline).toBe("No connections found yet across 1 case.");
-    expect(b.unknown).toBe("There is nothing to weigh yet. No human decision is recorded yet. The run has not finished, so this may change. This is the built-in sample run, so none of this is a result.");
+    expect(b.found).toBe("Hazel ran 0 checks so far and has not found any connections.");
+    expect(b.unknown).toBe("There is nothing to weigh yet. This run has not finished.");
   });
 
-  test("never says fraudster, guilty, criminal or that anything is proven", () => {
-    const b = briefing(m, { sample: true })!;
-    for (const line of [b.headline, b.found, b.unknown]) expect(line).not.toMatch(/fraudster|guilty|criminal|proves?/i);
+  test("never says fraudster, guilty, criminal or that anything is proven; the sample is said once, elsewhere", () => {
+    const b = briefing(m)!;
+    for (const line of [b.headline, b.found, b.unknown]) expect(line).not.toMatch(/fraudster|guilty|criminal|proves?|sample/i);
+  });
+});
+
+describe("simulated checks are counted apart from CRS lookups", () => {
+  test("a check can be a CRS lookup, simulated, both, or neither, and each is counted on its own", () => {
+    const mixed = runMetrics([
+      ev(1, "check_run", { sources: [{ kind: "crs", product: "tu", request_id: "r" }] }),
+      ev(2, "check_run", { simulated: true }),
+      ev(3, "check_run", { simulated: true, sources: [{ kind: "crs", product: "tu", request_id: "r2" }] }),
+      ev(4, "check_run"),
+    ])!;
+    expect(mixed.checks).toBe(4);
+    expect(mixed.crsChecks).toBe(2);
+    expect(mixed.simulatedChecks).toBe(2);
+    expect(runMetrics(run)!.simulatedChecks).toBe(0); // the real-looking test run marks none
   });
 });

@@ -23,6 +23,7 @@ export type RunMetrics = {
   casesInvestigated: number; // distinct loans named by lead_opened rows
   checks: number; // check_run rows
   crsChecks: number; // of those, rows that cite at least one CRS source
+  simulatedChecks: number; // of the checks, rows marked simulated: a stand-in, never a live call
   linksFound: number; // distinct threads from link_found rows
   linksExplained: number; // of those, threads taken down by a valid clue_explained row that cites its proof
   linkKinds: Record<string, number>; // distinct threads by what they share (phone, address, ...)
@@ -64,6 +65,7 @@ export function runMetrics(events: RunEvent[], recentCount = 14): RunMetrics | n
     casesInvestigated: distinct(ofType("lead_opened").flatMap((e) => e.loan_ids)),
     checks: checks.length,
     crsChecks: checks.filter((e) => e.sources.some((s) => s.kind === "crs")).length,
+    simulatedChecks: checks.filter((e) => e.simulated).length,
     linksFound: board.threads.length,
     linksExplained: explained.length,
     linkKinds: board.threads.reduce<Record<string, number>>((k, t) => ({ ...k, [t.kind]: (k[t.kind] ?? 0) + 1 }), {}),

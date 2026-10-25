@@ -48,7 +48,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
   const eventRows = events.state === "ok" ? events.data.rows : null;
   const m = useMemo(() => computeDashboard(loanRows, eventRows), [loanRows, eventRows]);
   const notes = useMemo(() => caseNotes(m.run, { sample }), [m.run, sample]);
-  const brief = useMemo(() => briefing(m.run, { sample }), [m.run, sample]);
+  const brief = useMemo(() => briefing(m.run), [m.run]);
   const runId = runs.selected;
   // the cases on this run's board, so the viewer can switch between them without going back to the board
   const leads = useMemo(() => (eventRows ? reduceEvents(eventRows).cards.filter((c) => c.pinnedBy === "lead_opened").map((c) => c.id) : []), [eventRows]);
@@ -61,8 +61,8 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
   const investigation = sample ? "the built-in sample run" : m.run ? `run ${m.run.runId}` : noRun(events).replace(/\.$/, "").toLowerCase();
 
   return (
-    <div className="dash-bg min-h-dvh px-3 py-4 text-[15px] leading-relaxed sm:px-6 sm:py-8">
-      <div className="dash-sheet mx-auto max-w-[1040px]">
+    <div className="dash-bg min-h-dvh px-3 py-4 text-[16px] leading-[1.65] sm:px-6 sm:py-8">
+      <div className="dash-sheet mx-auto max-w-[1040px] min-[1700px]:max-w-[1200px]">
         <header className="dash-rule flex items-center justify-between gap-3 border-b px-5 py-3.5 sm:px-10">
           <Link href="/" aria-label="Threadpull, investigation board" className="rounded-md">
             <img src="/brand/threadpull-wordmark.png" alt="Threadpull" className="h-9 w-auto" draggable={false} />
@@ -141,10 +141,10 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
             <CaseDetail caseId={caseId} sum={caseSum} rows={caseRows} state={events.state} overviewHref={dashboardHref({ run: sample ? null : runId, scenario: scenId })} sample={sample} />
           )}
 
-          <Finding brief={brief} notes={notes} events={events} boardHref={boardHref} />
+          <Finding brief={brief} notes={notes} events={events} boardHref={boardHref} sample={sample} />
 
-          <section aria-label="Key figures" className="mt-8">
-            <div className="dash-muted hidden grid-cols-4 text-[13px] font-semibold uppercase tracking-[0.1em] min-[760px]:grid">
+          <section aria-label="Key figures" className="mt-10">
+            <div className="dash-muted hidden grid-cols-4 text-[13.5px] font-semibold uppercase tracking-[0.1em] min-[760px]:grid">
               <p>Portfolio</p>
               <p className="dash-rule col-span-3 border-l pl-6">This investigation</p>
             </div>
@@ -153,15 +153,15 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
                 caption="Portfolio"
                 label="Loans loaded"
                 value={m.loansLoaded === null ? "—" : nf(m.loansLoaded)}
-                note={loans.state === "ok" ? (noLoanFiles ? `No loan files found for seed ${seed}. Load the portfolio (bun run data), then refresh.` : `Loan files, seed ${seed}`) : loans.state === "loading" ? "Loading…" : "The loan files aren't available."}
+                note={loans.state === "ok" ? (noLoanFiles ? `No loan files found for seed ${seed}. Load the portfolio (bun run data), then refresh.` : `Seed ${seed}`) : loans.state === "loading" ? "Loading…" : "The loan files aren't available."}
               />
-              <Metric caption="This run" label="Cases investigated" value={m.run ? nf(m.run.casesInvestigated) : "—"} note={m.run ? "Loans opened as leads" : noRun(events)} />
-              <Metric caption="This run" label="Checks completed" value={m.run ? nf(m.run.checks) : "—"} note={m.run ? `${nf(m.run.crsChecks)} with a CRS lookup` : noRun(events)} />
+              <Metric caption="This run" label="Cases investigated" value={m.run ? nf(m.run.casesInvestigated) : "—"} note={m.run ? "Opened as leads" : noRun(events)} />
+              <Metric caption="This run" label="Checks completed" value={m.run ? nf(m.run.checks) : "—"} note={m.run ? `${nf(m.run.crsChecks)} CRS lookups · ${nf(m.run.simulatedChecks)} simulated` : noRun(events)} />
               <Metric
                 caption="This run"
                 label="Connections explained"
                 value={m.run ? `${nf(m.run.linksExplained)} of ${nf(m.run.linksFound)}` : "—"}
-                note={m.run ? `By a cited check${m.run.explanationsWithoutThread ? `; ${nf(m.run.explanationsWithoutThread)} more explained something that isn't a connection` : ""}` : noRun(events)}
+                note={m.run ? `By a cited check${m.run.explanationsWithoutThread ? ` · ${nf(m.run.explanationsWithoutThread)} more explained something else` : ""}` : noRun(events)}
               />
             </div>
             <Support run={m.run} />
@@ -193,11 +193,11 @@ function Pick({ label, children }: { label: string; children: ReactNode }) {
 // A note that matters, set as a plain line with a rule at its edge, not a bordered box.
 function Notices({ sample, m, events, loans, retry }: { sample: boolean; m: RunMetrics | null; events: Load<{ invalid: number; truncated: boolean }>; loans: Load<unknown>; retry: () => void }) {
   const items: ReactNode[] = [];
-  const base = "border-l-[3px] py-0.5 pl-3 text-[14.5px]";
+  const base = "border-l-[3px] py-0.5 pl-3 text-[15px]";
   if (sample)
     items.push(
       <p key="sample" className={`${base} border-[#b8913f] font-medium`}>
-        Sample run: a hand-written example with made-up loans. It is not an investigation, and none of these figures is a result.
+        Sample run, illustrative only: made-up loans and hand-written results. Nothing here is a real fraud finding, and none of these figures is a result.
       </p>,
     );
   else if (m && m.simulatedRows > 0)
@@ -229,10 +229,10 @@ function Notices({ sample, m, events, loans, retry }: { sample: boolean; m: RunM
 
 // Hazel's finding: what the run found, in one headline and two plain sentences, with her desk beside it. The longer
 // notes open underneath; nothing here is anything the run's own figures don't say.
-function Finding({ brief, notes, events, boardHref }: { brief: Briefing | null; notes: CaseNotes | null; events: Load<unknown>; boardHref: string }) {
+function Finding({ brief, notes, events, boardHref, sample }: { brief: Briefing | null; notes: CaseNotes | null; events: Load<unknown>; boardHref: string; sample: boolean }) {
   return (
-    <section aria-labelledby="finding-title" className="dash-finding relative mt-6 overflow-hidden px-6 pb-5 pt-5 min-[760px]:min-h-[14rem] min-[760px]:pr-[14.5rem]">
-      <p className="dash-eyebrow">Hazel&rsquo;s finding</p>
+    <section aria-labelledby="finding-title" className="dash-finding relative mt-8 overflow-hidden px-6 pb-5 pt-5 min-[760px]:min-h-[14rem] min-[760px]:pr-[14.5rem]">
+      <p className="dash-eyebrow">Hazel&rsquo;s finding{sample ? " · illustrative sample" : ""}</p>
       {!brief ? (
         <>
           <h2 id="finding-title" className="font-display mt-1 text-[1.5rem] font-semibold leading-snug">
@@ -245,8 +245,8 @@ function Finding({ brief, notes, events, boardHref }: { brief: Briefing | null; 
           <h2 id="finding-title" className="font-display mt-1 max-w-[36rem] text-balance text-[1.6rem] font-semibold leading-snug min-[760px]:text-[1.75rem]">
             {brief.headline}
           </h2>
-          <p className="mt-3 max-w-[38rem] text-pretty">{brief.found}</p>
-          <p className="mt-2 max-w-[38rem] text-pretty">
+          <p className="mt-3 max-w-[40rem] text-pretty">{brief.found}</p>
+          <p className="mt-2 max-w-[40rem] text-pretty">
             <span className="font-semibold">Still unknown. </span>
             {brief.unknown}
           </p>
@@ -260,7 +260,7 @@ function Finding({ brief, notes, events, boardHref }: { brief: Briefing | null; 
                   <Chevron />
                   Hazel&rsquo;s full notes
                 </summary>
-                <dl className="mt-2 grid max-w-[38rem] grid-cols-1 gap-y-4">
+                <dl className="mt-2 grid max-w-[40rem] grid-cols-1 gap-y-4">
                   <Notebook label="What we found" lines={notes.found} />
                   <Notebook label="What it means" lines={notes.means} />
                   <Notebook label="What's next" lines={notes.next} />
@@ -310,10 +310,10 @@ function Chevron() {
 function Metric({ caption, label, value, note }: { caption: string; label: string; value: string; note: string }) {
   return (
     <div className="min-[760px]:px-6 min-[760px]:py-5 min-[760px]:first:pl-0">
-      <p className="dash-muted text-[13px] font-semibold uppercase tracking-[0.1em] min-[760px]:hidden">{caption}</p>
+      <p className="dash-muted text-[13.5px] font-semibold uppercase tracking-[0.1em] min-[760px]:hidden">{caption}</p>
       <p className="mt-1 font-semibold min-[760px]:mt-0">{label}</p>
       <p className="mt-1 text-[2.5rem] font-semibold leading-none tabular-nums">{value}</p>
-      <p className="dash-muted mt-2 text-[14px] leading-snug text-pretty">{note}</p>
+      <p className="dash-muted mt-2 text-[15px] leading-snug text-pretty">{note}</p>
     </div>
   );
 }
@@ -323,25 +323,28 @@ function Support({ run }: { run: RunMetrics | null }) {
   const b = run?.budget;
   const pct = b && b.limit > 0 ? Math.min(100, (b.spent / b.limit) * 100) : 0;
   return (
-    <dl className="dash-rule mt-1 grid grid-cols-1 gap-x-10 gap-y-3 border-t pt-4 text-[14.5px] min-[760px]:grid-cols-2">
+    <dl className="dash-rule mt-1 grid grid-cols-1 gap-x-10 gap-y-3 border-t pt-4 min-[760px]:grid-cols-2">
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="font-semibold">Validation budget</dt>
-          <dd className="tabular-nums">{b ? `${nf(b.spent)} of ${nf(b.limit)} acorns used` : "—"}</dd>
+          <dt className="font-semibold">Budget charged</dt>
+          <dd className="tabular-nums">{b ? `${nf(b.spent)} of ${nf(b.limit)} acorns` : "—"}</dd>
         </div>
         {b && (
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-walnut/15" role="img" aria-label={`${nf(b.spent)} of ${nf(b.limit)} acorns spent`}>
             <div className="h-full rounded-full bg-[#b8913f]" style={{ width: `${pct}%` }} />
           </div>
         )}
-        <p className="dash-muted mt-1 text-[14px]">{b ? "From the run's last row. Acorns are Threadpull's budget unit; tool prices are assumed." : "No run recorded yet."}</p>
+        <p className="dash-muted mt-1 text-[15px]">
+          {!run || !b
+            ? "No run recorded yet."
+            : `${run.simulatedRows === run.rows ? "Simulated run: acorns are bookkeeping, not a real charge." : run.simulatedRows > 0 ? `${nf(run.simulatedRows)} of ${nf(run.rows)} rows are simulated, so part of this is bookkeeping.` : "Recorded on the run's last row."} Acorns are Threadpull's own unit; no dollar cost is shown.`}
+        </p>
       </div>
       <div>
         <div className="flex items-baseline justify-between gap-3">
           <dt className="font-semibold">Human decisions</dt>
           <dd className="tabular-nums">{run ? (run.dispositions ? nf(run.dispositions) : "None yet") : "—"}</dd>
         </div>
-        <p className="dash-muted mt-1 text-[14px]">{run ? "Loans with a recorded human decision." : "No run recorded yet."}</p>
       </div>
     </dl>
   );
@@ -454,7 +457,7 @@ function CaseDetail({ caseId, sum, rows, state, overviewHref, sample }: { caseId
                 })}
               </ol>
             )}
-            {rows.length > 30 && <p className="dash-muted mt-1 text-[14px]">Showing the newest 30 of {nf(rows.length)} rows.</p>}
+            {rows.length > 30 && <p className="dash-muted mt-1 text-[15px]">Showing the newest 30 of {nf(rows.length)} rows.</p>}
           </details>
         </>
       )}
@@ -482,16 +485,20 @@ function ActivityLog({ run, events, boardHref, sample }: { run: RunMetrics | nul
             <p className="dash-muted break-all text-[14px]">
               Run {run.runId} · {nf(run.rows)} rows · {when(run.firstTs)} to {when(run.lastTs)}
             </p>
-            <p className="mt-2 text-[14.5px]">
+            <p className="mt-2 text-[15px]">
               <span className="font-semibold">Sources cited: </span>
               {refs.length === 0
                 ? "none recorded."
                 : `${refs.map(([k, n]) => `${nf(n)} ${SOURCE_NAME[k] ?? k}`).join(" · ")}${run.crsRequestIds > 0 ? ` · ${nf(run.crsRequestIds)} distinct CRS RequestIDs` : ""}.`}{" "}
               <span className="dash-muted">References are counted per row, so a source used twice counts twice.</span>
             </p>
-            <ol className="mt-3">
-              {run.recent.map((e) => (
-                <ActivityRow key={e.seq} e={e} boardHref={boardHref} />
+            <p className="dash-muted mt-3 text-[15px]">
+              Under each step: <span className="font-semibold">simulated</span> means a stand-in, not a live check; <span className="font-semibold">CRS lookup</span> means a call to the credit bureau;{" "}
+              <span className="font-semibold">+N acorns</span> is the budget that step used, from the change in the recorded budget.
+            </p>
+            <ol className="mt-2">
+              {run.recent.map((e, i) => (
+                <ActivityRow key={e.seq} e={e} boardHref={boardHref} charge={i + 1 < run.recent.length ? (e.budget?.spent ?? 0) - (run.recent[i + 1].budget?.spent ?? 0) : null} />
               ))}
             </ol>
             <p className="dash-muted mt-2 text-[14px]">
@@ -507,7 +514,7 @@ function ActivityLog({ run, events, boardHref, sample }: { run: RunMetrics | nul
   );
 }
 
-function ActivityRow({ e, boardHref }: { e: RunEvent; boardHref: string }) {
+function ActivityRow({ e, boardHref, charge }: { e: RunEvent; boardHref: string; charge: number | null }) {
   const d = describeEvent(e);
   return (
     <li className="dash-rule border-t first:border-t-0">
@@ -519,13 +526,15 @@ function ActivityRow({ e, boardHref }: { e: RunEvent; boardHref: string }) {
           <span className="min-w-0 flex-1">
             <span className="block font-medium">{d.title}</span>
             {d.detail && <span className="dash-muted block text-[14px] text-pretty">{d.detail}</span>}
-            <span className="dash-muted block text-[13.5px] tabular-nums">
+            <span className="dash-muted block text-[14px] tabular-nums">
               {when(e.ts)} · seq {e.seq}
-              {e.simulated ? " · simulated" : ""}
+              {e.simulated && <span className="font-semibold"> · simulated</span>}
+              {e.sources.some((s) => s.kind === "crs") && <span className="font-semibold"> · CRS lookup</span>}
+              {charge !== null && charge > 0 && <span className="font-semibold"> · +{nf(charge)} acorns</span>}
             </span>
           </span>
         </summary>
-        <div className="pb-3 pl-7 text-[14px]">
+        <div className="pb-3 pl-7 text-[15px]">
           {e.sources.length === 0 ? (
             <p className="dash-muted">No sources recorded on this row.</p>
           ) : (
@@ -535,7 +544,7 @@ function ActivityRow({ e, boardHref }: { e: RunEvent; boardHref: string }) {
                 return (
                   <li key={i}>
                     <span className="font-medium">{x.label}</span>
-                    <span className="dash-muted block break-all font-mono text-[13px]">{x.detail}</span>
+                    <span className="dash-muted block break-all font-mono text-[14px]">{x.detail}</span>
                   </li>
                 );
               })}
