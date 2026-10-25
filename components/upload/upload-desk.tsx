@@ -282,8 +282,8 @@ function TryOurs({ busy, onUse }: { busy: boolean; onUse: (url: string, name: st
             </p>
           </>}>
           The same planted cases as the sample, generated fresh: your seed (any number from 1 to {MAX_SAMPLE_SEED.toLocaleString("en-US")})
-          picks every name, address and background loan, and where in the tape the cases sit. Use it to check that the results don&apos;t
-          depend on the tape we built on.
+          picks every name, address and background loan, and where in the tape the cases sit. Like any uploaded tape it carries no
+          building unit counts or employer headcounts, so a lookalike that needs one of those to be cleared may stay up.
         </Option>
 
         <Option title="3. CSV column template" meta="3 loans · CSV"
