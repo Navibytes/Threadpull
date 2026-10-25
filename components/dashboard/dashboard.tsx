@@ -366,6 +366,7 @@ function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: L
         <>
           <p className="dash-muted mt-1">
             {nf(b.total - b.counts["Not reviewed"])} of {nf(b.total)} loans have a recorded review status.
+            {run ? ` All ${nf(b.total)} were scored by the evidence graph; the run records a status only for the loans it investigated.` : ""}
           </p>
           <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-walnut/12" role="img" aria-label={rows.map((s) => `${s}: ${nf(b.counts[s])}`).join(", ")}>
             {rows.map((s) => (
@@ -376,7 +377,7 @@ function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: L
             {rows.map((s) => (
               <li key={s} className="flex items-baseline gap-2.5">
                 <span aria-hidden className={`mt-[0.35rem] h-2.5 w-2.5 shrink-0 self-start rounded-full ${DOT[s]}`} />
-                <span className="flex-1">{s === "Not reviewed" ? "Not reviewed (no status yet)" : s}</span>
+                <span className="flex-1">{s === "Not reviewed" ? (run ? "Scored, not investigated (no status)" : "Not reviewed (no status yet)") : s}</span>
                 <span className="tabular-nums">
                   {nf(b.counts[s])} <span className="dash-muted">· {pct(b.counts[s]).toFixed(1)}%</span>
                 </span>
@@ -392,7 +393,9 @@ function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: L
               {nf(b.total)} loans, each counted once: the status on its loan file, or the latest status set in this run.
               {run ? ` ${nf(b.fromRun)} took their status from this run.` : ""}
               {b.outsidePortfolio ? ` ${nf(b.outsidePortfolio)} loans this run touched aren't in this portfolio and aren't counted.` : ""}
-              {b.ignoredRows ? ` ${nf(b.ignoredRows)} status rows used an unsupported word and were ignored.` : ""} &ldquo;Not reviewed&rdquo; is the absence of a status, not a finding.
+              {b.ignoredRows ? ` ${nf(b.ignoredRows)} status rows used an unsupported word and were ignored.` : ""} {run
+                ? <> &ldquo;Scored, not investigated&rdquo;: the graph scored the loan for shared links, but it was not a lead Hazel closed or one of the largest balances the run spot-checked, so no status was recorded. That is the absence of a finding, not a clean result; the CRO screen counts these loans at base price.</>
+                : <> &ldquo;Not reviewed&rdquo; is the absence of a status, not a finding.</>}
             </p>
           </details>
         </>
