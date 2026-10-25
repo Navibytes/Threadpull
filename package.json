@@ -8,6 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit --incremental false",
     "data": "bun run data/generate.ts",
+    "data:check": "bun run data/check.ts",
+    "freeze:check": "bun run data/freeze.ts",
     "test": "bun test",
     "hazel": "bun run eval/hazel-run.ts"
   },

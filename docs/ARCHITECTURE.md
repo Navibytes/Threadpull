@@ -75,10 +75,13 @@ lib/
 data/                                                                                A
   generate.ts            ✅ seeded generator (`bun run data`)
   seed-db.ts             ✅ upsert normalized loans into Supabase
+  spec.ts                ✅ pattern spec schema + cross-checks (the generator refuses an invalid spec)
+  check.ts               ✅ `bun run data:check --spec …`: validate, generate, verify end to end; prints pass/fail only
+  freeze.ts              ✅ `bun run freeze:check`: detection code vs the `detector-frozen` tag
   record-crs.ts          ✅ record every persona's CRS sandbox responses, run once by hand   B
   crs-recordings/        ✅ its output: the real sandbox responses of 2026-10-24, one JSON per endpoint and persona (RequestID kept, scanned for secrets)   B
   personas.json          ✅ canonical CRS persona identities
-  patterns/seed13.json   ✅ pattern spec; seed99.json ○ (C, after detector-frozen)
+  patterns/seed13.json   ✅ pattern spec; seed99.json ○ (C writes it in patterns/heldout/, gitignored; guide: patterns/HELDOUT.md)
   out/  keys/            gitignored outputs: tape + lookups / ground truth
 
 eval/                                                                                D
@@ -117,13 +120,13 @@ Arrows point the way imports are allowed. `tests/architecture.test.ts` enforces 
 app/  ──►  components/  ──►  lib/contracts (types only)
   │
   └──►  lib/*  ──►  lib/contracts  ──►  zod
-data/  ──►  lib/contracts, lib/ingest
+data/  ──►  lib/contracts, lib/ingest (data/check.ts also runs lib/graph, lib/crs, lib/agent to verify a spec)
 eval/  ──►  lib/*, data/keys
 ```
 
 1. 🔒 `lib/contracts/` imports nothing but `zod`. Everyone else may import it.
 2. 🔒 `lib/` never imports React, `app/` or `components/`.
-3. 🔒 Nothing outside `eval/` reads `data/keys` or `answer_key`.
+3. 🔒 Nothing outside `eval/` reads `data/keys` or `answer_key` (except `data/generate.ts`, which writes it, and `data/check.ts`, which validates it and prints only pass/fail). `lib/`, `app/` and `components/` never read pattern specs.
 4. 🔒 Detection code (`lib/graph`, `lib/evidence`, `lib/agent`, `lib/rules`) never reads `persona_id`. Only `lib/crs` may look up a persona, and only by SSN.
 5. 🔒 `components/` never imports server-only modules (`lib/crs`, `lib/agent`, `lib/db/server`, `lib/ledger`). The browser gets data from `app/api` or Realtime.
 6. Route handlers are thin: parse the input with a Zod schema, call one `lib/` function, return JSON. No business logic in `app/`.

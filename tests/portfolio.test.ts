@@ -116,6 +116,6 @@ describe("planted patterns", () => {
     spec.patterns = spec.patterns.map((p: { type: string }) => p.type === "injection" ? { type: "injection", target: "RING-1:bg9" } : p);
     const bad = join(tmp(), "bad.json");
     writeFileSync(bad, JSON.stringify(spec));
-    expect(() => generate(bad, tmp(), tmp())).toThrow("injection target RING-1:bg9");
+    expect(() => generate(bad, tmp(), tmp())).toThrow("target RING-1:bg9 is not a ring member planted above");
   });
 });
