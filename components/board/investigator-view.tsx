@@ -106,7 +106,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
         <header className="relative z-30 flex flex-col items-center gap-1 px-[var(--wall)] pt-2">
           {/* the wordmark is the visible brand; the status line is for screen readers only */}
-          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="h-[clamp(84px,15vh,140px)] w-auto select-none" />
+          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="h-[clamp(110px,20vh,190px)] w-auto select-none" />
           <div className="sr-only">
             <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
           </div>
