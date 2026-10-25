@@ -11,6 +11,8 @@
 
 **Update (Sat 23:05, checked against `main`):** Events persist to Supabase (D, PR #28: run `r13-20261025T053505`, 41 of 41 rows written and read back), and all four CRS tools are in the loop (PR #29). A failed model request now ends the log with `run_finished` instead of stopping mid-run (A, PR #26). Open: the 4-of-6 measurement belongs in `docs/PROOF.md` through ticket 13, after the freeze.
 
+**Update (Sat 23:35, checked against `main`):** The recorded run `r13-20261025T053505` plays on the board (`/?run=…`): 6 of 6 ring loans closed as Investigate, 11 of 60 acorns, one clean loan No material anomaly found (one run, not a proof measurement). It stopped after the ring because the prompt said to; Hazel now keeps working the next lead `close_lead` hands over (A, PR #35), and notes keep decimals whole (A, PR #34: that run's lead note was stored as "4352)."). Open: a fresh `bun run hazel` after #34 and #35, which also carries the seed on `run_started`.
+
 - [x] A Python tool-use loop and Anthropic SDK adapter exist in `backend/agent.py`; the loop enforces its tool allowlist, budget, and backend-owned statuses.
 - [x] The Python run writes event and model-trace JSONL, stops at budget/no leads, and bounds notes with sources.
 - [x] Tools without CRS (inspect_loan, find_connections, compare_documents, dealer_timeline, inspect_dealer_loans, check_address, check_household, check_employer) in `lib/agent/tools.ts`: Zod inputs, TOOL_SPECS costs, documents only through `safeDocumentView`, SSN masked; `tests/agent-tools.test.ts`.

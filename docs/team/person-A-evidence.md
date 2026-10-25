@@ -15,7 +15,9 @@
 
 **Also done:** landing page `/landing` (#21, #27), loan-tape upload `/upload` with intake (#23, #24), Windows path fixes (#17), the code review fixes (#26: a wrong-employer check clearing the ring, card statuses, runs that never end, Twin Compare's seed).
 
-**Left for A (Sat 23:05):** the Haiku decision for 08 (proposed: out of scope, so the detector can freeze); check the recorded run on the board once the anon key is in `.env.local`; then help where the demo needs it (15 replay, or the `recovery` row from 06).
+**Since 23:05:** the CRS 429 recovery row on the board (#32), notes keep decimals whole (#34), Hazel keeps working the next lead after the ring so innocents get cleared (#35), docs (#31, #33). Supabase URL and anon key are in `.env.local`; the recorded run plays on the board.
+
+**Left for A (Sat 23:35):** the Haiku decision for 08 (proposed: out of scope, so the detector can freeze); check D's fresh run on the board (falling thread, Twin Compare and drawer on its seed); then help where the demo needs it (15).
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
 
