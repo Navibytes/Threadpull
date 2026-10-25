@@ -54,7 +54,7 @@ async function play(turns: (ids: DealRun["ids"]) => Turn[]): Promise<DealRun> {
   const w = theWorld();
   const ids = { lead: "L0037", p12: "L0190", p14: "L0195", background: "L0445", fraudAlert: w.idOf("P16"), clean: w.idOf("P01"),
     p03: w.idOf("P03"), p15: w.idOf("P15"), p17: w.idOf("P17") };
-  const out = await runHazel({ runId: RUN_ID, loans: w.loans, reference: w.reference, anthropic: scriptedClaude(turns(ids)), crs: replayCrs(),
+  const out = await runHazel({ runId: RUN_ID, loans: w.loans, reference: w.reference, anthropic: scriptedClaude(turns(ids)), crs: replayCrs(), sweep: false,
     rules: new MemoryRuleStore(), now: () => new Date("2026-10-24T20:00:00Z") });
   return { run_id: RUN_ID, loans: w.loans, events: out.events, ids };
 }

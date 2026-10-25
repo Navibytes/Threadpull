@@ -97,7 +97,7 @@ export async function checkSpec(specPath: string, keysRoot = mkdtempSync(join(tm
   const lead = graph.rankLeads()[0].loan_id;
   try {
     const run = await runHazel({ runId: `check-${spec.seed}`, loans, seed: spec.seed, reference: loadReference(gen.outDir),
-      anthropic: smokeModel(lead), crs: recordedCrs(), rules: new MemoryRuleStore(), now: () => new Date("2026-10-25T00:00:00Z") });
+      anthropic: smokeModel(lead), crs: recordedCrs(), rules: new MemoryRuleStore(), sweep: false, now: () => new Date("2026-10-25T00:00:00Z") });
     const valid = run.events.every((e: Event) => EventSchema.safeParse(e).success);
     pass(valid && run.events.at(-1)?.type === "run_finished" && run.statuses.size === 1,
       "Hazel's loop runs on it end to end (scripted model, recorded CRS): every event row is valid");

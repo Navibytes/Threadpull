@@ -37,6 +37,24 @@ export function hazelFromEvents(events: readonly Event[]): AgentResult {
   };
 }
 
+/**
+ * The acorns spent when every ring member Hazel ends up flagging was first marked Investigate, read from her rows (the
+ * budget on that status row). Null when she flagged none. What she spent after that went on other leads and the sweep.
+ */
+export function ringCompleteAt(events: readonly Event[], key: AnswerKey): number | null {
+  const ring = new Set(key.rings.flatMap((x) => x.loan_ids));
+  const final = hazelFromEvents(events).statuses;
+  const found = [...ring].filter((id) => final.get(id) === "Investigate");
+  if (!found.length) return null;
+  const now = new Map<string, string>();
+  for (const e of [...events].sort((a, b) => a.seq - b.seq)) {
+    if (e.type !== "status_changed" || typeof e.result.status !== "string") continue;
+    for (const id of e.loan_ids) now.set(id, e.result.status);
+    if (found.every((id) => now.get(id) === "Investigate")) return e.budget.spent;
+  }
+  return null;
+}
+
 export type Score = {
   agent: string;
   ring_found: number; ring_total: number; // ring members marked Investigate
@@ -69,7 +87,8 @@ const ruleKinds = () => {
 };
 const secs = (ms: number) => (ms < 1000 ? "<1 s" : `${Math.round(ms / 100) / 10} s`);
 
-export type ProofContext = { seed: number; run_id: string; crs: string; commit: string; detector: string; generated_at: string };
+export type ProofContext = { seed: number; run_id: string; crs: string; commit: string; detector: string; generated_at: string;
+  hazel_ring_acorns?: { at: number; total: number } | null };
 
 export function renderProof(scores: Score[], ctx: ProofContext): string {
   const row = (s: Score) => `| ${s.agent} | ${s.ring_found} of ${s.ring_total} | ${s.innocents_flagged} of ${s.innocents_total} | ${n(s.other_flagged)} | ${s.review_right} of ${s.review_total} | ${n(s.acorns)} | ${s.crs_calls}${s.simulated_calls ? ` (${s.simulated_calls} simulated)` : ""} | ${s.questions} | ${secs(s.runtime_ms)} |`;
@@ -81,7 +100,9 @@ the event rows of run \`${ctx.run_id}\`; the baselines ran on the same portfolio
 | Agent | Ring found | Innocents flagged | Other loans flagged | Review cases right | Acorns | CRS calls | Questions | Runtime |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 ${scores.map(row).join("\n")}
-
+${ctx.hazel_ring_acorns ? `
+Hazel's ring members were all marked Investigate after **${ctx.hazel_ring_acorns.at} acorns**; the other ${ctx.hazel_ring_acorns.total - ctx.hazel_ring_acorns.at} went on her remaining leads and the verification sweep (when no lead is left, code spends the rest checking the largest unverified balances).
+` : ""}
 - **Ring found:** ring members marked Investigate. **Innocents flagged:** lookalikes (a shared building, household, employer
   or dealer burst with an innocent explanation) and risky-but-real loans marked Investigate. **Other loans flagged:** any
   other loan marked Investigate. **Review cases right:** fraud alert, frozen bureau and bureau disagreement cases with
@@ -128,7 +149,9 @@ if (import.meta.main) {
   const freeze = freezeStatus();
   const frozen = freeze.frozen && freeze.changed.length === 0;
   const commit = spawnSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).stdout.trim();
+  const ringAt = ringCompleteAt(events, key);
   const md = renderProof(scores, { seed: gen.seed, run_id: args.run, crs: args.crs!, commit,
+    hazel_ring_acorns: ringAt === null ? null : { at: ringAt, total: results[0].acorns },
     detector: frozen && freeze.frozen ? `${FREEZE_TAG} ${freeze.commit}` : "not frozen", generated_at: new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC" });
   console.log(md);
   const out = join("runs", args.run, `proof-seed${gen.seed}.md`);

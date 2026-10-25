@@ -47,7 +47,7 @@ beforeAll(() => {
 
 const run = (turns: (Call[] | string)[], extra: Partial<Parameters<typeof runHazel>[0]> = {}) => {
   const claude = scriptedClaude(turns);
-  return { claude, done: runHazel({ runId: "r13-test", loans, reference, anthropic: claude.anthropic, crs: replayCrs(),
+  return { claude, done: runHazel({ runId: "r13-test", loans, reference, anthropic: claude.anthropic, crs: replayCrs(), sweep: false,
     rules: new MemoryRuleStore(), now: () => new Date("2026-10-24T20:00:00Z"), ...extra }) };
 };
 const ofType = (events: readonly Event[], type: Event["type"]) => events.filter((e) => e.type === type);
@@ -281,7 +281,7 @@ describe("the code's guarantees hold whatever the model does", () => {
       : new Response(JSON.stringify({ type: "error", error: { type: "overloaded_error", message: "Overloaded" } }),
         { status: 529, headers: { "content-type": "application/json" } })) as unknown as typeof globalThis.fetch;
     const rows: Event[] = [];
-    const failed = await runHazel({ runId: "r13-test", loans, reference, crs: replayCrs(), rules: new MemoryRuleStore(),
+    const failed = await runHazel({ runId: "r13-test", loans, reference, crs: replayCrs(), rules: new MemoryRuleStore(), sweep: false,
       anthropic: new Anthropic({ apiKey: "test-key", fetch, maxRetries: 0 }), sinks: [(e) => { rows.push(e); }] }).catch((e) => e);
     expect(failed).toBeInstanceOf(Error);
     const last = rows.at(-1)!;

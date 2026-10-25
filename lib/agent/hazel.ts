@@ -10,7 +10,7 @@ import { LOAN_STATUSES, type Loan, type LoanStatus } from "@/lib/contracts/loan"
 import { QuestionTopicSchema } from "@/lib/contracts/rule";
 import { toolError, TOOL_SPECS, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
 import {
-  creditEventFacts, crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
+  canQuery, creditEventFacts, crsCreditReport, crsFraudFinder, crsIdentityCheck, crsReversePhone, type CreditReport, type CrsClient, type FraudFinder,
   type IdentityCheck,
 } from "@/lib/crs";
 import { budgetSpentRow, recoveryRow } from "@/lib/event-rows";
@@ -27,7 +27,7 @@ import {
 import { EventLog, type EventSink } from "./event-log";
 import { FALLBACK_BETA, HAZEL_EFFORT, HAZEL_MAX_ITERATIONS, HAZEL_MAX_TOKENS, HAZEL_MODEL } from "./models";
 import { HAZEL_SYSTEM } from "./prompt";
-import { decideStatus, type RunEvidence } from "./status";
+import { decideStatus, FRAUD_ALERT, HARD_CODES, type RunEvidence } from "./status";
 import { createDataRoom, prepareTool, runTool, TOOLS, type HazelToolName } from "./tools";
 
 /** link_found rows per find_connections call: the board shows 20–30 cards, not every weak thread. */
@@ -48,7 +48,9 @@ export type HazelOptions = {
   documentReader?: StubExtractor;
   // loans a person chose to start from, in order (the operator at a demo, an analyst with a hunch): worked before the
   // ranked leads, recorded on run_started and on each lead_opened row as chosen by the operator, never by detection code
-  leads?: string[]; // reads pay stubs the parser can't (modelStubExtractor); without one they stay unreadable
+  leads?: string[];
+  // when Hazel is done and budget is left, code spends it verifying the largest unverified balances (default on)
+  sweep?: boolean; // reads pay stubs the parser can't (modelStubExtractor); without one they stay unreadable
   crs: CrsClient;
   rules: RuleStore;
   budget?: number;
@@ -318,18 +320,56 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     },
   });
 
+  /** Code decides a loan's status from the run's evidence and records it (close_lead and the sweep). */
+  async function closeLoan(loanId: string, hazelNote: string | undefined, proposed?: LoanStatus) {
+    await scanDocuments(loanId, "close_lead"); // no status without its documents checked (CLAUDE.md rule 5)
+    const d = decideStatus(room.graph, loanId, evidence());
+    statuses.set(loanId, d.status);
+    await log.append({ type: "status_changed", loan_ids: [loanId], tool: "close_lead",
+      result: { status: d.status, reason: d.reason, ...(proposed && proposed !== d.status ? { proposed } : {}) },
+      sources: d.sources, note: hazelNote ?? `${d.status}: ${d.reason}.`, simulated: false });
+    return d;
+  }
+
+  // The verification sweep. Threads run out before the budget does, and a loan tied to nothing is never a lead, so a fraud
+  // alert, a frozen bureau or bureaus that disagree on such a loan would go unseen. When Hazel is done, code spends what
+  // is left on the largest balances nobody has verified, the way due diligence samples a portfolio by exposure: an
+  // identity check, then a credit report when the identity checks out (frozen, disagreeing, deceased files). Statuses
+  // come from decideStatus as for any lead. Order: amount financed, largest first; nothing here knows which loans are
+  // cases. Loans CRS can't be asked about (no sandbox file) are skipped and cost nothing.
+  async function sweep() {
+    const idCost = TOOL_SPECS.crs_identity_check.acorns, creditCost = TOOL_SPECS.crs_credit_report.acorns;
+    const order = opts.loans
+      .filter((l) => !statuses.has(l.loan_id) && !identity.has(l.loan_id) && canQuery(l))
+      .sort((a, b) => b.funding_info.amount_financed - a.funding_info.amount_financed || a.loan_id.localeCompare(b.loan_id));
+    for (const loan of order) {
+      if (ledger.remaining < idCost) break;
+      const id = loan.loan_id, usd = Math.round(loan.funding_info.amount_financed).toLocaleString("en-US");
+      opened.add(id);
+      await log.append({ type: "lead_opened", loan_ids: [id], tool: null, result: { score: room.graph.score(id).score, origins: room.graph.score(id).origins, sweep: true },
+        sources: [{ kind: "row", loan_id: id, field: "funding_info.amount_financed" }],
+        note: `Verification sweep: no lead left and ${ledger.remaining} acorns to spend; the largest unverified balance ($${usd}).`, simulated: false });
+      const ident = await crsCall("crs_identity_check", [id], () => crsIdentityCheck(loan, ledger, opts.crs));
+      if (ident.ok && ident.result) identity.set(id, { check: ident.result, sources: ident.sources });
+      await record("crs_identity_check", { loan_id: id }, "Verification sweep: identity check.", ident);
+      if (!ident.ok || !ident.result) continue; // not verified, so no status from it
+      const flagged = ident.result.messages.some((m) => HARD_CODES.has(m.code) || m.code === FRAUD_ALERT);
+      if (!flagged && ledger.remaining >= creditCost) {
+        const report = await crsCall("crs_credit_report", [id], () => crsCreditReport(loan, ledger, opts.crs));
+        if (report.ok && report.result) credit.set(id, { report: report.result, sources: report.sources });
+        await record("crs_credit_report", { loan_id: id }, "Verification sweep: credit report.", report);
+      }
+      await closeLoan(id, undefined);
+    }
+  }
+
   const closeTool = betaZodTool({
     name: "close_lead",
     description: "Finish with one loan. Propose a status; code decides the final one from the evidence and tells you the next lead. Free.",
     inputSchema: z.object({ loan_id: z.string(), proposed_status: z.enum(LOAN_STATUSES).optional(), note }),
     run: async ({ loan_id, proposed_status, note: hazelNote }) => {
       if (!room.byId.has(loan_id)) return json({ ok: false, error: `unknown loan ${loan_id}` });
-      await scanDocuments(loan_id, "close_lead"); // no status without its documents checked (CLAUDE.md rule 5)
-      const d = decideStatus(room.graph, loan_id, evidence());
-      statuses.set(loan_id, d.status);
-      await log.append({ type: "status_changed", loan_ids: [loan_id], tool: "close_lead",
-        result: { status: d.status, reason: d.reason, ...(proposed_status && proposed_status !== d.status ? { proposed: proposed_status } : {}) },
-        sources: d.sources, note: hazelNote ?? `${d.status}: ${d.reason}.`, simulated: false });
+      const d = await closeLoan(loan_id, hazelNote, proposed_status);
       const next = nextLead();
       suggested = next ?? null;
       return json({ ok: true, status: d.status, reason: d.reason, next_lead: next?.loan_id ?? null, budget: budget() });
@@ -379,6 +419,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
         content: message.content.map((b) => b.type === "tool_use" ? { type: b.type, name: b.name } : b.type === "text" ? { type: b.type, text: b.text } : { type: b.type }),
       });
     }
+    if (opts.sweep !== false) await sweep(); // after the model is done, inside the watch so a 429 still shows
   } catch (e) {
     failure = e;
     stop_reason = "error";
