@@ -6,7 +6,7 @@
 .agents/
 skills-lock.json
 data/out/
-runs/
+/runs/
 node_modules/
 __pycache__/
 .venv/
