@@ -107,8 +107,10 @@ function Problem() {
           Auto-lending fraud exposure hit a record <span className="text-[#7c3a26]">$10.4&nbsp;billion</span>.
         </h2>
         <p className="mt-4 text-lg leading-relaxed">
-          Up from $9.2 billion a year earlier, and most of it hides inside applications that look fine. A bank that buys a
-          portfolio inherits that risk without having seen how the loans were made.
+          Up from $9.2 billion a year earlier, according to{" "}
+          <a href={PP_URL} className="font-semibold underline underline-offset-2">Point Predictive&apos;s 2026 Auto Lending Fraud Trends Report</a>.
+          Most of it is first-party fraud by real borrowers or dealers, which an identity check alone doesn&apos;t catch. A
+          bank that buys a portfolio inherits that risk without having seen how the loans were made.
         </p>
       </div>
       <ul className="mt-12 grid list-none gap-8 p-0 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
