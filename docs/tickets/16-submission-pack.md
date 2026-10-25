@@ -15,7 +15,7 @@
 - [x] README covers setup, where CRS is used, how Claude is used, real vs simulated, known limits, and the team.
 - [ ] `docs/PROOF.md` contains generated results from ticket 13. Current report only documents that measurements are pending and makes no numerical claims.
 - [x] A Devpost draft includes the seat line, opening line, and intended Hyphenate, CRS, Microsoft, and Anthropic tracks (`submission/DEVPOST.md`); final track selection and submission remain pending.
-- [ ] Secret scan: no `.env*` or CRS, Anthropic, or Supabase keys anywhere in git history; the repo is public.
+- [x] Secret scan: no `.env*` or CRS, Anthropic, or Supabase keys anywhere in git history; the repo is public. (A, Sun 02:00: no `.env` path ever tracked, no key patterns in any commit of any branch; repo visibility PUBLIC. Re-run before submitting.)
 - [ ] All teammates are added to the Devpost project.
 
 `submission/VIDEO_SCRIPT.md` is a timed recording plan, not a video. The repo currently has no end-to-end demo/replay command (issue 15), and the measured proof depends on issue 13, so the video, public-repo verification, and Devpost team setup are not claimed complete.
