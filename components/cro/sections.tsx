@@ -1,7 +1,9 @@
 // The CRO screen's read-only sections (ticket 10): totals, spend against checking everything, where the risk sits, every
 // investigated loan. Neutral styling, separate from the cork board. Every figure shows the event rows it comes from.
+import { Fragment, useState } from "react";
 import type { DealReport, LoanRow, Verdict } from "@/lib/deal";
 import { eventRefs, eventRefsShort, pct, plural, usd } from "./format";
+import { WhyDetail } from "./why";
 
 export const VERDICT_STYLE: Record<Verdict, string> = {
   Exclude: "bg-red-50 text-red-800 ring-red-200",
@@ -106,7 +108,9 @@ export function Concentration({ r }: { r: DealReport }) {
   );
 }
 
-export function LoansTable({ loans }: { loans: LoanRow[] }) {
+/** `runId` switches on "Why this verdict?" under each loan, answered from the run's events (ticket 14). */
+export function LoansTable({ loans, runId }: { loans: LoanRow[]; runId?: string }) {
+  const [open, setOpen] = useState<string | null>(null);
   if (!loans.length) return <p className="text-sm text-slate-600">The run has not closed any loan yet.</p>;
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -115,15 +119,20 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
           {["Loan", "Dealer", "Balance", "Status", "Verdict", "Why", "Evidence"].map((h) => <th key={h} className="px-4 py-2 font-medium">{h}</th>)}
         </tr></thead>
         <tbody>{loans.map((l) => (
-          <tr key={l.loan_id} className="border-t border-slate-100 align-top">
-            <td className="px-4 py-2 font-medium">{l.loan_id}</td>
-            <td className="px-4 py-2">{l.dealer_name}</td>
-            <td className="px-4 py-2 tabular-nums">{usd(l.balance, true)}</td>
-            <td className="px-4 py-2">{l.status}{l.confirmed ? <div className="text-xs text-slate-500">{l.confirmed.decision === "approve" ? "approved" : "overridden"} by {l.confirmed.decided_by}</div> : null}</td>
-            <td className="px-4 py-2"><VerdictBadge verdict={l.verdict} />{l.confirmed?.reason ? <div className="mt-1 max-w-[16rem] text-xs text-slate-600">{l.confirmed.reason}</div> : null}</td>
-            <td className="px-4 py-2 text-slate-700">{l.reason ?? "no reason recorded"}</td>
-            <td className="px-4 py-2 text-xs text-slate-600">{eventRefs(l.event_seqs)}{l.request_ids.map((id) => <div key={id} title="CRS RequestID">CRS {id.slice(0, 8)}…</div>)}</td>
-          </tr>))}</tbody>
+          <Fragment key={l.loan_id}>
+            <tr className="border-t border-slate-100 align-top">
+              <td className="px-4 py-2 font-medium">{l.loan_id}</td>
+              <td className="px-4 py-2">{l.dealer_name}</td>
+              <td className="px-4 py-2 tabular-nums">{usd(l.balance, true)}</td>
+              <td className="px-4 py-2">{l.status}{l.confirmed ? <div className="text-xs text-slate-500">{l.confirmed.decision === "approve" ? "approved" : "overridden"} by {l.confirmed.decided_by}</div> : null}</td>
+              <td className="px-4 py-2"><VerdictBadge verdict={l.verdict} />{l.confirmed?.reason ? <div className="mt-1 max-w-[16rem] text-xs text-slate-600">{l.confirmed.reason}</div> : null}</td>
+              <td className="px-4 py-2 text-slate-700">{l.reason ?? "no reason recorded"}</td>
+              <td className="px-4 py-2 text-xs text-slate-600">{eventRefs(l.event_seqs)}{l.request_ids.map((id) => <div key={id} title="CRS RequestID">CRS {id.slice(0, 8)}…</div>)}
+                {runId ? <button type="button" aria-expanded={open === l.loan_id} onClick={() => setOpen(open === l.loan_id ? null : l.loan_id)}
+                  className="mt-1 block font-medium text-slate-800 underline underline-offset-2 hover:text-slate-950">{open === l.loan_id ? "Hide" : "Why this verdict?"}</button> : null}</td>
+            </tr>
+            {runId && open === l.loan_id ? <tr className="bg-slate-50"><td colSpan={7} className="px-4 py-3"><WhyDetail runId={runId} loanId={l.loan_id} /></td></tr> : null}
+          </Fragment>))}</tbody>
       </table>
     </div>
   );
