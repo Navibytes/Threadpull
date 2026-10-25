@@ -7,7 +7,7 @@
 
 **Blocked by:** 13 Proof: fixed-rule baseline vs Hazel; 15 bun run demo, replay and judge seed
 
-**Status:** in-progress. Done: README, Devpost draft, generated `docs/PROOF.md` (seeds 13 and 99), secret scan (re-run before submitting), repo public. Left (people): the video and backup video, adding teammates to Devpost, final track selection and submission.
+**Status:** in-progress. Done: README, generated `docs/PROOF.md` (seeds 13 and 99), secret scan (re-run before submitting), repo public, and the submission texts brought up to date (Sun 03:50): `submission/VIDEO_SCRIPT.md` (scene by scene, with the run ids to replay) and `submission/DEVPOST.md` (what's built, the proof results quoted from `docs/PROOF.md`, tracks). Left (people): record the video and backup video, add teammates to Devpost, select tracks and submit.
 
 **Update (Sat 23:05, checked against `main`):** README updated to match `main` (A, this PR). Open: the video, generated PROOF results, the secret scan of git history before the repo goes public, Devpost teammates.
 
