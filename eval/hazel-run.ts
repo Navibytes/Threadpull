@@ -6,12 +6,16 @@
 //   bun run hazel --spec data/patterns/seed99.json --budget 60
 //   bun run hazel --no-db              don't write events to Supabase (otherwise they go there when it's configured)
 //
+// Any seed other than 13 is held out (ticket 12): the run is refused unless detection code matches the
+// detector-frozen tag (bun run freeze:check), so nobody tunes on it. --allow-unfrozen overrides, and run.json says so.
+//
 // Needs ANTHROPIC_API_KEY (Bun loads .env.local). Writes runs/<run_id>/{run.json, events.jsonl, trace.jsonl} (gitignored).
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import Anthropic from "@anthropic-ai/sdk";
+import { FREEZE_TAG, freezeStatus } from "@/data/freeze";
 import { generate, type AnswerKey } from "@/data/generate";
 import { jsonlSink, runHazel, supabaseSink, type EventSink, type TraceEntry } from "@/lib/agent";
 import { serverClient } from "@/lib/db/server";
@@ -24,10 +28,18 @@ const { values: args } = parseArgs({ options: {
   crs: { type: "string", default: "live" }, // live | recorded
   budget: { type: "string", default: "60" },
   "no-db": { type: "boolean", default: false },
+  "allow-unfrozen": { type: "boolean", default: false },
 } });
 
 const tmp = () => mkdtempSync(join(tmpdir(), "tp-"));
 const gen = generate(args.spec!, tmp(), tmp());
+const freeze = freezeStatus();
+const frozen = freeze.frozen && freeze.changed.length === 0;
+if (gen.seed !== 13 && !frozen && !args["allow-unfrozen"]) {
+  console.error(`Seed ${gen.seed} is held out: run it only on frozen detection code. ${freeze.frozen
+    ? `These detection files differ from ${FREEZE_TAG}: ${freeze.changed.join(", ")}` : freeze.reason}.\nSee bun run freeze:check.`);
+  process.exit(1);
+}
 const key: AnswerKey = JSON.parse(readFileSync(join(gen.keyDir, "answer_key.json"), "utf8"));
 const runId = `r${gen.seed}-${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}`;
 const dir = join("runs", runId);
@@ -44,6 +56,7 @@ const trace = (t: TraceEntry) => {
 const started = Date.now();
 mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "run.json"), JSON.stringify({ run_id: runId, spec: args.spec, seed: gen.seed, crs: args.crs,
+  detector: frozen && freeze.frozen ? `${FREEZE_TAG} ${freeze.commit}` : "not frozen",
   crs_note: args.crs === "recorded" ? "real sandbox responses recorded 2026-10-24, replayed" : "live sandbox", started_at: new Date().toISOString() }, null, 1) + "\n");
 const sinks: EventSink[] = [jsonlSink(join(dir, "events.jsonl"))];
 const db = args["no-db"] ? null : serverClient();

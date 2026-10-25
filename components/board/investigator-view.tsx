@@ -7,6 +7,7 @@ import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
 import { hazelState, previewFeed, supabaseFeed } from "@/lib/events";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
+import { portfolioSeed } from "@/components/twin-compare/twin-compare";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
 import type { BoardCase, CardFocusRequest } from "./board-camera";
 import { Corkboard, type Selection } from "./corkboard";
@@ -31,6 +32,8 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   const { board, errors, animateAfterSeq } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
+  // the drawer lists the run's own portfolio (its run_started row names the seed), so seed 99's L0037 isn't seed 13's
+  const seed = useMemo(() => portfolioSeed(board.events, feed.mode), [board.events, feed.mode]);
   const [selection, setSelection] = useState<Selection>(null);
   // One auxiliary panel at a time: opening one replaces the other, and the tab that looks selected is always
   // the panel that is visible. null is the plain board.
@@ -178,6 +181,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
               )}
               <div className={styles.drawerBody}>
                 <FilingDrawer
+                  seed={seed ?? undefined}
                   selectedLoanId={drawerLoanId}
                   onSelectLoan={selectFromDrawer}
                 />

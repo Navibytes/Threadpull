@@ -29,8 +29,14 @@ describe("architecture rules", () => {
 
   test("only eval/ reads the answer keys", () => {
     for (const f of src("lib", "app", "components", "data"))
-      expect(/answer_key|data\/keys/.test(readFileSync(f, "utf8")) && !rel(f).startsWith("data/generate")
+      // the generator writes the key; data/check reads it to validate a spec and prints only pass/fail
+      expect(/answer_key|data\/keys/.test(readFileSync(f, "utf8")) && !/^data\/(generate|check)\.ts$/.test(rel(f))
         ? rel(f) : "").toBe("");
+  });
+
+  test("only data/ and eval/ read pattern specs (a spec says where every planted case is)", () => {
+    for (const f of src("lib", "app", "components"))
+      expect(/data\/patterns|data\/spec|seed\d+\.json/.test(readFileSync(f, "utf8")) ? rel(f) : "").toBe("");
   });
 
   test("detection code never reads persona_id", () => {
