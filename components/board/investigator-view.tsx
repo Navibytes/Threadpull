@@ -104,9 +104,9 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
-        <header className="relative z-30 flex flex-col items-center gap-1 px-[var(--wall)] pt-2">
+        <header className="relative z-30 flex flex-col items-center gap-0 px-[var(--wall)] pt-0">
           {/* the wordmark is the visible brand; the status line is for screen readers only */}
-          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="h-[clamp(110px,20vh,190px)] w-auto select-none" />
+          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="-mt-2 h-[clamp(100px,18vh,190px)] w-auto select-none" />
           <div className="sr-only">
             <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
           </div>
@@ -122,7 +122,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
           </p>
         </header>
 
-        <main className="relative flex min-h-0 flex-1 justify-center px-[var(--wall)] pb-[clamp(36px,6vh,64px)] pt-2">
+        <main className="relative flex min-h-0 flex-1 justify-center px-[var(--wall)] pb-[clamp(22px,3.5vh,40px)] pt-1">
           <div className="relative flex w-full">
             {/* the frame stays still; the board pans and zooms inside the cork, clipped at the frame */}
             <div className="board-frame flex min-w-0 flex-1">
