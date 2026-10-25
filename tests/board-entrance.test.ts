@@ -12,6 +12,7 @@ import {
   entranceTime,
   planBoardEntrance,
   planEntrance,
+  shiftPlan,
   type PlanCard,
   type PlanThread,
 } from "@/components/board/entrance-plan";
@@ -122,6 +123,26 @@ describe("a live link_found row", () => {
     // an item inside both ranges keeps its entry slot instead of being planned twice
     const both = planBoardEntrance(board, { animateAfterSeq: 1, entrySeq: 6 });
     expect(both.cards.size).toBe(3);
+  });
+});
+
+describe("replaying one case", () => {
+  const board = { cards: [card("A", 1), card("B", 2), card("Z", 3)], threads: [thread("e1", "A", "B", 2), thread("e2", "B", "Z", 3)] };
+
+  test("only the chosen case's cards and threads are planned, a beat later, in the same order as the first time", () => {
+    const first = planEntrance(board.cards, board.threads, new Set(["A", "B"]), new Set(["e1"]));
+    const again = shiftPlan(first, 180);
+    expect([...again.cards.keys()]).toEqual(["A", "B"]); // Z belongs to another case and is not touched
+    expect([...again.threads.keys()]).toEqual(["e1"]);
+    expect(again.cards.get("A")!.paper).toBe(0.18); // starts once the camera is on its way
+    expect(again.cards.get("B")!.paper - again.cards.get("A")!.paper).toBeCloseTo(first.cards.get("B")!.paper - first.cards.get("A")!.paper, 3);
+    expect(again.threads.get("e1")!.label - again.threads.get("e1")!.yarn).toBeCloseTo(yarnTotal / 1000, 3); // the shot is the same shape
+    expect(again.totalMs).toBe(first.totalMs + 180);
+  });
+
+  test("replaying is the same plan every time", () => {
+    const run = () => shiftPlan(planEntrance(board.cards, board.threads, new Set(["A", "B"]), new Set(["e1"])), 180);
+    expect(run()).toEqual(run());
   });
 });
 

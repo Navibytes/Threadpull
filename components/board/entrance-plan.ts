@@ -91,6 +91,17 @@ export function planEntrance(
 
 const idsOf = <T extends { id: string }>(items: T[]) => new Set(items.map((i) => i.id));
 
+// The same plan, starting `ms` later.
+export function shiftPlan(plan: EntrancePlan, ms: number): EntrancePlan {
+  const d = secs(ms);
+  const r = (x: number) => Math.round((x + d) * 1000) / 1000;
+  return {
+    cards: new Map([...plan.cards].map(([id, c]) => [id, { ...c, paper: r(c.paper), pin: r(c.pin) }])),
+    threads: new Map([...plan.threads].map(([id, t]) => [id, { pins: r(t.pins), yarn: r(t.yarn), label: r(t.label) }])),
+    totalMs: plan.totalMs + ms,
+  };
+}
+
 // The two triggers, planned from the board and two sequence numbers:
 //   `entrySeq`: set once per feed hydration (the board was entered), the last seq that was history then. Every card
 //     and thread up to it is re-laid on the wall.

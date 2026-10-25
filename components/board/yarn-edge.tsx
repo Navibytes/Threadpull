@@ -10,7 +10,7 @@ import {
   type InternalNode,
 } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
-import { memo, useRef } from "react";
+import { Fragment, memo, useRef } from "react";
 import { sharedLabel, threadWidth, type BoardThread } from "@/lib/events";
 import { PinStrike } from "./entrance";
 import { type Bezier, EASE_OUT, yarnSettle } from "./entrance-motion";
@@ -23,7 +23,7 @@ import { Pushpin } from "./pushpin";
 // `enter`: when this thread's end pins strike, its yarn shoots across and its label appears (seconds from mount, from
 // entrance-plan.ts), or null when it is simply on the wall. `retract`: its clue_explained row arrived after the
 // board loaded, so the suspicion yarn is pulled back; otherwise an explained thread shows only its fact line.
-export type YarnEdgeType = Edge<{ thread: BoardThread; enter: ThreadEnter | null; retract: boolean }, "yarn">;
+export type YarnEdgeType = Edge<{ thread: BoardThread; enter: ThreadEnter | null; enterKey: number; retract: boolean }, "yarn">;
 
 const INSET = 6; // yarn ends this far inside a card's edge, under its pin: inside the card's margin, clear of text
 
@@ -108,7 +108,9 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const zoom = useStore((st) => Math.round(st.transform[2] * 40) / 40);
   const px = tagPx(zoom);
   const reduce = useReducedMotion();
-  const played = useRef(!(reduce ? null : data?.enter)); // after its entrance, the yarn simply follows its cards
+  // After its entrance, the yarn simply follows its cards. A replay of its case gives it a new `enterKey`: everything it
+  // draws remounts and the entrance plays again.
+  const played = useRef({ key: data?.enterKey ?? 0, done: !(reduce ? null : data?.enter) });
   // wait until both cards are measured: before that the yarn would be drawn along a guessed path and jump
   if (!a || !b || !data || !a.measured.width || !b.measured.width) return null;
   const { thread, retract } = data;
@@ -124,7 +126,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const pathTransition = explained ? RETRACT : drawTransition;
   // The shot: the yarn is drawn along the straight line between its pins (taut), and when it arrives the tension
   // releases: it sags past its resting curve, rebounds, and settles into exactly the curve it always had.
-  const morph = !!enter && !played.current && !explained;
+  const morph = !!enter && !(played.current.key === data.enterKey && played.current.done) && !explained;
   const settle = yarnSettle();
   const frames = (dx: number, dy: number) => settle.sag.map((k) => yarnPath(s.x + dx, s.y + dy, t.x + dx, t.y + dy, k).path);
   // The path's shape (`d`) is always driven through Motion, never also set as a prop: once Motion owns an attribute it
@@ -150,7 +152,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const tag = placeLabel(at, 0, texts, cardBoxes(lookup), px);
 
   return (
-    <>
+    <Fragment key={data.enterKey}>
       {/* invisible wide path: what you click to select the thread */}
       <BaseEdge id={id} path={path} interactionWidth={26} style={{ stroke: "transparent" }} />
 
@@ -215,7 +217,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             animate={shootTo(0, 0, path)}
             transition={shootTransition}
             onAnimationComplete={() => {
-              played.current = true;
+              played.current = { key: data.enterKey, done: true };
             }}
           />
           {/* fibre twist */}
@@ -278,7 +280,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
           </div>
         </div>
       </EdgeLabelRenderer>
-    </>
+    </Fragment>
   );
 }
 

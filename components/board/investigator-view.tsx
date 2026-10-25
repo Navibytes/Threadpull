@@ -85,7 +85,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
   const activeLead = picked && cases.list.some((c) => c.lead === picked) ? picked : derivedLead;
   const pickCase = useCallback((lead: string | null) => {
     setPicked(lead);
-    if (lead) setFocusRequest({ cardId: lead }); // move the camera to the case as well
+    if (lead) setFocusRequest({ cardId: lead, replay: true }); // move the camera to the case, and lay its evidence out again
   }, []);
   // a case's detail page on the dashboard: the same run, with that case's lead loan
   const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId, scenario: runId ? undefined : sc.id }, leadId), [runId, sc.id]);

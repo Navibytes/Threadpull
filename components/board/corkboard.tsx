@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import { loanName, sharedLabel, type BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
-import { EMPTY_PLAN, planBoardEntrance } from "./entrance-plan";
+import { EMPTY_PLAN, planBoardEntrance, planEntrance, shiftPlan } from "./entrance-plan";
 import { cardFinding, IndexCardNode, type IndexCardNodeType } from "./index-card-node";
 import { layoutBoard } from "./layout";
 import type { BoardEntry } from "./use-run-events";
@@ -21,6 +21,9 @@ const edgeTypes = { yarn: YarnEdge };
 // removes or restyles evidence: that comes from event rows through the reducer. Rows up to
 // `animateAfterSeq` were history when the board loaded and appear in place; later rows animate in.
 // `keepClear` is the element whose box the camera keeps cards out of (Hazel's corner).
+// The camera takes 450ms to reach a case; its cards are thrown down while it is still arriving.
+const CASE_REPLAY_LEAD_MS = 180;
+
 export function Corkboard({
   board,
   animateAfterSeq,
@@ -52,6 +55,7 @@ export function Corkboard({
   // first mounts and never again, so a card already on the wall is not touched by later rows, by a zoom, or by a
   // panel opening. Reduced motion plans nothing: the finished board is shown at once.
   const reduce = useReducedMotion();
+  const replays = useRef(0); // each replay of a case is a new key for that case's cards and threads
   const entered = useRef<BoardEntry | null>(null); // the entry already laid out, so a rebuild of the same board doesn't replay it
   const plan = useMemo(
     () =>
@@ -104,6 +108,7 @@ export function Corkboard({
             showSeq,
             finding,
             enter: old ? (old.data.enter ?? null) : (plan.cards.get(card.id) ?? null),
+            enterKey: old ? old.data.enterKey : 0,
             detailHref: lead && caseHref ? caseHref(card.id) : null,
           },
         };
@@ -127,12 +132,30 @@ export function Corkboard({
           data: {
             thread,
             enter: old ? (old.data?.enter ?? null) : (plan.threads.get(thread.id) ?? null),
+            enterKey: old?.data?.enterKey ?? 0,
             retract: !!thread.explained && thread.explained.seq > animateAfterSeq,
           },
         };
       }),
     );
   }, [board.threads, animateAfterSeq, plan, setEdges]);
+
+  // The viewer stepped to or picked a case with the case controls: lay that case's evidence out again, once, a beat
+  // after the camera starts moving. Only that case's cards and threads restart (a new key remounts their animation
+  // wrappers); everything else on the wall stays where it is, and dragging, panning and zooming never come here.
+  const replayCase = useCallback(
+    (caseIndex: number) => {
+      if (reduce) return;
+      const ids = new Set(cases[caseIndex]?.ids ?? []);
+      if (ids.size === 0) return;
+      const threadIds = new Set(board.threads.filter((t) => ids.has(t.a) && ids.has(t.b)).map((t) => t.id));
+      const next = shiftPlan(planEntrance(board.cards, board.threads, ids, threadIds), CASE_REPLAY_LEAD_MS);
+      const key = ++replays.current;
+      setNodes((prev) => prev.map((n) => (next.cards.has(n.id) ? { ...n, data: { ...n.data, enter: next.cards.get(n.id)!, enterKey: key } } : n)));
+      setEdges((prev) => prev.map((e) => (next.threads.has(e.id) && e.data ? { ...e, data: { ...e.data, enter: next.threads.get(e.id)!, enterKey: key } } : e)));
+    },
+    [reduce, cases, board.cards, board.threads, setNodes, setEdges],
+  );
 
   // After both effects above have read the plan: this entry has been laid out.
   useEffect(() => {
@@ -171,6 +194,7 @@ export function Corkboard({
         focusRequest={focusRequest}
         showSeq={showSeq}
         onToggleSeq={() => setShowSeq((v) => !v)}
+        onVisitCase={replayCase}
       />
     </ReactFlow>
   );

@@ -8,7 +8,9 @@ import type { IndexCardNodeType } from "./index-card-node";
 import { LAYOUT } from "./layout";
 
 export type BoardCase = { index: number; lead: string; ids: string[] };
-export type CardFocusRequest = { cardId: string };
+// `replay`: the viewer chose this case on purpose (the case picker), so its evidence is laid out again. A focus that
+// comes from anywhere else (the filing drawer) only moves the camera.
+export type CardFocusRequest = { cardId: string; replay?: boolean };
 
 // A card's box on the board as drawn now (after any drag). Fitting includes a lead's hanging note; deciding
 // whether a card is on screen uses the card itself.
@@ -33,6 +35,7 @@ export function BoardCamera({
   focusRequest,
   showSeq,
   onToggleSeq,
+  onVisitCase,
 }: {
   cases: BoardCase[];
   activeCase: number | null;
@@ -40,6 +43,7 @@ export function BoardCamera({
   focusRequest?: CardFocusRequest | null;
   showSeq: boolean;
   onToggleSeq: () => void;
+  onVisitCase?: (caseIndex: number) => void; // the viewer stepped to, or picked, a case: replay its entrance
 }) {
   const { setViewport, setNodes, setEdges, zoomIn, zoomOut } = useReactFlow();
   const measured = useNodesInitialized();
@@ -122,7 +126,8 @@ export function BoardCamera({
     setNodes((nodes) => nodes.map((node) => ({ ...node, selected: node.id === focusRequest.cardId })));
     setEdges((edges) => edges.map((edge) => ({ ...edge, selected: false })));
     void setViewport(bestFit(box, { w: paneW, h: paneH }, keepOut()), { duration: reduce ? 0 : 450 });
-  }, [focusRequest, measured, paneW, paneH, boxesFor, cases, keepOut, reduce, setNodes, setEdges, setViewport]);
+    if (focusRequest.replay && caseIndex >= 0) onVisitCase?.(caseIndex);
+  }, [focusRequest, measured, paneW, paneH, boxesFor, cases, keepOut, reduce, setNodes, setEdges, setViewport, onVisitCase]);
 
   // Viewer panned or zoomed by hand: stop following (React Flow passes an event only for user moves).
   useEffect(() => {
@@ -158,6 +163,7 @@ export function BoardCamera({
     const next = (from + d + cases.length) % cases.length;
     setFollowing(false);
     go(next);
+    onVisitCase?.(next);
   };
   const zoomBy = (dir: 1 | -1) => {
     setFollowing(false);
@@ -193,6 +199,7 @@ export function BoardCamera({
                 onChange={(e) => {
                   setFollowing(false);
                   go(e.target.value === "all" ? "all" : Number(e.target.value));
+                  if (e.target.value !== "all") onVisitCase?.(Number(e.target.value));
                 }}
                 className="max-w-[11rem] truncate rounded-sm border border-walnut/25 bg-paper/80 px-1.5 py-0.5 font-semibold text-walnut focus-visible:outline-2 focus-visible:outline-walnut"
               >

@@ -20,7 +20,7 @@ import { StatusChip } from "./status-chip";
 // `showSeq`: the board's "event numbers" debug option.
 // `finding`: why the card is on the board, from its recorded threads (cardFinding).
 export type IndexCardNodeType = Node<
-  { card: BoardCard; enter: CardEnter | null; lead: boolean; showSeq: boolean; finding: CardFinding | null; detailHref: string | null },
+  { card: BoardCard; enter: CardEnter | null; enterKey: number; lead: boolean; showSeq: boolean; finding: CardFinding | null; detailHref: string | null },
   "indexCard"
 >;
 
@@ -79,8 +79,10 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
   const { card, lead, showSeq, finding, detailHref } = data;
   const reduce = useReducedMotion();
   const enter = reduce ? null : data.enter; // reduced motion shows the finished board at once
-  const played = useRef(!enter); // once its entrance has played, the card answers selection with the spring below
-  const entering = !!enter && !played.current;
+  // Once its entrance has played, the card answers selection with the spring below. A replay of its case gives it a new
+  // `enterKey`: its animation wrappers remount and the entrance plays again.
+  const played = useRef({ key: data.enterKey, done: !enter });
+  const entering = !!enter && !(played.current.key === data.enterKey && played.current.done);
   const shudders = !!enter?.fx; // the paper shudders where the pin goes in (only on small entrances)
   const zoom = useStore((s) => Math.round(s.transform[2] * 40) / 40); // quantized: re-render only on real zoom steps
   const full = zoom >= FULL_ZOOM;
@@ -98,6 +100,7 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
 
   return (
     <motion.div
+      key={data.enterKey}
       className="relative"
       style={{ width: w, height, transformOrigin: origin }}
       // Paper slammed onto the board: thrown from above and spun, it lands hard (squashed), rebounds, wobbles, rests.
@@ -121,7 +124,7 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
             : { type: "spring", stiffness: 420, damping: 24, mass: 0.8 }
       }
       onAnimationComplete={() => {
-        played.current = true;
+        played.current = { key: data.enterKey, done: true };
       }}
     >
       {/* the impact: a dark thump under the edges and a puff of dust, behind the card, taking no space */}
