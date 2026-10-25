@@ -85,14 +85,49 @@ body {
   background-color: #6a4426;
 }
 
-/* Paper for cards and panels. */
-.paper {
-  background-color: #f4e9d4;
+/* Evidence cards. A lead is a manila case folder: the shared paper tinted with the board's honey. A linked
+   loan is a ruled index card on the same paper. */
+.folder {
+  background-color: #e6c88f;
   background-image:
-    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 62%, rgb(140 98 52 / 0.16) 100%),
+    radial-gradient(ellipse 125% 105% at 45% 30%, transparent 58%, rgb(110 70 25 / 0.2) 100%),
+    linear-gradient(rgb(217 164 65 / 0.34), rgb(217 164 65 / 0.34)),
     url("/assets/detective/paper-aged.webp");
-  background-size: auto, 640px auto;
+  background-size: auto, auto, 720px auto;
+  background-blend-mode: normal, multiply, normal;
 }
+.folder-tab {
+  border-radius: 6px 6px 0 0;
+  background-color: #dcbb7c;
+  box-shadow: inset 0 -6px 6px -6px rgb(110 70 25 / 0.35);
+}
+.index-ruled {
+  background-color: #fbf6ea;
+  background-image:
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 62%, rgb(140 98 52 / 0.14) 100%),
+    repeating-linear-gradient(to bottom, transparent 0 21px, rgb(123 145 166 / 0.26) 21px 22px),
+    url("/assets/detective/paper-aged.webp");
+  background-size: auto, auto, 640px auto;
+}
+
+/* Inked rubber stamps for facts a row carries: SIMULATED and CRS. Ink colours keep 4.5:1 on both papers. */
+.ink-stamp {
+  padding: 0.12em 0.45em 0.1em;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  mix-blend-mode: multiply;
+}
+.ink-simulated {
+  color: #6b4a10;
+}
+.ink-crs {
+  color: #34506b;
+}
+
 .panel-paper {
   background-color: #f6ecda;
   background-image:

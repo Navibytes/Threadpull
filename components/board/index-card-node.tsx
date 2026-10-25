@@ -1,29 +1,45 @@
 "use client";
 
-import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
-import { crsRequestIds, type BoardCard, type SourceRef } from "@/lib/events";
-import { cardTilt, cardWidth } from "./layout";
+import type { BoardCard, SourceRef } from "@/lib/events";
+import { cardSize, cardTilt } from "./layout";
 import { Pushpin } from "./pushpin";
 import { StatusChip } from "./status-chip";
 
 // `animate`: the card arrived after the board loaded, so it pins in; history appears in place.
-// `lead`: first pinned by lead_opened, so it is the centre of its cluster.
-export type IndexCardNodeType = Node<{ card: BoardCard; animate: boolean; lead: boolean }, "indexCard">;
+// `lead`: first pinned by lead_opened, so it is drawn as the case folder.
+// `showSeq`: the board's "event numbers" debug option.
+export type IndexCardNodeType = Node<{ card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean }, "indexCard">;
 
 // Yarn is drawn edge to edge (see YarnEdge); React Flow still needs a handle on each card.
 const hiddenHandle = { top: "50%", left: "50%", width: 1, height: 1, opacity: 0, pointerEvents: "none" } as const;
 
+// Sources in plain words: "1 data-room row", "2 sources: data room, CRS".
 const SOURCE_WORD: Record<SourceRef["kind"], string> = {
   row: "data room",
   document: "document",
   crs: "CRS",
   lookup: "lookup",
-  rule: "rule",
+  rule: "saved rule",
   human: "human answer",
   event: "earlier event",
 };
+export function sourcesInWords(sources: SourceRef[]) {
+  if (sources.length === 0) return "No sources recorded";
+  if (sources.length === 1 && sources[0].kind === "row") return "1 data-room row";
+  const kinds = [...new Set(sources.map((s) => SOURCE_WORD[s.kind]))];
+  return `${sources.length} source${sources.length === 1 ? "" : "s"}: ${kinds.join(", ")}`;
+}
+
+// Level of detail. At or above FULL_ZOOM every label renders at 12px or more, so the full face shows. Below it
+// the card shows its essentials only (ID, LEAD tab, SIMULATED and CRS stamps), sized from the zoom so they
+// still render at about 12px; everything else is in the evidence inspector.
+export const FULL_ZOOM = 0.93;
+export const essentialPx = (zoom: number) => Math.min(28, Math.max(13, 12.4 / zoom)); // CSS px for small labels
+const idPx = (zoom: number, lead: boolean, full: boolean) =>
+  full ? (lead ? 30 : 22) : Math.min(lead ? 52 : 40, Math.max(lead ? 30 : 22, (lead ? 24 : 20) / zoom));
 
 function hash(id: string) {
   let h = 7;
@@ -34,19 +50,39 @@ function hash(id: string) {
 const SHADOW = "drop-shadow(0px 2px 2px rgb(0 0 0 / 0.45)) drop-shadow(0px 10px 12px rgb(0 0 0 / 0.38))";
 const SHADOW_LIFTED = "drop-shadow(0px 4px 3px rgb(0 0 0 / 0.5)) drop-shadow(0px 20px 22px rgb(0 0 0 / 0.5))";
 
+// An inked rubber stamp. Only for facts the row carries: SIMULATED (row.simulated) and CRS (a crs source).
+function Stamp({ kind, px, detail }: { kind: "simulated" | "crs"; px: number; detail?: string }) {
+  return (
+    <span
+      className={`ink-stamp ink-${kind} inline-flex items-baseline gap-1.5 whitespace-nowrap`}
+      style={{ fontSize: px, transform: `rotate(${kind === "simulated" ? -4 : 3}deg)` }}
+      title={kind === "simulated" ? "Simulated: not a live verification" : detail}
+    >
+      {kind === "simulated" ? "Simulated" : "CRS"}
+      {kind === "crs" && detail && <span className="font-medium normal-case tracking-normal opacity-90">{detail}</span>}
+    </span>
+  );
+}
+
 function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
-  const { card, animate, lead } = data;
+  const { card, animate, lead, showSeq } = data;
   const reduce = useReducedMotion();
+  const zoom = useStore((s) => Math.round(s.transform[2] * 40) / 40); // quantized: re-render only on real zoom steps
+  const full = zoom >= FULL_ZOOM;
+  const label = full ? 13 : essentialPx(zoom);
   const tilt = cardTilt(card.id);
   const h = hash(card.id);
-  const width = cardWidth(card.id) + (lead ? 14 : 0);
-  const kinds = [...new Set(card.sources.map((s) => SOURCE_WORD[s.kind]))];
-  const crs = crsRequestIds(card.sources);
+  const { w, h: height } = cardSize(card.id, lead);
+  const crs = card.sources.filter((s) => s.kind === "crs");
+  const crsDetail =
+    crs.length === 1 && crs[0].kind === "crs" ? crs[0].product.replace(/_/g, " ") : crs.length > 1 ? `${crs.length} calls` : undefined;
+  const showStatus = card.status !== "Not reviewed"; // shown once a status row has set a real status
+  const showNote = lead && !!card.note && zoom >= 0.7; // the note's handwriting stays readable
 
   return (
     <motion.div
       className="relative"
-      style={{ width, transformOrigin: "50% 12px" }}
+      style={{ width: w, height, transformOrigin: lead ? "calc(100% - 22px) 0" : "18px 0" }}
       initial={animate && !reduce ? { opacity: 0, y: -16, rotate: tilt - 4, scale: 1.03, filter: SHADOW_LIFTED } : false}
       animate={{ opacity: 1, y: selected ? -3 : 0, rotate: tilt, scale: 1, filter: selected ? SHADOW_LIFTED : SHADOW }}
       transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 24, mass: 0.8 }}
@@ -54,51 +90,60 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
       <Handle id="pin-in" type="target" position={Position.Top} isConnectable={false} style={hiddenHandle} />
       <Handle id="pin-out" type="source" position={Position.Top} isConnectable={false} style={hiddenHandle} />
 
+      {/* the folder's tab, above the folder */}
+      {lead && (
+        <span
+          className="folder folder-tab absolute left-4 flex items-center px-3 font-semibold uppercase tracking-[0.14em] text-walnut"
+          style={{ fontSize: label, height: label * 1.75, top: -label * 1.75 + 2 }}
+        >
+          Lead
+        </span>
+      )}
+
       <div
-        className={`card-frame relative rounded-[2px] transition-[outline-color] duration-150 ${
+        className={`card-frame relative h-full rounded-[2px] transition-[outline-color] duration-150 ${
           selected ? "outline-2 outline-offset-4 outline-amber" : "outline-2 outline-offset-4 outline-transparent"
         }`}
       >
         <article
-          className={`paper worn-${h % 4} px-4 pb-3.5 pt-6 text-walnut`}
-          style={{ backgroundPosition: `0 0, ${-(h % 400)}px ${-(h % 260)}px` }}
+          className={`${lead ? "folder rounded-[3px] px-5 pb-4 pt-4" : `index-ruled worn-${h % 4} px-4 pb-3 pt-5`} flex h-full flex-col text-walnut`}
+          style={{ backgroundPosition: lead ? undefined : `0 0, 0 0, ${-(h % 300)}px ${-(h % 200)}px` }}
         >
-          <header className="flex items-baseline justify-between gap-2 border-b border-terracotta/45 pb-1">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-walnut/85">
-              {lead ? "Lead · loan application" : "Loan application"}
-            </p>
-            <p className="shrink-0 font-mono text-[10.5px] text-walnut/80">seq {card.firstSeq}</p>
-          </header>
-          <h3 className={`mt-1.5 font-semibold leading-tight tracking-tight ${lead ? "text-[1.6rem]" : "text-[1.3rem]"}`}>
+          <h3 className="font-semibold leading-none tracking-tight tabular-nums" style={{ fontSize: idPx(zoom, lead, full) }}>
             {card.id}
           </h3>
 
-          <div className="mt-2 space-y-1.5 text-[12.5px] leading-[1.35]">
-            <StatusChip status={card.status} />
-            <p>
-              Pinned by <span className="font-medium">{card.pinnedBy}</span>
-              {card.tool && <span className="text-walnut/80"> · {card.tool}</span>}
-            </p>
-            <p className="text-walnut/85">
-              {card.sources.length} source{card.sources.length === 1 ? "" : "s"}
-              {kinds.length > 0 && <>: {kinds.join(", ")}</>}
-            </p>
-            {crs.length > 0 && (
-              <p className="truncate font-mono text-[11px]" title={crs.join(", ")}>
-                CRS RequestID {crs[0]}
-                {crs.length > 1 && ` +${crs.length - 1}`}
-              </p>
-            )}
-            {card.simulated && (
-              <span className="inline-block rounded-sm bg-honey/30 px-1.5 py-px text-[10px] font-semibold tracking-[0.1em]">
-                SIMULATED
+          {full && (
+            <>
+              <p className={`text-[13px] leading-tight text-walnut/85 ${lead ? "mt-1.5" : "mt-1"}`}>Loan application</p>
+              {/* index cards: the head rule sits under the title block; facts go on the ruled lines */}
+              {!lead && <span aria-hidden className="mt-2 block h-[1.5px] bg-terracotta/55" />}
+              <p className={`text-[13px] leading-[22px] ${lead ? "mt-3" : "mt-1"}`}>{sourcesInWords(card.sources)}</p>
+              {showStatus && (
+                <div className="mt-1">
+                  <StatusChip status={card.status} />
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="mt-auto flex flex-wrap items-end gap-x-2.5 gap-y-1.5">
+            {card.simulated && <Stamp kind="simulated" px={label} />}
+            {crs.length > 0 && <Stamp kind="crs" px={label} detail={full ? crsDetail : undefined} />}
+            {showSeq && (
+              <span
+                className="ml-auto rounded-sm bg-walnut/10 px-1 font-medium tabular-nums text-walnut"
+                style={{ fontSize: label }}
+                aria-label={`event seq ${card.firstSeq}`}
+              >
+                seq {card.firstSeq}
               </span>
             )}
           </div>
         </article>
 
-        {/* the lead's own note from its lead_opened row, taped to the card's bottom margin (never over its text) */}
-        {lead && card.note && (
+        {/* the lead's own note from its lead_opened row, taped to the folder's bottom margin (never over its text) */}
+        {showNote && (
           <div
             className="sticky-note absolute -bottom-[66px] -right-7 w-[148px] px-2.5 pb-2 pt-3 shadow-[0_6px_10px_-4px_rgb(0_0_0/0.5)]"
             style={{ transform: `rotate(${2 + (h % 4)}deg)` }}
@@ -109,15 +154,16 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
         )}
       </div>
 
-      {/* decoration: pin at the top, tape across a corner on some cards; both stay in the card's margins */}
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-7px] -translate-x-1/2">
+      {/* decoration in the margins, clear of the text: the folder is pinned at its top-right corner, an index card
+          at its top-left corner, some index cards also taped across the opposite corner */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute -translate-x-1/2 ${lead ? "left-[calc(100%-22px)] top-[-9px]" : "left-[18px] top-[-7px]"}`}
+      >
         <Pushpin color={lead ? "red" : "brass"} size={lead ? 24 : 20} />
       </div>
-      {h % 3 === 0 && (
-        <span
-          aria-hidden
-          className="tape pointer-events-none absolute -left-[22px] -top-[2px] h-4 w-14 -rotate-45"
-        />
+      {!lead && h % 3 === 0 && (
+        <span aria-hidden className="tape pointer-events-none absolute -right-[22px] -top-[2px] h-4 w-14 rotate-45" />
       )}
     </motion.div>
   );

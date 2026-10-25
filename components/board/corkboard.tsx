@@ -1,7 +1,7 @@
 "use client";
 
-import { Controls, ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react";
+import { Controls, Panel, ReactFlow, useEdgesState, useNodesState, type OnSelectionChangeParams } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
@@ -32,6 +32,7 @@ export function Corkboard({
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<YarnEdgeType>([]);
   const moved = useRef(new Set<string>()); // cards the viewer dragged keep their spot; the rest follow the layout
+  const [showSeq, setShowSeq] = useState(false); // debug: show each card's event seq on its face
 
   const layout = useMemo(() => layoutBoard(board.cards, board.threads), [board.cards, board.threads]);
 
@@ -61,17 +62,19 @@ export function Corkboard({
         const spot = layout.get(card.id)!;
         const position = old && moved.current.has(card.id) ? old.position : { x: spot.x, y: spot.y };
         const lead = card.pinnedBy === "lead_opened";
+        const crs = card.sources.some((s) => s.kind === "crs");
         return {
           ...old,
           id: card.id,
           type: "indexCard",
           position,
           zIndex: lead ? 2 : 1,
-          data: { card, lead, animate: card.firstSeq > animateAfterSeq },
+          ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${card.id}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
+          data: { card, lead, showSeq, animate: card.firstSeq > animateAfterSeq },
         };
       }),
     );
-  }, [board.cards, layout, animateAfterSeq, setNodes]);
+  }, [board.cards, layout, animateAfterSeq, showSeq, setNodes]);
 
   useEffect(() => {
     setEdges((prev) =>
@@ -123,6 +126,17 @@ export function Corkboard({
       <BoardCamera cases={cases} activeCase={activeCase} keepClear={keepClear} />
       {/* framing lives in the case bar ("Show all"), which knows to keep clear of Hazel */}
       <Controls showInteractive={false} showFitView={false} position="bottom-left" />
+      {/* debug: event seq numbers live in the inspector; this puts them on the card faces too */}
+      <Panel position="bottom-left" className="!mb-[84px]">
+        <button
+          type="button"
+          aria-pressed={showSeq}
+          onClick={() => setShowSeq((v) => !v)}
+          className="rounded-sm bg-[#2c1e14] px-2 py-1 text-xs font-medium text-cream shadow-[0_6px_14px_rgb(0_0_0/0.5)] hover:bg-[#3d2a1c] focus-visible:outline-2 focus-visible:outline-amber"
+        >
+          Event numbers: {showSeq ? "on" : "off"}
+        </button>
+      </Panel>
     </ReactFlow>
   );
 }

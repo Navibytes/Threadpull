@@ -13,6 +13,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
 import { threadWidth, type BoardThread } from "@/lib/events";
 import type { IndexCardNodeType } from "./index-card-node";
+import { essentialPx, FULL_ZOOM } from "./index-card-node";
 import { LAYOUT } from "./layout";
 import { Pushpin } from "./pushpin";
 
@@ -67,18 +68,20 @@ function cardBoxes(lookup: Map<string, InternalNode>): Box[] {
   });
 }
 
-const LABEL_H = 20;
-const labelWidth = (text: string) => text.length * 6.3 + 18; // 11px Plex, with the tag's padding
+// Tags render at about 12px or more: below FULL_ZOOM their font grows as the board zooms out, like the cards'
+// essential labels. Width and height scale with the font (11px Plex: about 6.3px a character plus padding).
+const tagPx = (zoom: number) => (zoom >= FULL_ZOOM ? 12 : essentialPx(zoom));
+const labelWidth = (text: string, px: number) => (text.length * 6.3 + 18) * (px / 11);
 const SPOTS = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74];
 
 // Where the tag hangs: the first point along the thread (from the middle outwards) where it touches no card.
 // Tries the full text first, then the short one; if nothing is clear, the short text at the middle.
-function placeLabel(at: (u: number) => { x: number; y: number }, drop: number, texts: string[], cards: Box[]) {
+function placeLabel(at: (u: number) => { x: number; y: number }, drop: number, texts: string[], cards: Box[], px: number) {
   for (const text of texts) {
-    const w = labelWidth(text);
+    const w = labelWidth(text, px);
     for (const u of SPOTS) {
       const p = at(u);
-      const r = { x: p.x - w / 2, y: p.y + drop, w, h: LABEL_H };
+      const r = { x: p.x - w / 2, y: p.y + drop, w, h: px * 1.8 };
       const clear = cards.every((c) => r.x + r.w < c.x - 4 || c.x + c.w < r.x - 4 || r.y + r.h < c.y - 4 || c.y + c.h < r.y - 4);
       if (clear) return { text, x: p.x, y: p.y + drop };
     }
@@ -93,6 +96,8 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const a = useInternalNode(source);
   const b = useInternalNode(target);
   const lookup = useStore((st) => st.nodeLookup);
+  const zoom = useStore((st) => Math.round(st.transform[2] * 40) / 40);
+  const px = tagPx(zoom);
   const reduce = useReducedMotion();
   if (!a || !b || !data) return null;
   const { thread, animate, retract } = data;
@@ -109,7 +114,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
     ? `${thread.kind} · explained · ${explained.ruleId ?? explained.explainedBy}`
     : `${thread.kind} · ${thread.weight.toFixed(2)}`;
   const short = explained ? `${thread.kind} · explained` : thread.kind;
-  const tag = placeLabel(at, w / 2 + 8, [full, short], cardBoxes(lookup));
+  const tag = placeLabel(at, w / 2 + 8, [full, short], cardBoxes(lookup), px);
 
   return (
     <>
@@ -195,7 +200,8 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
           style={{ transform: `translate(-50%, 0) translate(${tag.x}px, ${tag.y}px)`, zIndex: 1001 }}
         >
           <motion.span
-            className={`relative block whitespace-nowrap px-2 py-0.5 text-[11px] font-medium shadow-[0_3px_6px_rgb(0_0_0/0.45)] ${
+            style={{ fontSize: px }}
+            className={`relative block whitespace-nowrap px-[0.6em] py-[0.15em] font-medium shadow-[0_3px_6px_rgb(0_0_0/0.45)] ${
               explained ? "bg-[#e3ecd6] text-walnut" : "bg-paper text-walnut"
             }`}
             initial={drawIn ? { opacity: 0, y: -4 } : false}

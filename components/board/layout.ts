@@ -7,14 +7,17 @@ import type { BoardCard, BoardThread } from "@/lib/events";
 
 // Starting values, tuned on the six-card proof run; adjust here (tests read them from this object).
 export const LAYOUT = {
-  cardH: 178, // nominal card height used for spacing
+  // card sizes (IndexCardNode draws exactly these): the lead is a case folder, linked loans are index cards
+  lead: { w: 300, h: 176 },
+  linked: { w: 232, h: 148 },
+  widthJitter: 10, // slightly uneven widths, from the card id
+  cardH: 160, // fallback height when a card has not been measured yet
   leadNoteH: 64, // the lead's taped note hangs below the card
-  leadExtraW: 14, // the lead card is a little wider (see IndexCardNode)
   gap: 40, // minimum space between cards of the same case
   caseGap: 220, // minimum space between cards of different cases, so separate cases never read as linked
   // distances from the partner card's centre, nearest ring first
   rings: [
-    { rx: 460, ry: 280 },
+    { rx: 420, ry: 270 },
     { rx: 820, ry: 520 },
     { rx: 1180, ry: 780 },
   ],
@@ -26,7 +29,7 @@ export const LAYOUT = {
   threadClearance: 12, // a thread keeps this far from unrelated card boxes
 };
 
-export type Rect = { x: number; y: number; w: number; h: number };
+export type Rect = { x: number; y: number; w: number; h: number; body?: number }; // body: card height without its note
 export type Spot = { x: number; y: number; cluster: number };
 type Pt = { x: number; y: number };
 
@@ -37,7 +40,10 @@ function hash(id: string) {
 }
 
 // Slightly uneven but consistent sizes and tilts, from the card id (stable across reloads).
-export const cardWidth = (id: string) => 248 + (hash(id) % 23); // 248-270 px
+export function cardSize(id: string, lead: boolean) {
+  const base = lead ? LAYOUT.lead : LAYOUT.linked;
+  return { w: base.w + (hash(id) % LAYOUT.widthJitter) - Math.floor(LAYOUT.widthJitter / 2), h: base.h };
+}
 export const cardTilt = (id: string) => ((hash(id) % 49) - 24) / 10; // -2.4° to 2.4°
 
 type CardIn = Pick<BoardCard, "id" | "pinnedBy" | "firstSeq"> & { note?: string | null };
@@ -47,12 +53,11 @@ const isLead = (c: CardIn) => c.pinnedBy === "lead_opened";
 
 // The box a card occupies on the board, including a lead's hanging note.
 export function cardBox(c: CardIn, x: number, y: number): Rect {
-  const w = cardWidth(c.id) + (isLead(c) ? LAYOUT.leadExtraW : 0);
-  const h = LAYOUT.cardH + (isLead(c) && c.note ? LAYOUT.leadNoteH : 0);
-  return { x, y, w, h };
+  const { w, h } = cardSize(c.id, isLead(c));
+  return { x, y, w, h: h + (isLead(c) && c.note ? LAYOUT.leadNoteH : 0), body: h };
 }
 
-const centreOf = (r: Rect): Pt => ({ x: r.x + r.w / 2, y: r.y + LAYOUT.cardH / 2 });
+const centreOf = (r: Rect): Pt => ({ x: r.x + r.w / 2, y: r.y + (r.body ?? r.h) / 2 });
 
 const overlaps = (a: Rect, b: Rect, gap = LAYOUT.gap) =>
   a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
@@ -130,7 +135,7 @@ export function layoutBoard(cards: CardIn[], threads: ThreadIn[]): Map<string, S
           .find((other) => boxes.has(other));
 
     const size = cardBox(card, 0, 0);
-    const at = (cx: number, cy: number): Rect => ({ ...size, x: Math.round(cx - size.w / 2), y: Math.round(cy - LAYOUT.cardH / 2) });
+    const at = (cx: number, cy: number): Rect => ({ ...size, x: Math.round(cx - size.w / 2), y: Math.round(cy - size.body! / 2) });
     let box: Rect | undefined;
     let cluster: number;
 
@@ -143,7 +148,7 @@ export function layoutBoard(cards: CardIn[], threads: ThreadIn[]): Map<string, S
       };
       centres.push(c);
       for (let step = 0; !box; step++) {
-        const r = at(c.x, c.y + step * (LAYOUT.cardH + LAYOUT.gap));
+        const r = at(c.x, c.y + step * (size.body! + LAYOUT.gap));
         if (fits(r, cluster) && blocked(r) === 0) box = r;
       }
     } else {
@@ -170,7 +175,7 @@ export function layoutBoard(cards: CardIn[], threads: ThreadIn[]): Map<string, S
       // nowhere clean: the free spot with the fewest crossings, else stack below the partner
       box ??= best?.r;
       for (let step = 1; !box; step++) {
-        const r = at(p.x, p.y + step * (LAYOUT.cardH + LAYOUT.gap) + LAYOUT.leadNoteH);
+        const r = at(p.x, p.y + step * (size.body! + LAYOUT.gap) + LAYOUT.leadNoteH);
         if (fits(r, cluster)) box = r;
       }
     }
