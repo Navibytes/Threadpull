@@ -11,6 +11,8 @@
 
 **Update (Sat 23:05, checked against `main`):** Everything but Haiku extraction is done and in Hazel's loop. A proposes declaring Haiku extraction out of scope so the detector can be frozen (ticket 12): fingerprints and the injection guard already cover the demo, and adding a model call to the detector now is risk without a demo moment.
 
+**Update (Sun 00:40, checked against `main`):** `close_lead` now scans a loan's documents before code decides its status (A, PR #40), so the injected stub is flagged in every run whichever tools Hazel chose; seen live in `r13-20261025T072822`. Haiku extraction: proposed out of scope (decision pending).
+
 - [x] Fingerprint from template id, font and creating tool, plus arithmetic checks (net below gross, net/gross ratio, year-to-date consistent with pay periods and time at employer). `lib/evidence/documents.ts`
 - [x] Returns a match score and the specific differences as sources, at 1 acorn per pair.
 - [x] Deterministic guard: `scanDocument` flags instruction-like text and off-form lines; `safeDocumentView` gives Hazel only the form fields and withholds any field carrying instructions. `lib/evidence/injection.ts`

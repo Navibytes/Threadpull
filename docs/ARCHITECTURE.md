@@ -94,8 +94,8 @@ data/                                                                           
 eval/                                                                                D
   hazel-run.ts           ✅ one Hazel run measured against the answer key (`bun run hazel`)
   sample-run.ts          ✅ writes runs/r13-sample: Hazel's loop with a scripted model on recorded CRS answers, for the local CRO screen   B
-  baseline.ts            ○ fixed-rule baseline, same tools and budget
-  evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
+  baselines.ts           ✅ check everything + fixed rules, same tools, prices and ledger as Hazel      A
+  evaluate.ts            ✅ `bun run eval --run <id>`: Hazel's rows + baselines vs the answer key → docs/PROOF.md (frozen only)   A
 
 supabase/migrations/     ✅ loans (A), events (C, insert-only), crs_cache (B), dispositions (B; apply it in the SQL Editor); runs, rules, questions ○
 tests/                   ✅ one <module>.test.ts per lib module: 34 TypeScript test files (bun test), including architecture, hazel, board-fall, spec, freeze; test_*.py cover the old Python prototype

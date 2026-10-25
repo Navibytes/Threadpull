@@ -17,7 +17,9 @@
 
 **Since 23:05:** the CRS 429 recovery row on the board (#32), notes keep decimals whole (#34), Hazel keeps working the next lead after the ring so innocents get cleared (#35), docs (#31, #33). Supabase URL and anon key are in `.env.local`; the recorded run plays on the board.
 
-**Left for A (Sat 23:35):** the Haiku decision for 08 (proposed: out of scope, so the detector can freeze); check D's fresh run on the board (falling thread, Twin Compare and drawer on its seed); then help where the demo needs it (15).
+**Since 23:35:** the document scan before every status (#40), the case summary follows the case on screen (#41), the fresh live run `r13-20261025T072822` (fall + refused stub, 10 acorns), and ticket 13's evaluator and baselines (`bun run eval`).
+
+**Left for A (Sun 00:40):** the Haiku decision for 08 (proposed: out of scope); after the freeze, `bun run eval --run <id> --write` for seed 13 and seed 99 with D.
 
 **Who waits on you:** D needs ticket 02 by noon to build the graph (04). C needs the generator's pattern-spec input for the held-out set (12).
 
