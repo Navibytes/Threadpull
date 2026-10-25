@@ -14,7 +14,7 @@ import { HAZEL_MODEL, runHazel, type HazelRun } from "@/lib/agent";
 import { MemoryRuleStore } from "@/lib/rules";
 import { buildGraph } from "@/lib/graph";
 import { generate, type AnswerKey } from "@/data/generate";
-import { client as replayCrs } from "./crs-replay";
+import { client as replayCrs, replayFetch } from "./crs-replay";
 
 type Call = { name: string; input: Record<string, unknown> };
 
@@ -219,6 +219,30 @@ describe("the code's guarantees hold whatever the model does", () => {
     expect(out.statuses.get(hospital)).toBe("Investigate");
     const reply = JSON.parse(claude.requests[1].body.messages.at(-1).content[0].content);
     expect(reply.asked.id).toBe("q-001");
+  });
+
+  test("a CRS 429 shows as a recovery row for the call's loan, between its check and its charge; the run stops listening after", async () => {
+    let limited = 0;
+    const fetch = (async (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).includes("identity-manager") && limited++ === 0
+        ? new Response(JSON.stringify({ codes: ["CRS962"] }), { status: 429, headers: { "Retry-After": "2" } })
+        : replayFetch(input, init)) as typeof globalThis.fetch;
+    const waits: number[] = [];
+    const crs = replayCrs({ fetch, sleep: async (ms) => void waits.push(ms) });
+    const out = await run([[{ name: "crs_identity_check", input: { loan_id: "L0037" } }], "done"], { crs }).done;
+    const [recovery] = ofType(out.events, "recovery");
+    expect(recovery).toMatchObject({ loan_ids: ["L0037"], tool: "crs_identity_check",
+      result: { endpoint: "tu_identity", status: 429, wait_ms: 2000, attempt: 1 }, budget: { spent: 0, limit: 60 } });
+    expect(EventSchema.parse(recovery)).toBeTruthy();
+    expect(waits).toEqual([2000]);
+    const [spent] = ofType(out.events, "budget_spent");
+    expect(spent.seq).toBeGreaterThan(recovery.seq); // charged once, after the retry succeeded
+    expect(out.spent).toBe(3);
+    const rows = out.events.length;
+    limited = 0; // a 429 after the run is over is not this run's
+    await crs.call("tu_identity", (await import("@/lib/crs/persona-guard")).bodyForLoan("tu_identity", loans.find((l) => l.loan_id === "L0190")!),
+      (await import("@/lib/crs/identity")).IdentityResponseSchema);
+    expect(out.events.length).toBe(rows);
   });
 
   test("a failed model request still ends the log with run_finished, then the error reaches the caller", async () => {

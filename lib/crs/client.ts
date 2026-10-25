@@ -54,6 +54,9 @@ export function createCrsClient(opts: CrsClientOptions = {}) {
   const baseUrl = opts.baseUrl ?? CRS_BASE_URL;
   const cache = opts.cache ?? defaultCache();
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  // Who hears about a 429 besides opts.onRecovery: a Hazel run subscribes for its duration, since the process-wide
+  // client outlives any one run.
+  const watchers = new Set<(info: CrsRecovery) => void | Promise<void>>();
 
   async function send(path: string, init: RequestInit): Promise<Response> {
     try {
@@ -97,7 +100,9 @@ export function createCrsClient(opts: CrsClientOptions = {}) {
     // 429: wait out Retry-After and send the same request again, at most twice; the login call never gets here, so a login 429 stays terminal.
     for (let attempt = 1; res.status === 429 && attempt <= MAX_429_RETRIES; attempt++) {
       const wait_ms = retryAfterMs(res);
-      await opts.onRecovery?.({ endpoint, status: 429, wait_ms, attempt });
+      const info: CrsRecovery = { endpoint, status: 429, wait_ms, attempt };
+      await opts.onRecovery?.(info);
+      for (const w of watchers) await w(info);
       await sleep(wait_ms);
       res = await send(path, init);
     }
@@ -116,7 +121,13 @@ export function createCrsClient(opts: CrsClientOptions = {}) {
     return { request_id, body: parsed.data, cached: false };
   }
 
-  return { call };
+  /** Hear about every 429 wait from now on; returns the unsubscribe. */
+  function watchRecovery(watcher: (info: CrsRecovery) => void | Promise<void>): () => void {
+    watchers.add(watcher);
+    return () => void watchers.delete(watcher);
+  }
+
+  return { call, watchRecovery };
 }
 
 let shared: CrsClient | undefined;

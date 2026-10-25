@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import personas from "@/data/personas.json";
-import { createCrsClient, memoryCache } from "@/lib/crs";
+import { createCrsClient, memoryCache, type CrsClientOptions } from "@/lib/crs";
 
 export type Recording = { endpoint: string; persona: string; status: number; request_id: string; request: Record<string, unknown>; response: unknown };
 
@@ -25,7 +25,7 @@ const endpointOf = (url: string) =>
   : url.includes("/experian/") ? "credit_exp" : url.includes("/fraud-finder/") ? "fraud" : "reverse";
 
 // The sandbox answers each persona with the response CRS really returned for it.
-const replay = (async (input: RequestInfo | URL, init?: RequestInit) => {
+export const replayFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
   if (url.endsWith("/users/login")) return new Response(JSON.stringify({ token: "t" }), { status: 200 });
   const body = JSON.parse(String(init?.body));
@@ -34,7 +34,8 @@ const replay = (async (input: RequestInfo | URL, init?: RequestInit) => {
   return new Response(JSON.stringify(r.response), { status: r.status, headers: { "Content-Type": "application/json", RequestID: r.request_id } });
 }) as typeof fetch;
 
-export const client = () => createCrsClient({ fetch: replay, cache: memoryCache(), username: "user", password: "pass" });
+export const client = (extra: CrsClientOptions = {}) =>
+  createCrsClient({ fetch: replayFetch, cache: memoryCache(), username: "user", password: "pass", ...extra });
 
 /** The day the responses were pulled (responseDetail.dateRequested), so counts do not drift with today's date. */
 export const PULLED = Date.parse("2026-10-24T23:11:57Z");
