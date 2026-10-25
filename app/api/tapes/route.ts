@@ -4,6 +4,7 @@
 import { join } from "node:path";
 import { IntakeError, intakeTape } from "@/lib/ingest/intake";
 import { saveTape } from "@/lib/ingest/tapes";
+import { publicDemo } from "@/lib/demo";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
   try {
     const intake = intakeTape(text);
     if (!intake.report.accepted) return Response.json({ error: "no loan in the tape could be accepted", report: intake.report }, { status: 422 });
+    // the public demo reads the tape and reports on it, but keeps nothing (its disk is read-only and shared by no one)
+    if (publicDemo()) return Response.json({ report: intake.report, demo: true }, { status: 201 });
     saveTape(join(process.cwd(), "data", "out", "uploads"), intake); // literal segments: keeps the build from tracing the whole repo
     return Response.json({ report: intake.report }, { status: 201 });
   } catch (e) {

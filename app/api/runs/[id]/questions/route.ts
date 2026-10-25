@@ -2,6 +2,7 @@
 // POST /api/runs/{id}/questions: a person's answer {question_id, decision, text, answered_by, min_group_size?}. A yes saves
 // a rule version; either way a question_answered row is appended to the run's log and copied to Supabase (`mirror`).
 import { questionsFor, recordAnswer } from "@/lib/deal/questions";
+import { demoRefusal, publicDemo } from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (publicDemo()) return demoRefusal();
   const { id } = await params;
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ error: "send a JSON object" }, { status: 400 });

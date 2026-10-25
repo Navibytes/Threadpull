@@ -3,6 +3,7 @@
 // ANTHROPIC_API_KEY); sentences without a checkable event reference are dropped and listed. Saved beside the run's events.
 import { AssumptionsInputSchema } from "@/lib/deal";
 import { makeMemo, readMemo } from "@/lib/deal/service";
+import { demoRefusal, publicDemo } from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (publicDemo()) return demoRefusal();
   const { id } = await params;
   const q = new URL(req.url).searchParams;
   const num = (k: string) => (q.has(k) ? Number(q.get(k)) : undefined);

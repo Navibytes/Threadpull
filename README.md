@@ -37,6 +37,10 @@ CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sand
 
 An uploaded tape has no address or employer reference data, so `check_address` and `check_employer` answer "unknown" rather than guess, and no thread comes down on them; a generated seed has both.
 
+## Public demo (Vercel)
+
+The deployed site is read-only: `PUBLIC_DEMO=1` turns off everything that spends Claude tokens or CRS calls or writes a file (investigations, answers, decisions, memos; an upload is read and reported on but not kept), and `THREADPULL_RUNS=demo/runs` serves the recorded runs in [demo/runs](demo/runs/README.md) to the CRO screen. The board reads runs from Supabase with the public anon key. The build generates seeds 13 and 99 (`vercel.json`). Environment: `PUBLIC_DEMO`, `THREADPULL_RUNS`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` only; no service-role, Anthropic or CRS key is set there. The full flow runs locally (`bun run dev`).
+
 ## Ask once, remember forever
 
 When Hazel can't decide and nobody has ruled on a case like it, she asks one person once (`ask_human`). Code routes the question (CRO, credit analyst, legal, compliance), computes the confidence and the reason from the evidence, and proposes the scope a yes would save, using only facts the run can check. The person answers on the CRO screen (`/cro?run=<run_id>`, "Questions for you"): a yes becomes a versioned rule, a no saves nothing, and either way a `question_answered` row is added to the run's log and the board. Later runs apply the rule on their own and cite it when a thread comes down; a link outside the rule's scope stays up.
