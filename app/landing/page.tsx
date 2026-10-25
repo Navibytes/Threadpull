@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Pushpin } from "@/components/board/pushpin";
 import { CaseBoard } from "@/components/landing/case-board";
+import { DEMO_HREF } from "@/components/landing/demo";
 import { SITE_NAV, SiteFooter, SiteHeader } from "@/components/landing/site-chrome";
 import s from "@/components/landing/landing.module.css";
 
@@ -37,29 +38,33 @@ export default function Landing() {
 
 function Hero() {
   return (
-    <section aria-labelledby="hero-title" className={`${s.gutter} pt-10 pb-16 lg:pt-14 lg:pb-24`}>
+    <section aria-labelledby="hero-title" className={`${s.gutter} pt-6 pb-16 lg:pt-8 lg:pb-24`}>
       <p className={`sticky-note ${s.note} ${s.rise}`} style={v({ "--i": 0 })}>case file: a loan portfolio for sale</p>
-      <h1 id="hero-title" className={`${s.headline} mt-5 text-walnut`}>
+      <h1 id="hero-title" className={`${s.headline} mt-4 text-walnut`}>
         <span className={s.rise} style={v({ "--i": 1 })}>Find the ring.</span>
         <span className={s.rise} style={v({ "--i": 2 })}>Protect the <span className={s.underlined}>innocent.</span></span>
         <span className={s.rise} style={v({ "--i": 3 })}>Decide the deal.</span>
       </h1>
-      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-x-12 gap-y-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
-      <div className="lg:pt-6">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] items-start gap-x-12 gap-y-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
+      <div className="lg:pt-2">
         <p className={`${s.rise} max-w-[34rem] text-lg leading-relaxed`} style={v({ "--i": 4 })}>
           Upload the loan tape. We tell you which borrowers don&apos;t exist, which ones only look suspicious, and how much
           less to pay.
         </p>
-        <p className={`${s.rise} mt-3 max-w-[34rem] leading-relaxed`} style={v({ "--i": 5 })}>
-          Hazel, our investigator, pulls threads through 1,000 loans on a fixed verification budget, and takes a thread back
-          down when one check proves the link innocent.
-        </p>
-        <div className={`${s.rise} mt-8 flex flex-wrap items-center gap-3`} style={v({ "--i": 6 })}>
-          <Link href="/" className={`brass-plate ${s.brass}`}>
+        <div className={`${s.rise} mt-6 flex flex-wrap items-center gap-3`} style={v({ "--i": 5 })}>
+          <Link href={DEMO_HREF} className={`brass-plate ${s.brass}`}>
             Open the investigator room <span aria-hidden>→</span>
           </Link>
           <Link href="/upload" className={s.paperButton}>Upload a loan tape</Link>
         </div>
+        <p className={`${s.rise} mt-3 max-w-[34rem] text-[0.95rem] leading-snug text-walnut/85`} style={v({ "--i": 6 })}>
+          The room opens a sample investigation: made-up loans, six cases, two taken down by a cited check, no live
+          checks. Uploading a tape checks its format, then lets you start a live investigation of it (it needs the API keys).
+        </p>
+        <p className={`${s.rise} mt-5 max-w-[34rem] leading-relaxed`} style={v({ "--i": 6 })}>
+          Hazel, our investigator, pulls threads through 1,000 loans on a fixed verification budget. When a check reveals a
+          legitimate explanation, she withdraws suspicion and takes the thread back down.
+        </p>
       </div>
       <div className={s.rise} style={v({ "--i": 5 })}>
         <CaseBoard />
@@ -95,7 +100,7 @@ const PROMISES: { title: string; tilt: number; body: ReactNode; stamp?: string }
   {
     title: "Decide the deal",
     tilt: -0.6,
-    stamp: "being built",
+    stamp: "needs a recorded run",
     body: (
       <>
         The Chief Risk Officer gets the work done, not a list of flags: which loans to exclude, reprice or protect,

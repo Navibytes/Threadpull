@@ -25,7 +25,7 @@ const PIN = { lead: [185, 186], p12: [530, 48], bg1: [545, 354], twinA: [840, 60
 
 const THREADS = [
   { a: PIN.lead, b: PIN.bg1, dx: 0, dy: 80, width: 7, delay: 1.0, label: "same rare phone", tilt: -2, t: 0.66 },
-  { a: PIN.lead, b: PIN.p12, dx: 0, dy: 80, width: 6, delay: 1.25, label: "same bank account", tilt: 2, t: 0.6 },
+  { a: PIN.lead, b: PIN.p12, dx: 0, dy: 80, width: 6, delay: 1.25, label: "same bank account", tilt: 2, t: 0.38 },
   { a: PIN.p12, b: PIN.bg1, dx: 120, dy: 0, width: 5, delay: 1.5, label: "same pay-stub template", tilt: -1.5, t: 0.5 },
 ];
 const ADDRESS = { a: PIN.twinA, b: PIN.twinB, dx: 130, dy: 0 };
@@ -35,6 +35,7 @@ export function CaseBoard() {
 
   return (
     <figure className="m-0">
+      <div className={s.desktopBoard}>
       <div className={s.boardScroll}>
         <div className={s.boardWrap}>
           <div className="board-frame">
@@ -88,7 +89,7 @@ export function CaseBoard() {
                   style={v({ ...pct(at(ADDRESS.a, ADDRESS.b, ADDRESS.dx, ADDRESS.dy)), "--tilt": "2deg", "--delay": "1.75s", "--delay2": "0.6s" })}>
                   same address
                 </span>
-                <div className={s.explained} style={v({ left: "84%", top: "41%", "--delay": "0.6s" })}>
+                <div className={s.explained} style={v({ left: "80%", top: "41%", "--delay": "0.6s" })}>
                   <strong>Explained</strong> by <code>check_address</code>: a 212-unit apartment building. The thread comes down.
                 </div>
               </div>
@@ -107,10 +108,88 @@ export function CaseBoard() {
           </button>
         </div>
       </div>
+      </div>
+      <MobileBoard />
       <figcaption className={`${s.caption} mt-1 text-walnut`}>
-        An illustration of the seed-13 case (synthetic loans, sandbox personas). In the app, every move on the board is a recorded event row.
+        An illustration of the seed-13 case (synthetic loans, sandbox personas). The sample you open next uses different, made-up loans and no live checks.
+        In the app, every move on the board is an event row.
       </figcaption>
     </figure>
+  );
+}
+
+// The same story as the wide board, for a phone: one column of cards, each thread a labelled red line between two of them.
+// Real text, not a picture, so it reads at a normal size and a screen reader gets it as it is.
+function MobileBoard() {
+  return (
+    <div className={s.mobileBoard}>
+      <div className="board-frame">
+        <div className={s.mCork}>
+          <div className={s.mCard} style={v({ "--tilt": "-0.8deg" })}>
+            <span className={s.mPin}><Pushpin color="red" /></span>
+            <div className={`folder worn-0 ${s.mBody}`}>
+              <span className={s.mLead}>LEAD</span>
+              <div className={s.mId}>L0037</div>
+              <div className="mt-1 font-semibold">TransUnion identity</div>
+              <div><span className={s.code}>2201</span> SSN not associated with this name</div>
+              <div><span className={s.code}>2202</span> date of birth doesn&apos;t match</div>
+              <div><span className={s.code}>2101</span> address doesn&apos;t match</div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="ink-stamp ink-crs">CRS</span>
+                <span className={s.mStatus}>Investigate</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={s.mThread}><span className={s.mLabel} style={v({ "--tilt": "-2deg" })}>same rare phone</span></div>
+
+          <div className={s.mCard} style={v({ "--tilt": "0.9deg" })}>
+            <span className={s.mPin}><Pushpin color="red" /></span>
+            <div className={`index-ruled worn-1 ${s.mBody}`}>
+              <div className={s.mId}>L0445</div>
+              <div>Dealer #3 · no bureau file</div>
+              <div>Pay stub: instructions withheld</div>
+            </div>
+          </div>
+
+          <div className={s.mThread}><span className={s.mLabel} style={v({ "--tilt": "1.5deg" })}>same pay-stub template</span></div>
+
+          <div className={s.mCard} style={v({ "--tilt": "-0.6deg" })}>
+            <span className={s.mPin}><Pushpin color="red" /></span>
+            <div className={`index-ruled worn-2 ${s.mBody}`}>
+              <div className={s.mId}>L0190</div>
+              <div>Dealer #3</div>
+              <div>TU: 2201 + 2202</div>
+            </div>
+          </div>
+          <p className={s.mNote}>L0190 and L0037 also share a bank account.</p>
+
+          <div className={s.mDivider} aria-hidden />
+
+          <div className={s.mCard} style={v({ "--tilt": "0.7deg" })}>
+            <span className={s.mPin}><Pushpin color="red" /></span>
+            <div className={`index-ruled worn-3 ${s.mBody}`}>
+              <div className={s.mId}>L0229</div>
+              <div>shared street address</div>
+            </div>
+          </div>
+          <div className={`${s.mThread} ${s.mThreadGone}`}><span className={s.mLabel} style={v({ "--tilt": "1deg", textDecoration: "line-through" })}>same address</span></div>
+          <div className={s.mCard} style={v({ "--tilt": "-0.9deg" })}>
+            <span className={s.mPin}><Pushpin color="red" /></span>
+            <div className={`index-ruled worn-0 ${s.mBody}`}>
+              <div className={s.mId}>L0566</div>
+              <div>shared street address</div>
+            </div>
+          </div>
+          <p className={s.mExplained}>
+            <strong>Explained</strong> by <code>check_address</code>: a 212-unit apartment building. The thread comes down.
+          </p>
+          <div className={s.mHazel}>
+            <Image src="/hazel/hazel-resolved.png" alt="" width={1219} height={1290} sizes="88px" className="h-auto w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

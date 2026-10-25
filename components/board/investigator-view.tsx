@@ -6,6 +6,7 @@ import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
 import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed, type RunEventFeed } from "@/lib/events";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { portfolioSeed } from "@/components/twin-compare/twin-compare";
@@ -19,6 +20,7 @@ import { RoomNav, type PanelId } from "./room-nav";
 import { SidePanel } from "./side-panel";
 import { CaseSummary } from "./case-summary";
 import { StatusPlaque } from "./status-plaque";
+import { CaseRoomIntro } from "./case-room-intro";
 import { useRunEvents } from "./use-run-events";
 import { dashboardHref } from "@/lib/dashboard/links";
 
@@ -141,7 +143,10 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
                       onPick={pickCase}
                     />
 {/* the wordmark is the visible brand; the status line is for screen readers only */}
-          <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="-mt-2 h-[clamp(100px,18vh,190px)] w-auto select-none" />
+          {/* the wordmark is also the way back to the landing page */}
+          <Link href="/landing" aria-label="Threadpull, back to the landing page" title="Back to the landing page" className="relative z-30 -mt-2 rounded-md focus-visible:outline-2 focus-visible:outline-terracotta">
+            <img src="/brand/threadpull-wordmark.png" alt="" draggable={false} className="h-[clamp(100px,18vh,190px)] w-auto select-none" />
+          </Link>
           <div className="sr-only">
             <StatusPlaque board={board} mode={feed.mode} runId={feed.runId} cases={cases.list} activeCase={cases.active} />
           </div>
@@ -150,6 +155,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
             onToggle={toggle}
             onBoard={() => setOpen(null)}
             dashboardHref={dashboardHref({ run: runId, scenario: runId ? undefined : sc.id })}
+            croHref={runId ? `/cro?run=${encodeURIComponent(runId)}` : null}
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
@@ -194,6 +200,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
                 <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />
+                <CaseRoomIntro />
                 <div className="pointer-events-none absolute left-5 top-5 z-20 max-w-[70%] space-y-2">
                   {feed.mode === "preview" && (
                     <p className="w-fit rounded-sm border border-honey bg-paper px-3 py-1.5 text-xs font-medium text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.4)]">

@@ -5,6 +5,7 @@
 // by drag and drop. Hazel watches with her own poses: thinking while the tape is read, discovery when a document
 // carries instructions, resolved when it's in.
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { IntakeReportView } from "./intake-report";
 import { sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
@@ -17,6 +18,24 @@ export function UploadDesk() {
   const input = useRef<HTMLInputElement>(null);
   const result = useRef<HTMLHeadingElement>(null);
   const busy = state.kind === "sending";
+  const router = useRouter();
+  const [starting, setStarting] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+
+  // Investigate the accepted loans: the server starts Hazel on them, then the board follows the run live.
+  const investigate = async (tapeId: string) => {
+    setStarting(true);
+    setRunError(null);
+    try {
+      const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs`, { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((body as { error?: string }).error ?? `The server answered HTTP ${res.status}.`);
+      router.push(`/?run=${encodeURIComponent((body as { run_id: string }).run_id)}`);
+    } catch (e) {
+      setRunError(e instanceof Error ? e.message : String(e));
+      setStarting(false);
+    }
+  };
 
   // after an answer, move focus to it so keyboard and screen-reader users land on the result
   useEffect(() => {
@@ -105,7 +124,15 @@ export function UploadDesk() {
         <div className="lg:col-span-2">
           {state.kind === "done" && (
             <IntakeReportView name={state.name} report={state.report} saved={state.saved} headingRef={result}
-              actions={<button type="button" className={s.paperButton} onClick={() => setState({ kind: "idle" })}>Upload another tape</button>} />
+              actions={<>
+                {state.saved ? (
+                  <button type="button" className={s.paperButton} onClick={() => void investigate(state.report.tape_id)} disabled={starting}>
+                    {starting ? "Starting the investigation…" : `Investigate these ${state.report.accepted.toLocaleString("en-US")} loans`}
+                  </button>) : null}
+                <button type="button" className={s.paperButton} onClick={() => { setRunError(null); setState({ kind: "idle" }); }}>Upload another tape</button>
+                {state.saved ? <p className="basis-full text-sm opacity-80">Hazel runs live on the CRS sandbox and Claude, within a 60-acorn budget; the board shows each step, and the CRO screen the decisions.</p> : null}
+                {runError ? <p role="alert" className="basis-full text-sm text-red-700">{runError}</p> : null}
+              </>} />
           )}
           {state.kind === "failed" && (
             <div className={`${u.failure} panel-paper worn-0`} role="alert">

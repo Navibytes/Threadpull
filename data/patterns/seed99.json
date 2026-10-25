@@ -1,0 +1,114 @@
+{
+  "seed": 99,
+  "n_loans": 1000,
+  "tape_date": "2026-10-01",
+  "origination_start": "2025-10-01",
+  "origination_end": "2026-09-25",
+  "n_dealers": 24,
+  "n_brokers": 9,
+  "patterns": [
+    {
+      "type": "ring",
+      "ring_id": "RING-1",
+      "dealer": "D17",
+      "broker": "B02",
+      "personas": ["P12", "P13", "P14"],
+      "background_members": 5,
+      "window_days": 6,
+      "start": "2026-04-27",
+      "shared": [
+        {"kind": "bank_account", "members": ["P12", "bg1", "bg3"]},
+        {"kind": "bank_account", "members": ["P13", "bg2", "bg5"]},
+        {"kind": "device_id", "members": ["P14", "bg4"]},
+        {"kind": "device_id", "members": ["P12", "P13"]},
+        {"kind": "ip_address", "members": ["P14", "bg1", "bg2"]}
+      ],
+      "employers": [
+        {"name": "Ashgrove Staffing Partners", "headcount": 7, "members": ["P13", "bg2", "bg4"]},
+        {"name": "Cobalt Ridge Courier LLC", "headcount": 3, "members": ["P12", "bg1"]}
+      ],
+      "recycled_pay_stub": false,
+      "vin_year_mismatch": ["bg3", "bg5"]
+    },
+    {
+      "type": "ring",
+      "ring_id": "RING-2",
+      "dealer": "D09",
+      "broker": "B05",
+      "personas": ["P09"],
+      "background_members": 3,
+      "window_days": 11,
+      "start": "2026-07-06",
+      "shared": [
+        {"kind": "device_id", "members": ["P09", "bg1"]},
+        {"kind": "ip_address", "members": ["bg1", "bg2", "bg3"]}
+      ],
+      "employers": [
+        {"name": "Tidewater Auto Detailing", "headcount": 5, "members": ["P09", "bg2"]}
+      ],
+      "recycled_pay_stub": true
+    },
+    {
+      "type": "shared_building",
+      "persona": "P03",
+      "background_members": 3,
+      "units": 96,
+      "proving_check": "check_address"
+    },
+    {
+      "type": "shared_building",
+      "persona": "P04",
+      "background_members": 2,
+      "units": 340,
+      "proving_check": "check_address"
+    },
+    {
+      "type": "large_employer",
+      "personas": ["P10"],
+      "background_members": 19,
+      "employer": {"name": "St. Brigid Regional Health", "headcount": 12500, "job_titles": ["Registered Nurse", "Surgical Technologist", "Respiratory Therapist", "Lab Technician", "Unit Clerk"]},
+      "proving_check": "crs_credit_report (employments) + rule R-001"
+    },
+    {
+      "type": "large_employer",
+      "personas": ["P01", "P06"],
+      "background_members": 27,
+      "employer": {"name": "Northgate State University", "headcount": 21000, "job_titles": ["Research Assistant", "Administrative Coordinator", "Lab Technician", "Facilities Technician", "Library Specialist", "IT Support Analyst"]},
+      "proving_check": "crs_credit_report (employments)",
+      "truth": "innocent; a large employer, but not a hospital, so outside R-001's scope and Hazel must ask again"
+    },
+    {
+      "type": "small_employer",
+      "background_members": 4,
+      "employer": {"name": "Marlow & Finch Plumbing Supply", "headcount": 52, "job_titles": ["Counter Sales Associate", "Delivery Driver", "Dispatcher"]},
+      "truth": "innocent; outside R-001 scope, so Hazel must ask again"
+    },
+    {
+      "type": "household",
+      "persona": "P19",
+      "spouse": {"first_name": "KENJI", "last_name": "OYAMA"},
+      "proving_check": "household check (same phone + same address + co-applicant)"
+    },
+    {
+      "type": "dealer_burst",
+      "dealer": "D11",
+      "month": "2026-06",
+      "count": 33,
+      "history_month_end_share": 0.5,
+      "proving_check": "dealer_timeline"
+    },
+    {
+      "type": "dealer_burst",
+      "dealer": "D22",
+      "month": "2026-03",
+      "count": 47,
+      "history_month_end_share": 0.4,
+      "proving_check": "dealer_timeline"
+    },
+    {"type": "review", "persona": "P16", "expected_status": "Investigate", "reason": "fraud alert on file; ask the CRO"},
+    {"type": "review", "persona": "P15", "expected_status": "Insufficient evidence", "reason": "TransUnion file frozen"},
+    {"type": "review", "persona": "P17", "expected_status": "Insufficient evidence", "reason": "bureaus disagree"},
+    {"type": "risky_real", "personas": ["P05", "P07", "P11"], "expected_action": "Reprice"},
+    {"type": "injection", "persona": "P02"}
+  ]
+}

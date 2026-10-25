@@ -29,6 +29,14 @@ Hazel runs on Claude Sonnet 5.5 (`claude-sonnet-5-5`) through the Anthropic Type
 
 CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sandbox (`lib/crs`). The persona guard builds request bodies only from `data/personas.json`, so a loan without a sandbox persona is refused before anything is sent. Every result keeps the CRS RequestID. Real sandbox responses recorded on 2026-10-24 are in `data/crs-recordings/` and back the tests and `bun run hazel --crs recorded`. Hazel also has the tri-bureau credit report (thick file, thin life features; frozen and disagreeing bureaus mean Insufficient evidence), AtData Fraud Finder and AccurateAppend reverse phone, each charged in acorns and logged with its RequestIDs. Any simulated lookup data is identified as simulated in [data/README.md](data/README.md).
 
+## From a loan tape to a decision, in the app
+
+1. `bun run dev`, then open `/upload`. Drop a JSON or CSV loan tape (the CSV template is on the page; `data/out/seed13/loans.json` is a 1,000-loan JSON tape). Intake validates every row, refuses any SSN that could belong to a real person, flags documents with instruction-like text, and shows the report.
+2. **Investigate these N loans** starts Hazel on the accepted loans on the server (live CRS sandbox and Claude; needs `ANTHROPIC_API_KEY`, `CRS_USERNAME`, `CRS_PASSWORD`), one run at a time. The board follows the run live at `/?run=<run_id>`; the filing drawer and Twin Compare read the tape's loans.
+3. `/cro?run=<run_id>`: the deal, the questions for a person, and Approve / Override on each proposed action.
+
+An uploaded tape has no address or employer reference data, so `check_address` and `check_employer` answer "unknown" rather than guess, and no thread comes down on them; a generated seed has both.
+
 ## Ask once, remember forever
 
 When Hazel can't decide and nobody has ruled on a case like it, she asks one person once (`ask_human`). Code routes the question (CRO, credit analyst, legal, compliance), computes the confidence and the reason from the evidence, and proposes the scope a yes would save, using only facts the run can check. The person answers on the CRO screen (`/cro?run=<run_id>`, "Questions for you"): a yes becomes a versioned rule, a no saves nothing, and either way a `question_answered` row is added to the run's log and the board. Later runs apply the rule on their own and cite it when a thread comes down; a link outside the rule's scope stays up.
