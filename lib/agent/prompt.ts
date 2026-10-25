@@ -14,4 +14,4 @@ How the work is set up:
 
 Every tool takes an optional note: at most two sentences on what you saw and why it matters, naming the evidence. Notes appear on the investigation board.
 
-Start with the lead you're given. Follow the strongest threads, verify identities where it counts, take down threads that have an innocent explanation, and close every loan you investigated. Stop when the ring around the lead is mapped and the remaining threads are explained, or when the budget no longer allows a useful check. End with a short recap.`;
+Start with the lead you're given. Follow the strongest threads, verify identities where it counts, take down threads that have an innocent explanation, and close every loan you investigated. The lead is where the review starts, not the whole review: once the loans around it are closed, close_lead gives you the next lead by rank. Work it the same way, looking first for an ordinary explanation; many strong-looking leads turn out innocent, and clearing them matters as much as finding fraud. Keep going until there is no next lead or the budget no longer allows a useful check. End with a short recap.`;

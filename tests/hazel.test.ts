@@ -245,6 +245,21 @@ describe("the code's guarantees hold whatever the model does", () => {
     expect(out.events.length).toBe(rows);
   });
 
+  test("after the ring, close_lead hands over the next lead, and working it is where an innocent thread comes down", async () => {
+    const ring = key.rings[0].loan_ids;
+    const twins = key.lookalikes.find((x) => x.proving_check === "check_address")!.loan_ids;
+    const { claude, done } = run([ring.map((id) => ({ name: "close_lead", input: { loan_id: id } })), "pause"]);
+    await done;
+    const replies = claude.requests[1].body.messages.at(-1).content.map((c: { content: string }) => JSON.parse(c.content));
+    const next = replies.at(-1).next_lead;
+    expect(twins).toContain(next); // the prompt tells Hazel to keep going with this; it is the apartment-building twin
+    const address = loans.find((l) => l.loan_id === next)!.derived.address_key;
+    const out = await run([ring.map((id) => ({ name: "close_lead", input: { loan_id: id } })), [{ name: "check_address", input: { address } }]]).done;
+    const [fall] = ofType(out.events, "clue_explained");
+    expect(fall.loan_ids).toEqual([...twins].sort());
+    expect(ofType(out.events, "link_found").map((e) => e.loan_ids.join(","))).toContain([...twins].sort().join(",")); // drawn, then falls
+  });
+
   test("a failed model request still ends the log with run_finished, then the error reaches the caller", async () => {
     let n = 0;
     const fetch = (async () => n++ === 0
