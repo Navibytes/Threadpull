@@ -18,19 +18,19 @@ Claude plans the checks; code holds the evidence and the math. A model runs in t
 
 ```mermaid
 flowchart TD
-  gen["Portfolio generator<br/><small>Bun · Faker · data/generate.ts</small>"] --> intake["Intake: validate rows, refuse real SSNs, flag instruction text<br/><small>TypeScript · Zod · lib/ingest</small>"]
-  gen -.->|answer key, kept apart| eval
-  intake --> graph["Evidence graph: rarity-weighted shared links<br/><small>graphology · lib/graph</small>"]
-  graph -->|leads| hazel["<b>Hazel</b> (Claude Sonnet 5.5): picks the next check, writes cited notes<br/><small>Anthropic SDK tool runner · lib/agent</small>"]
-  ledger["Budget ledger: reserves each price, refuses overspend<br/><small>lib/ledger.ts</small>"] -->|limit| hazel
-  hazel <-->|results come back as evidence| tools["Checks: CRS sandbox behind a persona guard, explanation checks, pay-stub parser<br/>(Claude Haiku only for stubs the parser can't; code verifies each value)<br/><small>lib/crs · lib/evidence</small>"]
-  hazel -->|rows| log["Event log: append-only rows with sources and CRS RequestIDs; code decides statuses<br/><small>Supabase Postgres · lib/agent · lib/events</small>"]
-  log -->|live, Supabase Realtime| board["Corkboard: replays or streams the rows<br/><small>Next.js · React Flow · components/board</small>"]
-  log --> deal["Deal engine: exclusions, repricing, buybacks, revised bid<br/><small>lib/deal</small>"]
-  log --> eval["Evaluator: the only code that reads the answer key<br/><small>eval/</small>"]
-  deal --> cro["CRO review: a person approves or overrides; answers become rules; memo by Claude, each sentence checked<br/><small>app/cro · lib/rules</small>"]
+  nGen["Portfolio generator<br/><small>Bun · Faker · data/generate.ts</small>"] --> nIntake["Intake: validate rows, refuse real SSNs, flag instruction text<br/><small>TypeScript · Zod · lib/ingest</small>"]
+  nGen -.->|answer key, kept apart| nEval
+  nIntake --> nGraph["Evidence graph: rarity-weighted shared links<br/><small>graphology · lib/graph</small>"]
+  nGraph -->|leads| nHazel["<b>Hazel</b> (Claude Sonnet 5.5): picks the next check, writes cited notes<br/><small>Anthropic SDK tool runner · lib/agent</small>"]
+  nLedger["Budget ledger: reserves each price, refuses overspend<br/><small>lib/ledger.ts</small>"] -->|limit| nHazel
+  nHazel <-->|results come back as evidence| nTools["Checks: CRS sandbox behind a persona guard, explanation checks, pay-stub parser<br/>(Claude Haiku only for stubs the parser can't; code verifies each value)<br/><small>lib/crs · lib/evidence</small>"]
+  nHazel -->|rows| nLog["Event log: append-only rows with sources and CRS RequestIDs; code decides statuses<br/><small>Supabase Postgres · lib/agent · lib/events</small>"]
+  nLog -->|live, Supabase Realtime| nBoard["Corkboard: replays or streams the rows<br/><small>Next.js · React Flow · components/board</small>"]
+  nLog --> nDeal["Deal engine: exclusions, repricing, buybacks, revised bid<br/><small>lib/deal</small>"]
+  nLog --> nEval["Evaluator: the only code that reads the answer key<br/><small>eval/</small>"]
+  nDeal --> nCro["CRO review: a person approves or overrides; answers become rules; memo by Claude, each sentence checked<br/><small>app/cro · lib/rules</small>"]
   classDef llm fill:#fdf3e3,stroke:#b5533c,stroke-width:2px;
-  class hazel,tools,cro llm;
+  class nHazel,nTools,nCro llm;
 ```
 
 ## Setup and data
