@@ -71,10 +71,11 @@ export function AdaptPanel({ bundle }: { bundle: ReportBundle }) {
           answer only if every value is printed on the line Haiku cites; otherwise the stub is reported unreadable. Lines with
           instructions in them never reach the model.
         </Card>
-        <Card title="Your budget and prices" status="in code"
+        <Card title="Your budget" status="live"
           now={<>This run: {limit ?? "?"} acorns. CRS prices: {CRS_PRICES.map((p) => `${p.tool} ${p.acorns} (${p.unit})`).join(" · ")}.</>}>
           The run spends no more than the budget, and the ledger reserves each check's listed price before it runs and refunds a check that fails.
-          The budget is set per run (<code className="text-xs">bun run hazel --budget</code>); prices live in one table in code.
+          The budget is chosen per run: 30, 60 or 120 acorns next to Investigate on the upload page, or any amount with{" "}
+          <code className="text-xs">bun run hazel --budget</code>. The prices live in one table in code, not yet a setting.
         </Card>
         <Card title="What counts as a connection" status="in code" now={<>Linked by: {LINK_KINDS.join(", ")}.</>}>
           A shared attribute counts in proportion to how rare it is across the tape, so a big employer or a busy dealer barely

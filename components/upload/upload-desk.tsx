@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "rea
 import { IntakeReportView } from "./intake-report";
 import { JSON_SAMPLE_URL, PLANTED, sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
 import { MAX_SAMPLE_SEED, SAMPLE_SIZES, sampleName, sampleProblem, sampleUrl } from "@/lib/ingest/sample";
+import { DEFAULT_RUN_BUDGET, RUN_BUDGETS } from "@/lib/runs/budgets";
 import s from "@/components/landing/landing.module.css";
 import u from "./upload.module.css";
 
@@ -29,6 +30,7 @@ export function UploadDesk() {
   const [runError, setRunError] = useState<string | null>(null);
   const tapeFile = useRef<Blob | null>(null); // the tape as uploaded, sent again with Investigate (a serverless host keeps no upload)
   const [needCode, setNeedCode] = useState(false);
+  const [budget, setBudget] = useState<number>(DEFAULT_RUN_BUDGET);
   const [code, setCode] = useState("");
 
   // Investigate the accepted loans: the server starts Hazel on them, then the board follows the run live.
@@ -37,7 +39,7 @@ export function UploadDesk() {
     setRunError(null);
     try {
       const passcode = code.trim() || readCode();
-      const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs`, { method: "POST",
+      const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs?budget=${budget}`, { method: "POST",
         headers: { "Content-Type": "text/plain", ...(passcode ? { "x-threadpull-passcode": passcode } : {}) },
         body: tapeFile.current ? await tapeFile.current.text() : undefined });
       const body = await res.json().catch(() => ({}));
@@ -141,12 +143,13 @@ export function UploadDesk() {
           {state.kind === "done" && (
             <IntakeReportView name={state.name} report={state.report} saved={state.saved} headingRef={result}
               actions={<>
+                {state.saved ? <BudgetChoice budget={budget} onChange={setBudget} disabled={starting} /> : null}
                 {state.saved ? (
                   <button type="button" className={s.paperButton} onClick={() => void investigate(state.report.tape_id)} disabled={starting}>
                     {starting ? "Starting the investigation…" : `Investigate these ${state.report.accepted.toLocaleString("en-US")} loans`}
                   </button>) : null}
                 <button type="button" className={s.paperButton} onClick={() => { setRunError(null); setState({ kind: "idle" }); }}>Upload another tape</button>
-                {state.saved ? <p className="basis-full text-sm opacity-80">Hazel runs live on the CRS sandbox and Claude, within a 60-acorn budget; the board shows each step, and the CRO screen the decisions.</p> : null}
+                {state.saved ? <p className="basis-full text-sm opacity-80">Hazel runs live on the CRS sandbox and Claude, within a {budget}-acorn budget; the board shows each step, and the CRO screen the decisions.</p> : null}
                 {state.saved && needCode ? (
                   <label className="basis-full text-sm">Passcode for live runs (the team has it)
                     <input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off"
@@ -166,6 +169,33 @@ export function UploadDesk() {
         </div>
       )}
     </>
+  );
+}
+
+// How many acorns the run may spend. Code enforces it (lib/ledger.ts); Hazel can't raise it. Our measured results are
+// all at 60, so the page says so rather than promising the same at another budget.
+const BUDGET_NOTES: Record<number, string> = {
+  30: "Half the usual budget. In the proof runs the ring was complete by 14 and 17 acorns, but with less left for checking the largest balances. Not measured at 30.",
+  60: "The budget every measured result on this site was run with.",
+  120: "More left for checking the largest balances once the threads run out. Not measured at 120; takes longer.",
+};
+
+function BudgetChoice({ budget, onChange, disabled }: { budget: number; onChange: (n: number) => void; disabled: boolean }) {
+  return (
+    <fieldset className="basis-full text-sm text-walnut" disabled={disabled}>
+      <legend className="font-medium">Verification budget</legend>
+      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="flex overflow-hidden rounded-sm border border-walnut/35">
+          {RUN_BUDGETS.map((n) => (
+            <label key={n} className={`cursor-pointer px-3 py-1.5 tabular-nums has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-amber ${budget === n ? "bg-walnut font-semibold text-white" : "bg-paper text-walnut hover:bg-white"}`}>
+              <input type="radio" name="run-budget" value={n} checked={budget === n} onChange={() => onChange(n)} className="sr-only" />
+              {n} acorns
+            </label>
+          ))}
+        </span>
+        <span className="text-walnut/85">{BUDGET_NOTES[budget]} One loan through all four CRS checks costs 12 acorns.</span>
+      </span>
+    </fieldset>
   );
 }
 

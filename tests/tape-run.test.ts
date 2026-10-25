@@ -10,6 +10,7 @@ import type { HazelOptions, HazelRun } from "@/lib/agent";
 import type { Event } from "@/lib/contracts/event";
 import { intakeTape } from "@/lib/ingest/intake";
 import { saveTape } from "@/lib/ingest/tapes";
+import { DEFAULT_RUN_BUDGET, runBudget } from "@/lib/runs/budgets";
 import { missingConfig, startTapeRun, tapeRun, tapeTagged } from "@/lib/runs/tape-run";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -60,6 +61,29 @@ describe("starting a run on an uploaded tape", () => {
     await Bun.sleep(10);
     expect(tapeRun(out.run.run_id)?.state).toBe("finished");
     expect(existsSync(join(dir, "events.jsonl"))).toBe(true);
+  });
+
+  test("a chosen budget reaches Hazel and run.json; none given leaves Hazel's default", async () => {
+    const seen: (number | undefined)[] = [];
+    const run = async (opts: HazelOptions): Promise<HazelRun> => {
+      seen.push(opts.budget);
+      return { events: [], statuses: new Map(), spent: 0, limit: opts.budget ?? 60, iterations: 0, stop_reason: "end_turn", recap: "" };
+    };
+    const runsDir = tmp();
+    const a = startTapeRun(TAPE, { env, uploads, runsDir, run, anthropic, db: null, budget: 120, now: () => new Date("2026-10-25T06:00:00Z") });
+    if (!a.ok) throw new Error(a.error);
+    await a.done;
+    expect(JSON.parse(readFileSync(join(runsDir, a.run.run_id, "run.json"), "utf8")).budget).toBe(120);
+    const b = startTapeRun(TAPE, { env, uploads, runsDir, run, anthropic, db: null, now: () => new Date("2026-10-25T06:01:00Z") });
+    if (!b.ok) throw new Error(b.error);
+    await b.done;
+    expect(seen).toEqual([120, undefined]);
+    expect(JSON.parse(readFileSync(join(runsDir, b.run.run_id, "run.json"), "utf8")).budget).toBeUndefined();
+  });
+
+  test("the budgets a request may ask for", () => {
+    expect([runBudget(null), runBudget(""), runBudget("30"), runBudget("120")]).toEqual([DEFAULT_RUN_BUDGET, DEFAULT_RUN_BUDGET, 30, 120]);
+    for (const bad of ["45", "0", "1000", "abc", "60.5", "-60"]) expect(runBudget(bad)).toBeNull();
   });
 
   test("tapeTagged adds the tape to run_started only", async () => {

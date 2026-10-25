@@ -48,6 +48,7 @@ type Deps = {
   run?: (opts: HazelOptions) => Promise<HazelRun>; env?: Record<string, string | undefined>; now?: () => Date;
   uploads?: string; runsDir?: string; anthropic?: Anthropic; db?: SupabaseClient | null; rules?: string;
   tape?: { loans: Loan[]; reference: Reference }; // the tape itself, when the request carried it (no shared disk)
+  budget?: number; // acorns; Hazel's own default (60) when not given
 };
 
 /** The saved tape, from the first upload folder that has it, or null. */
@@ -69,7 +70,7 @@ export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
   const dir = join(deps.runsDir ?? runsRoot(), run_id);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "run.json"), JSON.stringify({ run_id, tape_id: tapeId, loans: tape.loans.length, crs: "live", crs_note: "live sandbox",
-    rules: deps.rules ?? rulesFile(), started_at: now.toISOString() }, null, 1) + "\n");
+    ...(deps.budget !== undefined ? { budget: deps.budget } : {}), rules: deps.rules ?? rulesFile(), started_at: now.toISOString() }, null, 1) + "\n");
 
   const sinks: EventSink[] = [jsonlSink(join(dir, "events.jsonl"))];
   // never the hosted project under bun test: tests load real keys, so they pass a fake or nothing
@@ -80,7 +81,7 @@ export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
   const state: TapeRunState = { run_id, tape_id: tapeId, state: "running", started_at: now.toISOString() };
   runs.set(run_id, state);
   registry.current = (deps.run ?? runHazel)({ runId: run_id, loans: tape.loans, reference: tape.reference, anthropic, crs: defaultCrsClient(),
-    rules: new FileRuleStore(deps.rules ?? rulesFile()), documentReader: modelStubExtractor(anthropic), sinks: sinks.map((s) => tapeTagged(s, tapeId)) })
+    ...(deps.budget !== undefined ? { budget: deps.budget } : {}), rules: new FileRuleStore(deps.rules ?? rulesFile()), documentReader: modelStubExtractor(anthropic), sinks: sinks.map((s) => tapeTagged(s, tapeId)) })
     .then(() => { state.state = "finished"; })
     .catch((e: unknown) => { state.state = "failed"; state.error = e instanceof Error ? e.message : String(e); })
     .finally(() => { registry.current = null; });
