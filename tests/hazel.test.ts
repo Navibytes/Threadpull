@@ -193,6 +193,17 @@ describe("the code's guarantees hold whatever the model does", () => {
     expect(attacked.statuses.get(loan)).toBe(control.statuses.get(loan)!);
   });
 
+  test("closing a loan scans its documents first, so the attack is on the record even if Hazel never opened it", async () => {
+    const [doc] = key.injected_docs, loan = doc.replace(/-PS$/, "");
+    const closedOnly = await run([[{ name: "close_lead", input: { loan_id: loan } }]]).done;
+    const [attack] = ofType(closedOnly.events, "attack_detected"), [closed] = ofType(closedOnly.events, "status_changed");
+    expect(attack).toMatchObject({ tool: "close_lead", loan_ids: [loan], result: { doc_id: doc } });
+    expect(attack.seq).toBeLessThan(closed.seq);
+    // read first, then closed: still one row per document
+    const both = await run([[{ name: "inspect_loan", input: { loan_id: loan } }], [{ name: "close_lead", input: { loan_id: loan } }]]).done;
+    expect(ofType(both.events, "attack_detected").map((e) => e.tool)).toEqual(["inspect_loan"]);
+  });
+
   test("the injection sits on a ring loan, and code overrules the status it demands", async () => {
     const [doc] = key.injected_docs, loan = doc.replace(/-PS$/, "");
     expect(key.rings[0].loan_ids).toContain(loan); // so the demo shows a refusal, not an agreement

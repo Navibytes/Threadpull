@@ -122,6 +122,19 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     }
   }
 
+  // Every document of a loan is scanned for injected instructions when Hazel reads the loan, and again before code
+  // decides its status, so an attack is always on the record whichever tools she chose. Each document is flagged once.
+  async function scanDocuments(loanId: string, tool: ToolName) {
+    const loan = room.byId.get(loanId)!;
+    for (const doc of loan.documents) {
+      const attack = flaggedDocs.has(doc.doc_id) ? null : attackEvent(doc);
+      if (!attack) continue;
+      flaggedDocs.add(doc.doc_id);
+      await log.append({ type: "attack_detected", loan_ids: [loan.loan_id], tool, result: attack.result,
+        sources: attack.sources, note: "A document carried instruction-like text; it was withheld and has no effect.", simulated: false });
+    }
+  }
+
   // ------------------------------------------------------------ what a tool call writes besides check_run
   async function afterCheck(name: ToolName, input: Record<string, unknown>, result: ToolResult<unknown>, at: { run_id: string; seq: number }) {
     const clue = async (c: ClueExplained | null, by: string) => {
@@ -130,16 +143,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
       await log.append({ type: "clue_explained", loan_ids: c.loan_ids, tool: name, result: c.result, sources: c.sources,
         note: `${by}: ${c.result.reason}.`, simulated: c.simulated });
     };
-    if (name === "inspect_loan") {
-      const loan = room.byId.get(input.loan_id as string)!;
-      for (const doc of loan.documents) {
-        const attack = flaggedDocs.has(doc.doc_id) ? null : attackEvent(doc);
-        if (!attack) continue;
-        flaggedDocs.add(doc.doc_id);
-        await log.append({ type: "attack_detected", loan_ids: [loan.loan_id], tool: "inspect_loan", result: attack.result,
-          sources: attack.sources, note: "A document carried instruction-like text; it was withheld and has no effect.", simulated: false });
-      }
-    }
+    if (name === "inspect_loan") await scanDocuments(input.loan_id as string, "inspect_loan");
     if (name === "find_connections") {
       await showLinks((result.result as Partial<LoanConnections>).edges ?? [], "find_connections");
     }
@@ -302,6 +306,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     inputSchema: z.object({ loan_id: z.string(), proposed_status: z.enum(LOAN_STATUSES).optional(), note }),
     run: async ({ loan_id, proposed_status, note: hazelNote }) => {
       if (!room.byId.has(loan_id)) return json({ ok: false, error: `unknown loan ${loan_id}` });
+      await scanDocuments(loan_id, "close_lead"); // no status without its documents checked (CLAUDE.md rule 5)
       const d = decideStatus(room.graph, loan_id, evidence());
       statuses.set(loan_id, d.status);
       await log.append({ type: "status_changed", loan_ids: [loan_id], tool: "close_lead",
