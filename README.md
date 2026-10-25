@@ -36,7 +36,10 @@ The generator, normalizer, contracts, graph/agent/rule prototypes, and proof hel
 ## Known limits
 
 - No `bun run demo` or replay with speed control yet (ticket 15); the board plays a recorded run from Supabase.
-- No CRO screen yet (ticket 10): pricing, buyback drafts and Approve/Override are not built. `/dashboard` shows status counts and run metrics only.
+- The CRO screen (`/cro`, tickets 10 and 14) reads runs from the local `runs/<run_id>/` folder of the machine that serves it, not from the Supabase `events` table, and needs the loan tape (`bun run data --no-db`). Prices on it are labeled assumed. A decision is saved in the run's event log and copied to the Supabase `dispositions` table once its migration is applied.
+- The CRO memo is written by the model and kept as `runs/<run_id>/memo.json`. Code drops any sentence it cannot check against the run's events, but it does not check that a cited event supports the sentence.
+- There is no sign-in. The name on a decision is whatever is typed into "Deciding as", so it is not proof of who decided, and anyone who can open the page can write a memo, which spends the model API key. Run it only on a trusted machine.
+- `/dashboard` shows status counts and run metrics only.
 - Saved rules and questions live in memory for one run; the Supabase `rules`/`questions` tables are not built (ticket 11).
 - Address and employer lookups are simulated stand-ins and are labeled simulated wherever they appear.
 - The Python modules in `backend/` predate the TypeScript architecture and are not used by it.
