@@ -50,7 +50,10 @@ export function CroScreen() {
     fetch("/api/runs").then((r) => r.json()).then((list: RunSummary[]) => {
       setRuns(list);
       const wanted = new URLSearchParams(window.location.search).get("run");
-      setRunId(wanted && list.some((r) => r.run_id === wanted) ? wanted : list[0]?.run_id ?? null);
+      // a run named in the link is shown even when this server has no files for it (a fresh run on a deployment is read
+      // from Supabase); it is added to the picker
+      if (wanted && !list.some((r) => r.run_id === wanted)) setRuns([{ run_id: wanted, started_at: null, crs: null, note: null, events: 0 }, ...list]);
+      setRunId(wanted ?? list[0]?.run_id ?? null);
     }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 

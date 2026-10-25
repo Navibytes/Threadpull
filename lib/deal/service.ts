@@ -6,8 +6,10 @@ import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import { LoanSchema, type Loan } from "@/lib/contracts/loan";
+import { uploadRoots, writableRuns } from "@/lib/demo";
 import { TAPE_ID } from "@/lib/ingest/intake";
-import { loadTape } from "@/lib/ingest/tapes";
+import { fetchTapeLoans, loadTape, type LoansTable } from "@/lib/ingest/tapes";
+import { serverClient } from "@/lib/db/server";
 import { buybackDemands, documentRequests, type BuybackDemand, type DocumentRequest } from "./drafts";
 import { DispositionInputSchema, dispositionRow } from "./dispositions";
 import { defaultDispositionsDb, mirrorDisposition, type DispositionsTable, type Mirror } from "./dispositions-db";
@@ -29,7 +31,15 @@ export const runsRoot = () => (process.env.THREADPULL_RUNS
 export type RunFiles = { meta: RunMeta; events: Event[]; skipped: number };
 
 /** One run's meta and event rows, in order. A malformed row is skipped and counted, never repaired. */
-export function readRun(runId: string, root = runsRoot()): RunFiles | null {
+/** The folders runs are read from: runsRoot, then where this server writes new runs (the same folder locally). */
+const runRoots = () => [...new Set([runsRoot(), writableRuns()])];
+
+export function readRun(runId: string, root?: string): RunFiles | null {
+  for (const r of root ? [root] : runRoots()) { const run = readRunIn(runId, r); if (run) return run; }
+  return null;
+}
+
+function readRunIn(runId: string, root: string): RunFiles | null {
   if (!RUN_ID.test(runId)) return null;
   const dir = join(/*turbopackIgnore: true*/ root, runId);
   const file = join(dir, "events.jsonl");
@@ -47,7 +57,33 @@ export function readRun(runId: string, root = runsRoot()): RunFiles | null {
   return { meta, events: events.sort((a, b) => a.seq - b.seq), skipped };
 }
 
-export function listRuns(root = runsRoot()): RunSummary[] {
+type EventsSelect = { from(t: "events"): { select(c: string): { eq(c: string, v: string): { order(c: string): { limit(n: number): PromiseLike<{ data: unknown[] | null; error: { message: string } | null }> } } } } };
+// never the hosted project under bun test (tests load real keys)
+const hostedDb = () => (process.env.NODE_ENV === "test" ? null : serverClient());
+
+/**
+ * A run from this server's files, else from the Supabase events table: on a serverless deployment a new run's files sit
+ * on whichever instance ran it. Its meta comes from its run_started row (the seed or the uploaded tape it read).
+ */
+export async function findRun(runId: string, root?: string, db: EventsSelect | null = hostedDb() as unknown as EventsSelect | null): Promise<RunFiles | null> {
+  const local = readRun(runId, root);
+  if (local || root || !db || !RUN_ID.test(runId)) return local;
+  const { data, error } = await db.from("events").select("*").eq("run_id", runId).order("seq").limit(5000);
+  if (error || !data?.length) return null;
+  const events: Event[] = [];
+  let skipped = 0;
+  for (const r of data) { const p = EventSchema.safeParse(r); if (p.success) events.push(p.data); else skipped++; }
+  const started = events.find((e) => e.type === "run_started")?.result ?? {};
+  const meta: RunMeta = { run_id: runId, seed: typeof started.seed === "number" ? started.seed : 13, crs: "live",
+    ...(typeof started.tape_id === "string" ? { tape_id: started.tape_id } : {}), started_at: events[0]?.ts };
+  return { meta, events, skipped };
+}
+
+export function listRuns(root?: string): RunSummary[] {
+  if (!root) {
+    const seen = new Set<string>();
+    return runRoots().flatMap((r) => listRuns(r)).filter((x) => !seen.has(x.run_id) && seen.add(x.run_id));
+  }
   if (!existsSync(/*turbopackIgnore: true*/ root)) return [];
   return readdirSync(/*turbopackIgnore: true*/ root)
     .filter((id) => RUN_ID.test(id) && existsSync(/*turbopackIgnore: true*/ join(root, id, "events.jsonl")))
@@ -64,7 +100,11 @@ const loansCache = new Map<number, Loan[]>();
 export async function loansFor(meta: RunMeta): Promise<Loan[]> {
   if (meta.tape_id !== undefined) { // a run of an uploaded tape (lib/runs/tape-run.ts) reads that tape's accepted loans
     if (!TAPE_ID.test(meta.tape_id)) throw new Error(`run ${meta.run_id} names no valid tape`);
-    return loadTape(join(process.cwd(), "data", "out", "uploads"), meta.tape_id).loans;
+    for (const root of uploadRoots()) { try { return loadTape(root, meta.tape_id).loans; } catch { /* not in this folder */ } }
+    const db = hostedDb();
+    const kept = db ? await fetchTapeLoans(db as unknown as LoansTable, meta.tape_id) : null;
+    if (kept) return kept;
+    throw new Error(`the loans of uploaded tape ${meta.tape_id} are not on this server (an upload is kept on the server that took it)`);
   }
   if (!Number.isInteger(meta.seed)) throw new Error(`run ${meta.run_id} has no whole-number seed`); // the seed becomes part of a path
   const cached = loansCache.get(meta.seed);
@@ -95,7 +135,7 @@ export async function loadReport(
   input: { lgd?: number; margin?: number; scores?: ReadonlyMap<string, number> } = {},
   deps: Deps = {},
 ): Promise<ReportBundle | null> {
-  const run = readRun(runId, deps.root);
+  const run = await findRun(runId, deps.root);
   if (!run) return null;
   const assumptions: Assumptions = withInputs(DEFAULT_ASSUMPTIONS, input);
   const notes = [run.meta.model_note, run.meta.crs ? `CRS answers: ${run.meta.crs}${run.meta.crs_note ? ` (${run.meta.crs_note})` : ""}` : null,
@@ -177,7 +217,7 @@ export async function makeMemo(runId: string, input: { lgd?: number; margin?: nu
 /** Why a loan has the verdict it has, from the run's own events; refuses when the run has none for it. */
 export async function whyFor(runId: string, loanId: string, deps: Deps = {}): Promise<{ ok: true; why: Why } | { ok: false; status: number; error: string }> {
   if (!/^L\d{4}$/.test(loanId)) return { ok: false, status: 400, error: "a loan id looks like L0037" };
-  const run = readRun(runId, deps.root);
+  const run = await findRun(runId, deps.root);
   if (!run) return { ok: false, status: 404, error: `no run ${runId}` };
   const report = buildReport({ run_id: runId, loans: deps.loans ?? (await loansFor(run.meta)), events: run.events });
   return whyLoan(report, run.events, loanId);

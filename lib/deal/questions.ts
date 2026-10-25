@@ -11,7 +11,7 @@ import type { Question, Rule } from "@/lib/contracts/rule";
 import { serverClient } from "@/lib/db/server";
 import { answerQuestion, currentRules, FileRuleStore, type RuleStore } from "@/lib/rules";
 import type { Mirror } from "./dispositions-db";
-import { readRun, runsRoot, STILL_RUNNING, stillRunning } from "./service";
+import { findRun, readRun, runsRoot, STILL_RUNNING, stillRunning } from "./service";
 
 export const rulesPath = () => process.env.THREADPULL_RULES ?? join(process.cwd(), "runs", "rules.json");
 
@@ -26,7 +26,7 @@ export type RunQuestions = { questions: Question[]; rules: Rule[] };
 
 /** The questions this run asked (open and answered) and the rules in force now. Null when there is no such run. */
 export async function questionsFor(runId: string, deps: Deps = {}): Promise<RunQuestions | null> {
-  if (!readRun(runId, deps.root)) return null;
+  if (!(await findRun(runId, deps.root))) return null;
   const store = storeOf(deps);
   const questions = (await store.questions()).filter((q) => q.run_id === runId).sort((a, b) => a.id.localeCompare(b.id));
   return { questions, rules: await currentRules(store) };

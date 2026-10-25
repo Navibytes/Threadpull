@@ -12,15 +12,18 @@ import { jsonlSink, modelStubExtractor, runHazel, supabaseSink, type EventSink, 
 import { defaultCrsClient } from "@/lib/crs";
 import { serverClient } from "@/lib/db/server";
 import { TAPE_ID } from "@/lib/ingest/intake";
+import type { Loan } from "@/lib/contracts/loan";
+import { uploadRoots, writableRules, writableRuns } from "@/lib/demo";
+import type { Reference } from "@/lib/ingest/reference";
 import { loadTape } from "@/lib/ingest/tapes";
 import { FileRuleStore } from "@/lib/rules";
 
 /** Longest wait for one model request before it is dropped and retried (the SDK's own default is 10 minutes). */
 export const MODEL_TIMEOUT_MS = 120_000;
 
-export const uploadsRoot = () => join(process.cwd(), "data", "out", "uploads");
-const runsRoot = () => join(process.cwd(), "runs");
-const rulesFile = () => process.env.THREADPULL_RULES ?? join(process.cwd(), "runs", "rules.json");
+// locally the repo's folders; on a serverless host its /tmp (lib/demo.ts)
+const runsRoot = writableRuns;
+const rulesFile = writableRules;
 
 export type TapeRunState = { run_id: string; tape_id: string; state: "running" | "finished" | "failed"; error?: string; started_at: string };
 // Kept on globalThis: Next.js can load this module more than once in one server (one copy per route bundle, again after
@@ -39,19 +42,27 @@ export function tapeTagged(sink: EventSink, tapeId: string): EventSink {
   return (e) => sink(e.type === "run_started" ? { ...e, result: { ...e.result, tape_id: tapeId } } : e);
 }
 
-export type StartResult = { ok: true; run: TapeRunState } | { ok: false; status: number; error: string };
+// `done` settles when the run ends, so a serverless route can keep its function alive until then (next/server after()).
+export type StartResult = { ok: true; run: TapeRunState; done: Promise<unknown> } | { ok: false; status: number; error: string };
 type Deps = {
   run?: (opts: HazelOptions) => Promise<HazelRun>; env?: Record<string, string | undefined>; now?: () => Date;
   uploads?: string; runsDir?: string; anthropic?: Anthropic; db?: SupabaseClient | null; rules?: string;
+  tape?: { loans: Loan[]; reference: Reference }; // the tape itself, when the request carried it (no shared disk)
 };
+
+/** The saved tape, from the first upload folder that has it, or null. */
+function findTape(tapeId: string, roots: string[]) {
+  for (const root of roots) { try { return loadTape(root, tapeId); } catch { /* not in this folder */ } }
+  return null;
+}
 
 export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
   if (!TAPE_ID.test(tapeId)) return { ok: false, status: 400, error: "not a tape id" };
   const missing = missingConfig(deps.env);
   if (missing.length) return { ok: false, status: 503, error: `a live run needs ${missing.join(", ")} in .env.local` };
   if (registry.current) return { ok: false, status: 409, error: "a run is already in progress; wait for it to finish" };
-  let tape;
-  try { tape = loadTape(deps.uploads ?? uploadsRoot(), tapeId); } catch { return { ok: false, status: 404, error: `no uploaded tape ${tapeId}` }; }
+  const tape = deps.tape ?? findTape(tapeId, deps.uploads ? [deps.uploads] : uploadRoots());
+  if (!tape) return { ok: false, status: 404, error: `no uploaded tape ${tapeId}; upload it again` };
 
   const now = deps.now?.() ?? new Date();
   const run_id = `rt-${tapeId.slice(2, 8)}-${now.toISOString().replace(/[-:]/g, "").slice(0, 15)}`;
@@ -73,7 +84,7 @@ export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
     .then(() => { state.state = "finished"; })
     .catch((e: unknown) => { state.state = "failed"; state.error = e instanceof Error ? e.message : String(e); })
     .finally(() => { registry.current = null; });
-  return { ok: true, run: state };
+  return { ok: true, run: state, done: registry.current };
 }
 
 export const tapeRun = (runId: string): TapeRunState | null => runs.get(runId) ?? null;

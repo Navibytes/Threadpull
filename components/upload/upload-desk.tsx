@@ -13,6 +13,10 @@ import { sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
 import s from "@/components/landing/landing.module.css";
 import u from "./upload.module.css";
 
+// the passcode, kept for this browser tab only
+const readCode = () => { try { return sessionStorage.getItem("threadpull-passcode") ?? ""; } catch { return ""; } };
+const saveCode = (c: string) => { try { sessionStorage.setItem("threadpull-passcode", c); } catch { /* private mode: ask again next time */ } };
+
 export function UploadDesk() {
   const [state, setState] = useState<UploadState>({ kind: "idle" });
   const [over, setOver] = useState(false);
@@ -22,15 +26,26 @@ export function UploadDesk() {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const tapeFile = useRef<Blob | null>(null); // the tape as uploaded, sent again with Investigate (a serverless host keeps no upload)
+  const [needCode, setNeedCode] = useState(false);
+  const [code, setCode] = useState("");
 
   // Investigate the accepted loans: the server starts Hazel on them, then the board follows the run live.
   const investigate = async (tapeId: string) => {
     setStarting(true);
     setRunError(null);
     try {
-      const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs`, { method: "POST" });
+      const passcode = code.trim() || readCode();
+      const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs`, { method: "POST",
+        headers: { "Content-Type": "text/plain", ...(passcode ? { "x-threadpull-passcode": passcode } : {}) },
+        body: tapeFile.current ? await tapeFile.current.text() : undefined });
       const body = await res.json().catch(() => ({}));
+      if (res.status === 401 && (body as { passcode_required?: boolean }).passcode_required) {
+        setNeedCode(true);
+        throw new Error(passcode ? "That passcode isn't right." : (body as { error?: string }).error ?? "A passcode is needed.");
+      }
       if (!res.ok) throw new Error((body as { error?: string }).error ?? `The server answered HTTP ${res.status}.`);
+      if (passcode) saveCode(passcode);
       replayIntroNextTime(); // arriving from an upload always opens on the opening scene
       router.push(`/board?run=${encodeURIComponent((body as { run_id: string }).run_id)}`);
     } catch (e) {
@@ -45,6 +60,7 @@ export function UploadDesk() {
   }, [state]);
 
   const send = async (file: Blob, name: string) => {
+    tapeFile.current = file;
     setState({ kind: "sending", name });
     setState(await sendTape(file, name));
     if (input.current) input.current.value = ""; // choosing the same file again still fires a change
@@ -133,6 +149,12 @@ export function UploadDesk() {
                   </button>) : null}
                 <button type="button" className={s.paperButton} onClick={() => { setRunError(null); setState({ kind: "idle" }); }}>Upload another tape</button>
                 {state.saved ? <p className="basis-full text-sm opacity-80">Hazel runs live on the CRS sandbox and Claude, within a 60-acorn budget; the board shows each step, and the CRO screen the decisions.</p> : null}
+                {state.saved && needCode ? (
+                  <label className="basis-full text-sm">Passcode for live runs (the team has it)
+                    <input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off"
+                      onKeyDown={(e) => { if (e.key === "Enter" && state.kind === "done") void investigate(state.report.tape_id); }}
+                      className="ml-2 rounded-sm border border-walnut/30 bg-paper px-2 py-1 text-sm" />
+                  </label>) : null}
                 {runError ? <p role="alert" className="basis-full text-sm text-red-700">{runError}</p> : null}
               </>} />
           )}
