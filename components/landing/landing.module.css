@@ -166,15 +166,25 @@
 
 /* ---------- the case board (hero illustration) ---------- */
 
+/* No clipping box on wide screens: the frame's shadow and Hazel on its corner hang over the wall freely. Only a
+   phone narrower than the board scrolls it sideways, with room inside the scroller for Hazel's overhang. */
 .boardScroll {
-  overflow-x: auto;
-  padding: 1.25rem 0.5rem 2.75rem;
-  margin-inline: -0.5rem;
-  scrollbar-width: thin;
+  padding: 1.25rem 0 2.75rem;
 }
 .boardWrap {
   position: relative;
-  min-width: 640px;
+}
+@media (max-width: 720px) {
+  .boardScroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1.25rem 0.5rem 4.5rem 2.75rem;
+    margin-inline: -0.5rem;
+    scrollbar-width: thin;
+  }
+  .boardWrap {
+    min-width: 640px;
+  }
 }
 .cork {
   position: relative;
