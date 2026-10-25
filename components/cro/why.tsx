@@ -7,10 +7,10 @@ import type { Why } from "@/lib/deal/why";
 export function WhyView({ why }: { why: Why }) {
   return (
     <div>
-      <p className="text-sm text-slate-800">{why.answer}</p>
-      <ol className="mt-2 space-y-1 text-xs text-slate-700">
+      <p className="text-sm text-walnut">{why.answer}</p>
+      <ol className="mt-2 space-y-1 text-xs text-walnut/90">
         {why.steps.map((s) => (
-          <li key={s.seq}><span className="tabular-nums text-slate-500">#{s.seq}</span> <b className="font-semibold">{s.type}</b>{s.tool ? ` · ${s.tool}` : ""}{s.note ? ` — ${s.note}` : ""}</li>
+          <li key={s.seq}><span className="tabular-nums text-walnut/80">#{s.seq}</span> <b className="font-semibold">{s.type}</b>{s.tool ? ` · ${s.tool}` : ""}{s.note ? ` — ${s.note}` : ""}</li>
         ))}
       </ol>
     </div>
@@ -32,7 +32,7 @@ export function WhyDetail({ runId, loanId }: { runId: string; loanId: string }) 
       .catch((e) => { if (live) setState({ error: e instanceof Error ? e.message : String(e) }); });
     return () => { live = false; };
   }, [runId, loanId]);
-  if (!state) return <p className="text-sm text-slate-600">Reading the events…</p>;
-  if ("error" in state) return <p role="alert" className="text-sm text-red-700">{state.error}</p>;
+  if (!state) return <p className="text-sm text-walnut/85">Reading the events…</p>;
+  if ("error" in state) return <p role="alert" className="text-sm text-terracotta">{state.error}</p>;
   return <WhyView why={state.why} />;
 }

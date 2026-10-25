@@ -1,16 +1,29 @@
 "use client";
-// The CRO screen (ticket 10): what the run found, what it cost, what code proposes to do about it, and Approve / Override.
-// Neutral on purpose: this is the page a risk officer signs from, separate from the cork board. All figures come from
-// GET /api/runs/{id}/report; a decision is POSTed to /api/dispositions and lands in the run's event log.
+// The CRO screen (ticket 10): the acquisition case file Hazel's run produced, set as a memorandum. 01 the recommendation (the
+// proposed bid, what stays out, and the one action), 02 why, 03 how the price is built, 04 where the risk sits, 05 the open
+// questions, 06 what the investigation cost, 07 the memo, 08 every investigated loan, 09 the sources and assumptions behind
+// every number. All figures come from GET /api/runs/{id}/report; a decision is POSTed to /api/dispositions and lands in the
+// run's event log. Loading, the assumptions form and the decision call are unchanged by the redesign.
 import { useCallback, useEffect, useState } from "react";
 import type { Mirror } from "@/lib/deal/dispositions-db";
 import type { ReportBundle, RunSummary } from "@/lib/deal/service";
-import { Actions, type Decide } from "./actions";
-import { plural } from "./format";
-import { MemoPanel } from "./memo";
 import { AdaptPanel } from "./adapt";
+import { DecisionDrawer, type Decide, type Scope } from "./decision-drawer";
+import { Efficiency } from "./efficiency";
+import { suggestRun } from "./findings";
+import { plural } from "./format";
+import { Masthead, RunOffer } from "./masthead";
+import { MemoPanel } from "./memo";
+import { Part } from "./part";
+import { PriceLedger } from "./price-ledger";
 import { QuestionsPanel } from "./questions";
-import { Concentration, LoansTable, Section, Spend, Totals } from "./sections";
+import { Recommendation } from "./recommendation";
+import { RiskTable } from "./risk-table";
+import { LoansTable, Section } from "./sections";
+import { SourceLedger } from "./source-ledger";
+import { useRunDigests } from "./use-run-digests";
+import { WhyRecommended } from "./why-recommended";
+import styles from "./cro.module.css";
 
 const DEFAULTS = { lgd: "0.55", margin: "0.04" };
 /** The decision is always in the run's event log; say plainly what happened to the Supabase copy. */
@@ -29,6 +42,9 @@ export function CroScreen() {
   const [who, setWho] = useState("CRO");
   const [inputs, setInputs] = useState(DEFAULTS);
   const [applied, setApplied] = useState(DEFAULTS); // the assumptions the report on screen was built with
+  const [drawer, setDrawer] = useState(false);
+  const [scope, setScope] = useState<Scope>(null);
+  const digests = useRunDigests(runs);
 
   useEffect(() => {
     fetch("/api/runs").then((r) => r.json()).then((list: RunSummary[]) => {
@@ -77,77 +93,61 @@ export function CroScreen() {
     }
   };
 
-  const note = bundle?.report.run.note ?? "";
+  const closeDrawer = useCallback(() => setDrawer(false), []);
+  const openDrawer = (s: Scope = null) => { setScope(s); setDrawer(true); };
+  const choose = (id: string) => { setNotice(null); setRunId(id); };
+  const boardHref = runId ? `/board?run=${encodeURIComponent(runId)}` : "/board";
+  const r = bundle?.report ?? null;
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 px-6 py-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Threadpull · portfolio acquisition review</p>
-            <h1 className="mt-1 text-2xl font-semibold">CRO review</h1>
-          </div>
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="text-sm font-medium text-slate-700">Run
-              <select value={runId ?? ""} onChange={(e) => { setNotice(null); setRunId(e.target.value); }} disabled={!runs?.length}
-                className="mt-1 block min-w-56 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm">
-                {runs?.map((r) => <option key={r.run_id} value={r.run_id}>{r.run_id}</option>)}
-              </select>
-            </label>
-            <label className="text-sm font-medium text-slate-700">Deciding as
-              <input value={who} onChange={(e) => setWho(e.target.value)} maxLength={80} className="mt-1 block w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
-            </label>
-          </div>
-        </div>
-      </header>
+    <div className={styles.ground}>
+      {/* the page behind the decision panel is inert while the panel is open */}
+      <div inert={drawer}>
+        <Masthead r={r} runs={runs} digests={digests} runId={runId} onRun={choose} boardHref={boardHref} />
 
-      <main className="mx-auto max-w-7xl px-6 pb-20 pt-6">
-        <p className="max-w-4xl text-sm text-slate-600">
-          A recommendation for a person to check, never an automatic purchase decision. Prices marked <b>assumed</b> come from
-          the brief's tier table and your inputs. Each figure shows the audit-log events it comes from.
-        </p>
-        {note ? <p className="mt-3 inline-block rounded-md bg-amber-50 px-3 py-1.5 text-sm text-amber-900 ring-1 ring-amber-200">{note}</p> : null}
-        <div aria-live="polite" className="mt-3 min-h-5 text-sm">
-          {notice ? <span className="text-emerald-800">{notice}</span> : null}
-          {error ? <span role="alert" className="text-red-700">{error}</span> : null}
-        </div>
-
-        {runs === null && !error ? <p className="mt-8 text-slate-600">Loading runs…</p> : null}
-        {runs && runs.length === 0 ? (
-          <div className="mt-8 max-w-2xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">No run to review yet</h2>
-            <p className="mt-2 text-sm text-slate-600">A run is what Hazel writes to <code>runs/&lt;run_id&gt;/events.jsonl</code>. Make one with <code>bun run hazel --crs recorded</code> (needs an Anthropic key), or load a sample with <code>bun run eval/sample-run.ts</code> (no key needed; it says so on this screen).</p>
+        <main className={styles.sheet}>
+          <RunOffer offer={suggestRun(digests, runId)} current={digests.find((d) => d.run_id === runId)} onSwitch={choose} />
+          <div aria-live="polite" className="min-h-5 pt-4 text-[14.5px]">
+            {notice ? <span className="font-semibold text-[#3f5233]">{notice}</span> : null}
+            {error ? <span role="alert" className="font-semibold text-terracotta">{error}</span> : null}
           </div>
-        ) : null}
 
-        {bundle ? (
-          <>
-            <Section title="The deal" hint="What the bank is buying, what code proposes to pay, and how much of it is flagged.">
-              <Totals r={bundle.report} />
-            </Section>
-            <Section title="What the investigation cost" hint="Acorns are the run's budget. The comparison is arithmetic over the tool price list, not a second run.">
-              <Spend r={bundle.report} />
-            </Section>
-            <Section title="Where the risk sits" hint="Loans the run flagged, grouped by dealer and by the links that still join them.">
-              <Concentration r={bundle.report} />
-            </Section>
-            <Section title="Memo for the CRO" hint="Claude writes it from the report. Code keeps only the sentences it can check against the run's events, and shows the events behind each one.">
-              <MemoPanel runId={bundle.report.run_id} lastSeq={bundle.report.run.last_seq} assumptions={applied} />
-            </Section>
-            <Section title="Questions for you" hint="Where the run could not decide and nobody had ruled on a case like it, it asked one person once. A yes becomes a rule that later runs apply on their own, citing it.">
-              <QuestionsPanel runId={bundle.report.run_id} who={who} onAnswered={() => { if (runId) void load(runId, applied); }} />
-            </Section>
-            <Section title="Proposed actions" hint="Code proposes; you decide. Approve keeps the proposal, Override replaces it and needs a reason. Every decision is recorded in the run's event log.">
-              <Actions bundle={bundle} busy={busy} onDecide={decide} inputs={inputs} setInputs={setInputs} onApply={apply} />
-            </Section>
-            <Section title="Every investigated loan" hint={`${plural(bundle.report.totals.reviewed, "loan")} closed by the run. The other ${bundle.report.totals.not_reviewed.toLocaleString("en-US")} were not investigated and are counted at base price.`}>
-              <LoansTable loans={bundle.report.loans} runId={bundle.report.run_id} />
-            </Section>
-            <Section title="Adapting to a client" hint="Configured, not retrained: what a bank changes to fit this to its own policies, tapes and documents, and what this run used.">
-              <AdaptPanel bundle={bundle} />
-            </Section>
-          </>
-        ) : null}
-      </main>
+          {runs === null && !error ? <p className="py-10 text-[16px]">Loading runs…</p> : null}
+          {runs && runs.length === 0 ? (
+            <Part n="01" id="none-title" title="No run to review yet" first>
+              <p className="max-w-2xl text-[16px]">A run is what Hazel writes to <code>runs/&lt;run_id&gt;/events.jsonl</code>. Make one with <code>bun run hazel --crs recorded</code> (needs an Anthropic key), or load a sample with <code>bun run eval/sample-run.ts</code> (no key needed; it says so on this screen).</p>
+            </Part>
+          ) : null}
+
+          {r && bundle ? (
+            <>
+              <Recommendation r={r} onReview={() => openDrawer()} boardHref={boardHref} />
+              <WhyRecommended r={r} />
+              <PriceLedger r={r} busy={busy} inputs={inputs} setInputs={setInputs} onApply={apply} />
+              <RiskTable r={r} onDecide={openDrawer} />
+              <Section n="05" id="q-title" title="Questions for you" hint="Where the run could not decide and nobody had ruled on a case like it, it asked one person once. A yes becomes a rule that later runs apply on their own, citing it.">
+                <QuestionsPanel runId={r.run_id} who={who} onAnswered={() => { if (runId) void load(runId, applied); }} />
+              </Section>
+              <Efficiency r={r} />
+              <Section n="07" id="memo-title" title="Memo for the CRO" hint="Claude writes it from the report. Code keeps only the sentences it can check against the run's events, and shows the events behind each one.">
+                <MemoPanel runId={r.run_id} lastSeq={r.run.last_seq} assumptions={applied} />
+              </Section>
+              <Section n="08" id="loans-title" title="Every investigated loan" hint={`${plural(r.totals.reviewed, "loan")} closed by the run. The other ${r.totals.not_reviewed.toLocaleString("en-US")} were not investigated and are counted at base price.`}>
+                <LoansTable loans={r.loans} runId={r.run_id} />
+              </Section>
+              <SourceLedger r={r} />
+              <details className="border-t border-walnut/30 py-6">
+                <summary className={`${styles.note} inline-block text-[15.5px]`}>Adapting to a client: what a bank changes to fit this to its own policies and tapes</summary>
+                <div className="mt-4"><AdaptPanel bundle={bundle} /></div>
+              </details>
+            </>
+          ) : null}
+        </main>
+      </div>
+
+      {bundle ? (
+        <DecisionDrawer bundle={bundle} open={drawer} onClose={closeDrawer} onDecide={decide} busy={busy} who={who} setWho={setWho}
+          scope={scope} clearScope={() => setScope(null)} />
+      ) : null}
     </div>
   );
 }

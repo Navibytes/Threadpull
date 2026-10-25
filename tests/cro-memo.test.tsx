@@ -91,11 +91,15 @@ describe("why this verdict", () => {
       const run = await dealRun();
       report = buildReport({ run_id: run.run_id, loans: run.loans, events: run.events });
     });
-    test("every loan gets a button when the table knows its run, and none when it does not", () => {
+    test("every loan number is a button when the table knows its run, and none is when it does not", () => {
       const withRun = renderToStaticMarkup(<LoansTable loans={report.loans} runId="r13-sample" />);
-      expect(withRun.split("Why this verdict?").length - 1).toBe(report.loans.length);
+      expect(withRun.split("aria-expanded=\"false\"").length - 1).toBe(report.loans.length); // one trace button per loan, each named by its loan id
+      for (const l of report.loans) expect(withRun).toMatch(new RegExp(`<button[^>]*>${l.loan_id}</button>`));
+      expect(withRun).toContain("trace its verdict");
       expect(withRun).not.toContain("Reading the events"); // closed until someone asks
-      expect(renderToStaticMarkup(<LoansTable loans={report.loans} />)).not.toContain("Why this verdict?");
+      const without = renderToStaticMarkup(<LoansTable loans={report.loans} />);
+      expect(without).not.toContain("aria-expanded");
+      expect(without).not.toContain("trace its verdict");
     });
   });
 });
