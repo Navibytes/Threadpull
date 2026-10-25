@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
-import { HazelAvatar } from "@/components/notebook/hazel-avatar";
 import type { LoanStatus } from "@/lib/contracts/loan";
 import { computeDashboard, OFFICIAL_STATUSES, type RunMetrics, type StatusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
@@ -244,7 +243,8 @@ function Sidebar({ boardHref }: { boardHref: string }) {
         </span>
       </nav>
       <div className="mt-auto flex gap-2.5 rounded-lg bg-black/25 p-2.5 text-[12px] leading-snug text-cream/90 ring-1 ring-[#b8913f]/40">
-        <HazelAvatar pose="idle" size={56} className="h-14 w-14 shrink-0 self-start" />
+        {/* Hazel's icon, the small standing squirrel, as her note's picture */}
+        <img src="/hazel/hazel-icon-logo.png" alt="" aria-hidden className="h-14 w-14 shrink-0 self-start object-contain" draggable={false} />
         <p>
           <span className="font-semibold text-[#f0c27e]">Hazel&rsquo;s note.</span> This page only reads recorded data. A connection is a lead to check, not proof.
         </p>
@@ -338,8 +338,8 @@ function CaseNotesSection({ notes, run, events, boardHref, sample }: { notes: Ca
           <div className="relative order-2 -mt-2 flex flex-col min-[640px]:order-1 min-[640px]:-mt-9 min-[640px]:h-full min-[640px]:justify-between">
             <p className="brass-plate mx-auto mt-12 hidden w-fit rounded-[3px] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] min-[640px]:block">Hazel · Investigator</p>
             <Image
-              src="/hazel/hazel-icon-logo.png"
-              alt="Hazel, the squirrel investigator, holding a magnifying glass"
+              src="/hazel/hazel-office.png"
+              alt="Hazel at her desk, studying a photograph through a magnifying glass, with a lamp, case files and a small evidence board"
               width={1254}
               height={1254}
               sizes="216px"
