@@ -10,6 +10,7 @@ describe("reasons, as decideStatus writes them", () => {
   test("each known reason is recognised", () => {
     expect(reasonKind("TransUnion identity: 2201 + 2202 + 2101")).toBe("hard_identity");
     expect(reasonKind("TransUnion identity: 2301")).toBe("hard_identity");
+    expect(reasonKind("credit report: a bureau reports the file as deceased")).toBe("hard_identity");
     expect(reasonKind("fraud alert on file: needs the CRO")).toBe("fraud_alert");
     expect(reasonKind("strong unexplained links (phone, employer) to L0037, whose identity failed")).toBe("ring_link");
     expect(reasonKind("strong unexplained link to L0037, whose identity failed")).toBe("ring_link");
@@ -26,7 +27,7 @@ describe("reasons, as decideStatus writes them", () => {
 
   test("drift guard: every phrase the verdicts rely on is still in lib/agent/status.ts", () => {
     const source = readFileSync(join(import.meta.dir, "..", "lib", "agent", "status.ts"), "utf8");
-    for (const phrase of ["TransUnion identity:", "fraud alert on file", "whose identity failed", "waiting on a question", "strong unexplained link"])
+    for (const phrase of ["TransUnion identity:", "a bureau reports the file as deceased", "fraud alert on file", "whose identity failed", "waiting on a question", "strong unexplained link"])
       expect(source).toContain(phrase);
     expect(REASON_PATTERNS.map((p) => p.kind).sort()).toEqual(["fraud_alert", "hard_identity", "open_question", "ring_link", "soft_link"]);
   });
@@ -37,6 +38,7 @@ describe("verdicts", () => {
 
   test("a hard identity failure or a link to one: Exclude", () => {
     expect(v("Investigate", "TransUnion identity: 2201 + 2202")).toBe("Exclude");
+    expect(v("Investigate", "credit report: a bureau reports the file as deceased")).toBe("Exclude");
     expect(v("Investigate", "strong unexplained links (phone) to L0037, whose identity failed")).toBe("Exclude");
   });
   test("a fraud alert, an open question or an unconfirmed link: Review, not Exclude", () => {

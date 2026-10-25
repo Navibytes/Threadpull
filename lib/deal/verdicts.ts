@@ -16,7 +16,7 @@ export type ReasonKind = "hard_identity" | "ring_link" | "fraud_alert" | "open_q
 
 // These match the reasons decideStatus writes in lib/agent/status.ts; tests/deal-verdicts.test.ts fails if that file is reworded.
 export const REASON_PATTERNS: { kind: ReasonKind; pattern: RegExp }[] = [
-  { kind: "hard_identity", pattern: /^TransUnion identity:/ },
+  { kind: "hard_identity", pattern: /^TransUnion identity:|^credit report: a bureau reports the file as deceased/ },
   { kind: "fraud_alert", pattern: /^fraud alert on file/ },
   { kind: "ring_link", pattern: /^strong unexplained links? .*whose identity failed/ },
   { kind: "open_question", pattern: /^waiting on a question/ },
