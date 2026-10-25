@@ -47,11 +47,13 @@ function AnswerForm({ q, who, busy, onAnswer }: { q: Question; who: string; busy
         </label>) : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={!ready || (q.proposed_rule?.min_group_size !== undefined && !staffOk)} onClick={() => void send("yes")}
-          className="rounded-md bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50">Yes, save it as a rule</button>
+          className="rounded-md bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50">{q.proposed_rule ? "Yes, save it as a rule" : "Yes"}</button>
         <button type="button" disabled={!ready} onClick={() => void send("no")}
           className="rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50">No</button>
       </div>
-      <p className="text-xs text-slate-500">Answering as {who.trim() || "CRO"}. A yes is applied by later runs on their own, citing the rule; a no saves no rule.</p>
+      <p className="text-xs text-slate-500">Answering as {who.trim() || "CRO"}. {q.proposed_rule
+        ? "A yes is applied by later runs on their own, citing the rule; a no saves no rule."
+        : "This question is not about a shared link, so your answer is recorded and no rule is saved."}</p>
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
     </form>
   );

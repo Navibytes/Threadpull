@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { apiLoanSource } from "@/components/drawer/loan-source";
+import { apiLoanSource, type Portfolio } from "@/components/drawer/loan-source";
 import type { Loan } from "@/lib/contracts/loan";
 import { browserClient } from "@/lib/db/browser";
 import { EventSchema, scenarioById, scenarioRunId, type RunEvent } from "@/lib/events";
@@ -14,7 +14,7 @@ const ROW_LIMIT = 2000;
 
 // Reads only what the app already exposes: the loan files through /api/loans, and the run's event rows through
 // the browser (anon) Supabase client, which can read the events table. No new queries, tables or routes.
-export function useDashboardData({ run, seed, sample, scenario }: { run?: string; seed: number; sample: boolean; scenario?: string }) {
+export function useDashboardData({ run, seed, sample, scenario }: { run?: string; seed: Portfolio; sample: boolean; scenario?: string }) {
   const [loans, setLoans] = useState<Load<Loan[]>>({ state: "loading" });
   const [events, setEvents] = useState<Load<{ rows: RunEvent[]; invalid: number; truncated: boolean }>>({ state: "loading" });
   const [runs, setRuns] = useState<RunsInfo>({ runs: [], selected: null });

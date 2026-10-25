@@ -103,6 +103,13 @@ export async function loadReport(
   return { report, buyback_demands: buybackDemands(report), document_requests: documentRequests(report), run: run.meta };
 }
 
+/**
+ * Rows a person adds (a decision, an answer) are appended after the run's last row. While the run is still writing,
+ * its next row would take the same seq (the Supabase key is run_id + seq), so they wait for run_finished.
+ */
+export const stillRunning = (events: readonly Event[]) => !events.some((e) => e.type === "run_finished");
+export const STILL_RUNNING = "the run is still going; record this once it has finished (its last row is run_finished)";
+
 export type RecordResult = { ok: true; event: Event; mirror: Mirror } | { ok: false; status: number; error: string };
 
 /**
@@ -116,6 +123,7 @@ export async function recordDisposition(raw: unknown, deps: Deps = {}): Promise<
   const input = parsed.data;
   const run = readRun(input.run_id, deps.root);
   if (!run) return { ok: false, status: 404, error: `no run ${input.run_id}` };
+  if (stillRunning(run.events)) return { ok: false, status: 409, error: STILL_RUNNING };
   const report = buildReport({ run_id: input.run_id, loans: deps.loans ?? (await loansFor(run.meta)), events: run.events });
   const last = run.events.at(-1);
   const built = dispositionRow(input, (id) => {

@@ -76,7 +76,8 @@ const sinks: EventSink[] = [jsonlSink(join(dir, "events.jsonl"))];
 const db = args["no-db"] ? null : serverClient();
 const dbErrors: string[] = [];
 if (db) sinks.push(supabaseSink(db, (e, message) => dbErrors.push(`seq ${e.seq} (${e.type}): ${message}`)));
-const anthropic = new Anthropic();
+// a request that hangs (a network switch mid-call) is dropped after 2 min and retried, not waited on for 10
+const anthropic = new Anthropic({ timeout: 120_000, maxRetries: 2 });
 const out = await runHazel({ runId, loans: gen.normalized, seed: gen.seed, reference: loadReference(gen.outDir), anthropic, crs,
   documentReader: modelStubExtractor(anthropic), // only for a stub the parser can't read; every generated stub parses
   rules: ruleStore, leads, budget: Number(args.budget), sinks, trace });

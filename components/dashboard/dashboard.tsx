@@ -9,7 +9,8 @@ import { computeDashboard, OFFICIAL_STATUSES, type RunMetrics, type StatusBreakd
 import { describeEvent } from "@/lib/dashboard/describe";
 import { briefing, caseNotes, type Briefing, type CaseNotes } from "@/lib/dashboard/notes";
 import { describeSource, loanName, reduceEvents, SCENARIOS, scenarioById, summarizeCase, type CaseSummary, type RunEvent } from "@/lib/events";
-import { dashboardHref } from "@/lib/dashboard/links";
+import { portfolioLabel, type Portfolio } from "@/components/drawer/loan-source";
+import { dashboardHref, portfolioQuery } from "@/lib/dashboard/links";
 import { useDashboardData, type Load } from "./use-dashboard-data";
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -39,7 +40,7 @@ const noRun = (events: Load<unknown>) =>
 
 // Reading order: the title and what is being shown, Hazel's finding, four figures, how much of the portfolio has been
 // reviewed, then everything else folded away (the activity log, the method).
-export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: string; seed: number; sample: boolean; caseId?: string; scenario?: string }) {
+export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: string; seed: Portfolio; sample: boolean; caseId?: string; scenario?: string }) {
   const router = useRouter();
   const scenId = sample ? scenarioById(scenario).id : undefined; // which sample situation the page is showing
   const { loans, events, runs, retry } = useDashboardData({ run, seed, sample, scenario: scenId });
@@ -57,7 +58,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
   const caseSum = useMemo(() => (caseId && eventRows ? summarizeCase(reduceEvents(eventRows), caseId) : null), [caseId, eventRows]);
   const caseRows = useMemo(() => (caseId && eventRows ? eventRows.filter((e) => e.loan_ids.includes(caseId)).reverse() : []), [caseId, eventRows]);
 
-  const portfolio = loans.state === "ok" ? (noLoanFiles ? `no loan files found for seed ${seed}` : `${nf(loans.data.length)} loans, seed ${seed}`) : loans.state === "loading" ? "loading…" : "loan files unavailable";
+  const portfolio = loans.state === "ok" ? (noLoanFiles ? `no loan files found for ${portfolioLabel(seed)}` : `${nf(loans.data.length)} loans, ${portfolioLabel(seed)}`) : loans.state === "loading" ? "loading…" : "loan files unavailable";
   const investigation = sample ? "the built-in sample run" : m.run ? `run ${m.run.runId}` : noRun(events).replace(/\.$/, "").toLowerCase();
 
   return (
@@ -89,7 +90,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
               <Pick label="Run">
                 <select
                   value={runId ?? ""}
-                  onChange={(e) => router.push(`/dashboard?run=${encodeURIComponent(e.target.value)}${seed !== 13 ? `&seed=${seed}` : ""}`)}
+                  onChange={(e) => router.push(`/dashboard?run=${encodeURIComponent(e.target.value)}${portfolioQuery(seed)}`)}
                   className="dash-btn dash-select"
                 >
                   {runs.runs.slice(0, 25).map((r) => (
@@ -104,7 +105,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
               <Pick label="Case">
                 <select
                   value={caseId ?? ""}
-                  onChange={(e) => router.push(dashboardHref({ run: sample ? null : runId, scenario: scenId }, e.target.value || undefined))}
+                  onChange={(e) => router.push(dashboardHref({ run: sample ? null : runId, scenario: scenId, portfolio: seed }, e.target.value || undefined))}
                   className="dash-btn dash-select"
                 >
                   <option value="">Whole run</option>
@@ -128,7 +129,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
               </Pick>
             )}
             {!sample && (
-              <Link href={`/dashboard?sample=1${seed !== 13 ? `&seed=${seed}` : ""}`} className="dash-btn">
+              <Link href={`/dashboard?sample=1${typeof seed === "number" ? portfolioQuery(seed) : ""}`} className="dash-btn">
                 Show sample run
               </Link>
             )}
@@ -138,7 +139,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
           <Notices sample={sample} m={m.run} events={events} loans={loans} retry={retry} />
 
           {caseId && (
-            <CaseDetail caseId={caseId} sum={caseSum} rows={caseRows} state={events.state} overviewHref={dashboardHref({ run: sample ? null : runId, scenario: scenId })} sample={sample} />
+            <CaseDetail caseId={caseId} sum={caseSum} rows={caseRows} state={events.state} overviewHref={dashboardHref({ run: sample ? null : runId, scenario: scenId, portfolio: seed })} sample={sample} />
           )}
 
           <Finding brief={brief} notes={notes} events={events} boardHref={boardHref} sample={sample} />
@@ -153,7 +154,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
                 caption="Portfolio"
                 label="Loans loaded"
                 value={m.loansLoaded === null ? "—" : nf(m.loansLoaded)}
-                note={loans.state === "ok" ? (noLoanFiles ? `No loan files found for seed ${seed}. Load the portfolio (bun run data), then refresh.` : `Seed ${seed}`) : loans.state === "loading" ? "Loading…" : "The loan files aren't available."}
+                note={loans.state === "ok" ? (noLoanFiles ? `No loan files found for ${portfolioLabel(seed)}.${typeof seed === "number" ? " Load the portfolio (bun run data), then refresh." : ""}` : portfolioLabel(seed).replace(/^./, (c) => c.toUpperCase())) : loans.state === "loading" ? "Loading…" : "The loan files aren't available."}
               />
               <Metric caption="This run" label="Cases investigated" value={m.run ? nf(m.run.casesInvestigated) : "—"} note={m.run ? "Opened as leads" : noRun(events)} />
               <Metric caption="This run" label="Checks completed" value={m.run ? nf(m.run.checks) : "—"} note={m.run ? `${nf(m.run.crsChecks)} CRS lookups · ${nf(m.run.simulatedChecks)} simulated` : noRun(events)} />
@@ -351,7 +352,7 @@ function Support({ run }: { run: RunMetrics | null }) {
 }
 
 // How much of the portfolio has a status: one bar, then the five counts.
-function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: Load<unknown>; run: RunMetrics | null; seed: number }) {
+function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: Load<unknown>; run: RunMetrics | null; seed: Portfolio }) {
   const rows: LoanStatus[] = [...OFFICIAL_STATUSES, "Not reviewed"];
   const pct = (n: number) => (b && b.total ? (n / b.total) * 100 : 0);
   return (
@@ -360,7 +361,7 @@ function Coverage({ b, loans, run, seed }: { b: StatusBreakdown | null; loans: L
         Review status of the portfolio
       </h2>
       {!b ? (
-        <p className="dash-muted mt-2">{loans.state === "loading" ? "Loading…" : loans.state === "ok" ? `No loan files found for seed ${seed}, so there is nothing to break down yet.` : "The loan files aren't available, so the breakdown can't be shown."}</p>
+        <p className="dash-muted mt-2">{loans.state === "loading" ? "Loading…" : loans.state === "ok" ? `No loan files found for ${portfolioLabel(seed)}, so there is nothing to break down yet.` : "The loan files aren't available, so the breakdown can't be shown."}</p>
       ) : (
         <>
           <p className="dash-muted mt-1">
