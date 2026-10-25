@@ -25,6 +25,8 @@ export type RunMetrics = {
   crsChecks: number; // of those, rows that cite at least one CRS source
   linksFound: number; // distinct threads from link_found rows
   linksExplained: number; // of those, threads taken down by a valid clue_explained row that cites its proof
+  linkKinds: Record<string, number>; // distinct threads by what they share (phone, address, ...)
+  finished: boolean; // the run has a run_finished row
   explanationsWithoutThread: number; // valid clue_explained rows naming no thread (for example a dealer burst)
   budget: { spent: number; limit: number } | null; // the budget on the run's last row
   dispositions: number; // distinct loans named by disposition_recorded rows
@@ -64,6 +66,8 @@ export function runMetrics(events: RunEvent[], recentCount = 14): RunMetrics | n
     crsChecks: checks.filter((e) => e.sources.some((s) => s.kind === "crs")).length,
     linksFound: board.threads.length,
     linksExplained: explained.length,
+    linkKinds: board.threads.reduce<Record<string, number>>((k, t) => ({ ...k, [t.kind]: (k[t.kind] ?? 0) + 1 }), {}),
+    finished: rows.some((e) => e.type === "run_finished"),
     explanationsWithoutThread: clueRows.filter((e) => !(e.result.edge_ids as unknown[] | undefined)?.length).length,
     budget: last.budget ?? null,
     dispositions: distinct(ofType("disposition_recorded").flatMap((e) => e.loan_ids)),

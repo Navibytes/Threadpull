@@ -5,6 +5,7 @@ import { LOAN_STATUSES } from "@/lib/contracts/loan";
 import { createPreviewLoans } from "@/components/drawer/preview-loan-source";
 import { computeDashboard, runMetrics, statusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
+import { caseNotes } from "@/lib/dashboard/notes";
 import { PREVIEW_EVENTS, type RunEvent } from "@/lib/events";
 
 const loans = createPreviewLoans();
@@ -116,5 +117,44 @@ describe("audit sentences", () => {
     expect(describeEvent(run[6])).toEqual({ title: "Explained a connection", detail: "an apartment building" });
     expect(describeEvent(run[7]).title).toBe("Loan L0001 set to Investigate");
     expect(describeEvent(ev(1, "recovery")).detail).toBeNull();
+  });
+});
+
+describe("Hazel's case notes", () => {
+  const m = runMetrics(run)!;
+
+  test("no run means no notes, not invented ones", () => {
+    expect(caseNotes(null, { sample: false })).toBeNull();
+  });
+
+  test("found, means and next are read from the run's own figures", () => {
+    const n = caseNotes(m, { sample: false })!;
+    expect(m.linkKinds).toEqual({ phone: 1, address: 1 });
+    expect(n.found).toEqual([
+      "Hazel opened 1 case and ran 2 checks, 1 of them with a CRS lookup.",
+      "She found 2 connections between loans: shared address (1), shared phone number (1).",
+    ]);
+    expect(n.means).toContain("A shared detail is a lead to check, not proof of fraud.");
+    expect(n.means).toContain("1 connection has an innocent explanation backed by a cited check; 1 still has none.");
+    expect(n.means).toContain("4 of 60 acorns of the checking budget used.");
+    expect(n.next[0]).toBe("1 connection still needs an explanation. Open the board to see the records behind it.");
+    expect(n.next[1]).toBe("1 loan has a recorded human decision.");
+    expect(n.next).toHaveLength(2); // the run finished, so no caveat
+  });
+
+  test("no connections, no decisions, an unfinished or sample run: each says exactly that", () => {
+    const bare = runMetrics([ev(1, "run_started"), ev(2, "lead_opened", { loan_ids: ["L0001"] })])!;
+    const n = caseNotes(bare, { sample: false })!;
+    expect(n.found[1]).toBe("She has not found any connections between loans yet.");
+    expect(n.means[0]).toBe("With no connections yet, there is nothing to weigh.");
+    expect(n.next).toEqual(["Nothing to follow up on from this run yet.", "No human decision is recorded yet. A person approves any decision.", "This run has not finished, so these notes may change."]);
+    expect(caseNotes(bare, { sample: true })!.means.at(-1)).toBe("This is the built-in sample run, so none of this is a result.");
+    const sim = runMetrics(run.map((e) => ({ ...e, simulated: true })))!;
+    expect(caseNotes(sim, { sample: false })!.means.at(-1)).toBe("10 of 10 rows are simulated sample data, so treat this as a demonstration.");
+  });
+
+  test("never calls a connection fraud or proof of anything", () => {
+    const n = caseNotes(m, { sample: false })!;
+    for (const line of [...n.found, ...n.means, ...n.next]) expect(line).not.toMatch(/fraudster|guilty|criminal|proves?/i);
   });
 });
