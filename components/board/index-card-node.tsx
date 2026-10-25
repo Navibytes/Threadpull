@@ -175,13 +175,12 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
               <>
                 {/* index cards: the head rule sits under the ID; the facts go on the ruled lines */}
                 {!lead && <span aria-hidden className="mt-2 block h-[1.5px] bg-terracotta/55" />}
-                {/* 2: why this loan is on the board */}
+                {/* 2: why this loan is on the board. Scrolls inside the card when it runs past the lines it has
+                    (nowheel/nodrag: the wheel and a drag scroll the text, not the board) */}
                 <p
-                  className={
-                    lead
-                      ? "mt-3 line-clamp-3 text-[14px] font-medium leading-[19px]"
-                      : "mt-1 line-clamp-2 text-[13px] font-medium leading-[19px]"
-                  }
+                  className={`card-scroll nowheel nodrag overflow-y-auto overscroll-contain pr-1 font-medium leading-[19px] ${
+                    lead ? "mt-3 max-h-[57px] text-[14px]" : "mt-1 max-h-[38px] text-[13px]"
+                  }`}
                   title={finding?.text}
                 >
                   {finding?.text ?? "A loan application on the board."}
