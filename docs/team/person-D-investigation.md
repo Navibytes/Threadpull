@@ -2,7 +2,7 @@
 
 **Good fit:** Agents / product
 
-**Your stack:** graphology (evidence graph, connected components), Vercel AI SDK + Zod tool definitions with Claude Sonnet 5.5 (`lib/agent/`), Supabase `events` / `runs` / `rules`, Bun for the baseline and evaluator (`eval/`), `bun test`.
+**Your stack:** graphology (evidence graph, connected components), Anthropic TypeScript SDK tool runner + Zod tool definitions with Claude Sonnet 5.5 (`lib/agent/`), Supabase `events` / `runs` / `rules`, Bun for the baseline and evaluator (`eval/`), `bun test`.
 
 **Your tickets, in order:**
 
@@ -20,7 +20,7 @@
 
 1. Read SKELETON §6 (weights) and §7 (tools) and confirm the tool-result shape with B and C.
 1. While A ports the generator, write the graphology weight functions and their `bun test` unit tests against a tiny hand-made portfolio.
-1. Sketch the AI SDK loop (`generateText` with tools + a step limit) and draft Hazel's system prompt: she proposes, code decides; notes at most two sentences, always citing sources.
+1. Sketch the tool loop (Anthropic SDK tool runner + a step limit) and draft Hazel's system prompt: she proposes, code decides; notes at most two sentences, always citing sources.
 
 **While you're blocked:** You also own the pitch: keep the demo script (SKELETON §2) current and record a rough run at the 21:00 checkpoint.
 
