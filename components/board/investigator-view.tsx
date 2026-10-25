@@ -75,7 +75,11 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
   const onCases = useCallback((list: BoardCase[], active: number | null) => setCases({ list, active }), []);
-  const activeLead = cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null;
+  // The case on screen: the one picked with the case bar (or framed by the camera), else the case of the latest row.
+  const [shownCase, setShownCase] = useState<"all" | number | null>(null);
+  const onShown = useCallback((s: "all" | number | null) => setShownCase(s), []);
+  const caseIndex = typeof shownCase === "number" ? shownCase : cases.active;
+  const activeLead = caseIndex !== null ? (cases.list[caseIndex]?.lead ?? null) : null;
   // a case's detail page on the dashboard: the same run, with that case's lead loan
   const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId }, leadId), [runId]);
 
@@ -149,6 +153,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
                   keepClear={hazelCorner}
                   focusRequest={focusRequest}
                   onCases={onCases}
+                  onShown={onShown}
                   caseHref={caseHref}
                 />
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}

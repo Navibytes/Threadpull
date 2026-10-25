@@ -25,6 +25,7 @@ export function Corkboard({
   keepClear,
   focusRequest,
   onCases,
+  onShown,
   caseHref,
 }: {
   board: BoardState;
@@ -33,6 +34,7 @@ export function Corkboard({
   keepClear: RefObject<HTMLElement | null>;
   focusRequest?: CardFocusRequest | null;
   onCases?: (cases: BoardCase[], activeCase: number | null) => void; // for the room's status plaque
+  onShown?: (shown: "all" | number | null) => void; // the case on screen (the case bar or the camera chose it)
   caseHref?: (leadId: string) => string; // where a case's "Case details" button goes (the dashboard)
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<IndexCardNodeType>([]);
@@ -140,6 +142,7 @@ export function Corkboard({
         focusRequest={focusRequest}
         showSeq={showSeq}
         onToggleSeq={() => setShowSeq((v) => !v)}
+        onShown={onShown}
       />
     </ReactFlow>
   );

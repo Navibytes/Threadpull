@@ -33,6 +33,7 @@ export function BoardCamera({
   focusRequest,
   showSeq,
   onToggleSeq,
+  onShown,
 }: {
   cases: BoardCase[];
   activeCase: number | null;
@@ -40,6 +41,7 @@ export function BoardCamera({
   focusRequest?: CardFocusRequest | null;
   showSeq: boolean;
   onToggleSeq: () => void;
+  onShown?: (shown: "all" | number | null) => void; // the case the camera is framing, for the case summary
 }) {
   const { setViewport, setNodes, setEdges, zoomIn, zoomOut } = useReactFlow();
   const measured = useNodesInitialized();
@@ -51,6 +53,7 @@ export function BoardCamera({
   const domNode = useStore((s) => s.domNode);
   const [following, setFollowing] = useState(true);
   const [shown, setShown] = useState<"all" | number | null>(null); // what the camera last framed
+  useEffect(() => onShown?.(shown), [shown, onShown]);
   const framedOnce = useRef(false);
   const handledFocus = useRef<CardFocusRequest | null>(null);
 
