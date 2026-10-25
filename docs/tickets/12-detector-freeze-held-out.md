@@ -7,7 +7,7 @@
 
 **Blocked by:** 07 Strings come down: explanations and Twin Compare; 08 Document fingerprints and injection guard; 11 Ask once, remember forever
 
-**Status:** tooling done (A, Sat 2026-10-24 ~23:00); the spec itself is C's, and the tag waits for 08 and 11.
+**Status:** tag created: `detector-frozen` at f40ff3b (PR #48, Sun 02:40), and `bun run freeze:check` passes on later commits. Held-out proof by C in #50 (`docs/PROOF.md`, Seed 99). Spec items below are C's to tick.
 A built everything except the held-out placements, which stay C's so no detection author sees them:
 `data/spec.ts` (the generator refuses an invalid spec), `bun run data:check` (validate, generate, verify end to end,
 prints nothing that reveals the set), `bun run freeze:check`, `bun run hazel` refusing a held-out seed on unfrozen
@@ -17,7 +17,7 @@ output is byte-for-byte unchanged.
 
 **Update (Sat 23:35, checked against `main`):** C writes the spec next, following `data/patterns/HELDOUT.md`. Not done: C's spec, the `detector-frozen` tag (after 08's Haiku decision and D's 11; PR #35's prompt change already landed before it, as detection changes must), then loading and running seed 99.
 
-- [ ] The `detector-frozen` tag is created only after 07, 08 and 11 are merged. (07 done; 08 and 11 open. `bun run freeze:check` then guards it.)
+- [x] The `detector-frozen` tag is created only after 07, 08 and 11 are merged. (Tag at f40ff3b, Sun 02:40; `bun run freeze:check` guards it.)
 - [ ] C writes the seed 99 pattern spec using only SKELETON §5.1 fields: the same pattern types in new places, plus at least one variation (for example a ring linked by a shared bank account instead of a phone).
 - [x] The held-out answer key is stored where A and D don't read it before the proof run. (Tooling: `--keys` outside the repo, spec in the ignored `data/patterns/heldout/`, `data:check` output reveals nothing.)
 - [ ] `bun run data --spec data/patterns/seed99.json` loads seed 99 into Supabase and it runs end to end. (Verified on seed 13 and a varied practice spec with `data:check`; the board's drawer and Twin Compare follow the run's seed. Seed 99 itself after C writes it.)
