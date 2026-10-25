@@ -13,7 +13,7 @@ const src = (...dirs: string[]) => dirs.flatMap((d) => walk(join(ROOT, d)));
 const imports = (file: string) =>
   [...readFileSync(file, "utf8").matchAll(/(?:import|export)[^"']*?from\s+["']([^"']+)["']|import\(\s*["']([^"']+)["']\s*\)/g)]
     .map((m) => m[1] ?? m[2]);
-const rel = (f: string) => relative(ROOT, f);
+const rel = (f: string) => relative(ROOT, f).replaceAll("\\", "/"); // forward slashes on Windows too
 
 describe("architecture rules", () => {
   test("lib/contracts imports nothing but zod", () => {
