@@ -10,6 +10,10 @@ export const TEMPLATE_URL = "/templates/loan-tape-template.csv";
  * generator truth in it). Investigating it shows the ring, an injected pay stub and the innocent lookalikes. */
 export const JSON_SAMPLE_URL = "/templates/sample-tape-1000-loans.json";
 
+/** What the sample and every generated tape have planted in them: the development spec's cases, the same counts for any
+ * seed and size (tests/judge-sample-tape.test.ts checks them against the answer key). */
+export const PLANTED = "a 6-loan fraud ring, 47 innocent loans that only look connected to others, 3 risky but real borrowers, 3 cases a person has to decide, and one pay stub with instructions hidden in it";
+
 export type UploadState =
   | { kind: "idle" }
   | { kind: "sending"; name: string }
