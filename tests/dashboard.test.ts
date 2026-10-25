@@ -167,6 +167,13 @@ describe("board and dashboard links", () => {
     expect(dashboardHref({ run: "run 7/a" }, "L0001")).toBe("/dashboard?run=run+7%2Fa&case=L0001");
     expect(dashboardHref({ run: null }, "PV-01")).toBe("/dashboard?sample=1&case=PV-01");
   });
+
+  test("a run's link names its own portfolio, so the dashboard reads that run's loans (seed 13 is the default)", () => {
+    expect(dashboardHref({ run: "r99-x", portfolio: 99 }, "L0001")).toBe("/dashboard?run=r99-x&seed=99&case=L0001");
+    expect(dashboardHref({ run: "rt-x", portfolio: "t-8be99367fefa" })).toBe("/dashboard?run=rt-x&tape=t-8be99367fefa");
+    expect(dashboardHref({ run: "r13-x", portfolio: 13 })).toBe("/dashboard?run=r13-x");
+    expect(dashboardHref({ run: null, portfolio: 99 })).toBe("/dashboard?sample=1");
+  });
 });
 
 describe("the briefing at the top of the page", () => {
