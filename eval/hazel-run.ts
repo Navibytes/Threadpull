@@ -30,10 +30,11 @@ const runId = `r${gen.seed}-${new Date().toISOString().replace(/[-:]/g, "").slic
 const dir = join("runs", runId);
 const crs = args.crs === "recorded" ? (await import("@/tests/crs-replay")).client() : defaultCrsClient();
 
-const usage = { input: 0, output: 0, cache_read: 0 };
+const usage = { input: 0, output: 0, cache_read: 0, cache_write: 0 };
 const traceFile = join(dir, "trace.jsonl");
 const trace = (t: TraceEntry) => {
   usage.input += t.usage.input_tokens; usage.output += t.usage.output_tokens; usage.cache_read += t.usage.cache_read_input_tokens ?? 0;
+  usage.cache_write += t.usage.cache_creation_input_tokens ?? 0;
   appendFileSync(traceFile, JSON.stringify(t) + "\n");
 };
 

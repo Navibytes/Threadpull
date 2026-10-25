@@ -12,6 +12,7 @@ import { scanDocument } from "@/lib/evidence";
 import { loadReference, type Reference } from "@/lib/ingest/reference";
 import { HAZEL_MODEL, runHazel, type HazelRun } from "@/lib/agent";
 import { MemoryRuleStore } from "@/lib/rules";
+import { buildGraph } from "@/lib/graph";
 import { generate, type AnswerKey } from "@/data/generate";
 import { client as replayCrs } from "./crs-replay";
 
@@ -78,6 +79,13 @@ describe("the first ring, end to end", () => {
       "ask_human", "check_address", "check_employer", "check_household", "close_lead", "compare_documents", "crs_identity_check",
       "dealer_timeline", "find_connections", "inspect_dealer_loans", "inspect_loan"].sort());
     expect(b.messages[0].content).toContain("L0037");
+    expect(b.cache_control).toEqual({ type: "ephemeral" });
+  });
+
+  test("closing loans suggests a next lead but doesn't open it until Hazel works on it", () => {
+    expect(ofType(out.events, "lead_opened").map((e) => e.loan_ids[0])).toEqual(["L0037"]);
+    const reply = JSON.parse(requests[5].body.messages.at(-1).content[0].content);
+    expect(reply.next_lead).toMatch(/^L\d{4}$/);
   });
 
   test("every row fits the event contract, with seq 1, 2, 3, … and the run's budget", () => {
@@ -93,6 +101,10 @@ describe("the first ring, end to end", () => {
     expect(ofType(out.events, "budget_spent").map((e) => e.loan_ids)).toEqual([["L0037"], ["L0190"], ["L0195"]]);
     const refused = JSON.parse(requests[4].body.messages.at(-1).content[0].content);
     expect([refused.ok, refused.error]).toEqual([false, expect.stringContaining("no sandbox persona")]);
+    // the refused attempt is in the record too, uncharged
+    const logged = ofType(out.events, "check_run").find((e) => e.result.ok === false)!;
+    expect([logged.tool, logged.loan_ids, logged.budget.spent]).toEqual(["crs_identity_check", ["L0445"], 9]);
+    expect(String(logged.result.error)).toContain("no sandbox persona");
   });
 
   test("link_found rows come from the graph, at most a board's worth per query", () => {
@@ -119,6 +131,22 @@ describe("the first ring, end to end", () => {
 });
 
 describe("the code's guarantees hold whatever the model does", () => {
+  test("a suggested lead is opened when Hazel starts working on it", async () => {
+    const next = buildGraph(loans).rankLeads().find((l) => l.loan_id !== "L0037")!.loan_id; // what close_lead will suggest
+    const { claude, done } = run([
+      [{ name: "close_lead", input: { loan_id: "L0037" } }],
+      [{ name: "inspect_loan", input: { loan_id: next } }],
+      "done",
+    ]);
+    const out = await done;
+    expect(JSON.parse(claude.requests[1].body.messages.at(-1).content[0].content).next_lead).toBe(next);
+    const opened = ofType(out.events, "lead_opened");
+    expect(opened.map((e) => e.loan_ids[0])).toEqual(["L0037", next]);
+    // opened right before the check that started the work on it, not when it was suggested
+    const firstCheck = ofType(out.events, "check_run").find((e) => e.loan_ids.includes(next))!;
+    expect(opened[1].seq).toBe(firstCheck.seq - 1);
+  });
+
   test("over budget: the call is refused and nothing more is charged", async () => {
     const out = await run([[{ name: "crs_identity_check", input: { loan_id: "L0037" } }], "done"], { budget: 2 }).done;
     expect([out.spent, ofType(out.events, "budget_spent").length]).toEqual([0, 0]);

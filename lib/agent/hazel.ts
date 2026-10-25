@@ -31,7 +31,7 @@ const MAX_LINKS_PER_QUERY = 8;
 
 export type TraceEntry = {
   iteration: number; stop_reason: string | null; model: string;
-  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null };
+  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null };
   content: { type: string; name?: string; text?: string }[];
 };
 
@@ -95,6 +95,14 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
       sources: [{ kind: "row", loan_id: loanId, field: "loan_id" }], note: why, simulated: false });
   }
   const nextLead = () => ranked.find((l) => l.score > 0 && !opened.has(l.loan_id) && !statuses.has(l.loan_id));
+  // close_lead suggests the next lead; it only counts as opened (and shows on the board) once Hazel works on it
+  let suggested: { loan_id: string; score: number } | null = null;
+  async function openIfSuggested(loanIds: string[]) {
+    if (!suggested || !loanIds.includes(suggested.loan_id) || opened.has(suggested.loan_id)) return;
+    const lead = suggested;
+    suggested = null;
+    await openLead(lead.loan_id, `Next lead by rank (score ${lead.score}).`);
+  }
 
   // ------------------------------------------------------------ what a tool call writes besides check_run
   async function afterCheck(name: ToolName, input: Record<string, unknown>, result: ToolResult<unknown>, at: { run_id: string; seq: number }) {
@@ -155,9 +163,17 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     return [...new Set(ids)];
   };
 
-  /** Write check_run (and what follows from it) for a successful call; hand Claude a compact reply. */
+  /** Write check_run for every call that reached code (refused ones included) and what follows a success; hand Claude a compact reply. */
   async function record(name: ToolName, input: Record<string, unknown>, hazelNote: string | undefined, result: ToolResult<unknown>) {
-    if (!result.ok) return json({ ok: false, error: result.error, budget: budget() });
+    await openIfSuggested(loansIn(input));
+    if (!result.ok) {
+      // refused or failed calls go in the record too (clean audit log); nothing was charged, so the budget is unchanged
+      const loanIds = loansIn(input);
+      await log.append({ type: "check_run", loan_ids: loanIds, tool: name, result: { input, ok: false, error: result.error ?? "refused" },
+        sources: loanIds.map((id): SourceRef => ({ kind: "row", loan_id: id, field: "loan_id" })),
+        note: hazelNote ?? `${name} refused: ${result.error ?? "no reason given"}.`, simulated: false });
+      return json({ ok: false, error: result.error, budget: budget() });
+    }
     const row = await log.append({ type: "check_run", loan_ids: loansIn(input), tool: name, result: { input, ok: true },
       sources: result.sources, note: hazelNote ?? `${name} ran.`, simulated: result.simulated });
     const hint = await afterCheck(name, input, result, { run_id: row.run_id, seq: row.seq });
@@ -238,7 +254,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
         result: { status: d.status, reason: d.reason, ...(proposed_status && proposed_status !== d.status ? { proposed: proposed_status } : {}) },
         sources: d.sources, note: hazelNote ?? `${d.status}: ${d.reason}.`, simulated: false });
       const next = nextLead();
-      if (next) await openLead(next.loan_id, `Next lead by rank (score ${next.score}).`);
+      suggested = next ? { loan_id: next.loan_id, score: next.score } : null;
       return json({ ok: true, status: d.status, reason: d.reason, next_lead: next?.loan_id ?? null, budget: budget() });
     },
   });
@@ -256,6 +272,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     output_config: { effort: HAZEL_EFFORT },
     betas: [FALLBACK_BETA],
     fallbacks: "default",
+    cache_control: { type: "ephemeral" }, // system prompt and tools never change within a run, so each request reuses the cached prefix
     system: HAZEL_SYSTEM,
     tools: [...dataRoomTools, identityTool, askTool, closeTool],
     messages: [{ role: "user", content: `Portfolio: ${opts.loans.length} loans. Budget: ${ledger.limit} acorns. Your lead: ${first.loan_id} (rank 1, score ${first.score}). Begin.` }],
@@ -269,7 +286,8 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     if (text) recap = text;
     opts.trace?.({
       iteration: iterations, stop_reason: message.stop_reason, model: message.model,
-      usage: { input_tokens: message.usage.input_tokens, output_tokens: message.usage.output_tokens, cache_read_input_tokens: message.usage.cache_read_input_tokens },
+      usage: { input_tokens: message.usage.input_tokens, output_tokens: message.usage.output_tokens,
+        cache_read_input_tokens: message.usage.cache_read_input_tokens, cache_creation_input_tokens: message.usage.cache_creation_input_tokens },
       content: message.content.map((b) => b.type === "tool_use" ? { type: b.type, name: b.name } : b.type === "text" ? { type: b.type, text: b.text } : { type: b.type }),
     });
   }
