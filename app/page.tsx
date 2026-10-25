@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Pushpin } from "@/components/board/pushpin";
+import { Architecture } from "@/components/landing/architecture";
 import { CaseBoard } from "@/components/landing/case-board";
 import { PROOF, PROOF_URL, type ProofSeed } from "@/components/landing/proof-data";
 import { DEMO_HREF } from "@/components/landing/demo";
@@ -40,6 +41,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
         <Promises />
         <HowItWorks />
         <Results />
+        <Architecture />
         <Limits />
         <Responsible />
       </main>
