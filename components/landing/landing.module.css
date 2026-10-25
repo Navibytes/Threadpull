@@ -24,6 +24,77 @@
   border-bottom: 1px solid rgb(74 55 40 / 0.12);
 }
 
+/* "Skip to content": the page's first Tab stop, hidden until it has focus. */
+.skip {
+  position: fixed;
+  left: 0.75rem;
+  top: -4rem;
+  z-index: 60;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  color: var(--color-walnut);
+  background: #fbf6ea;
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.35);
+}
+.skip:focus-visible {
+  top: 0.75rem;
+  outline: 3px solid var(--color-walnut);
+  outline-offset: 2px;
+}
+
+/* The section links below 1024px: a button that opens a short paper panel. */
+.menu {
+  position: relative;
+}
+.menuButton {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-walnut);
+  background: #fbf6ea;
+  border: 1px solid rgb(74 55 40 / 0.3);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.menuButton:focus-visible {
+  outline: 3px solid var(--color-walnut);
+  outline-offset: 2px;
+}
+.menuPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.6rem);
+  z-index: 30;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.4rem;
+  background: #fbf6ea;
+  border: 1px solid rgb(74 55 40 / 0.25);
+  border-radius: 6px;
+  box-shadow: 0 18px 30px -12px rgb(0 0 0 / 0.5);
+}
+.menuLink {
+  display: block;
+  padding: 0.85rem 0.9rem;
+  font-weight: 600;
+  color: var(--color-walnut);
+  text-decoration: none;
+  border-radius: 4px;
+}
+.menuLink[aria-current="page"] {
+  background: rgb(184 145 63 / 0.22);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menuLink:hover {
+    background: rgb(74 55 40 / 0.08);
+  }
+}
+.menuLink:focus-visible {
+  outline: 2px solid var(--color-terracotta);
+  outline-offset: -2px;
+}
+
 .navLink {
   position: relative;
   padding: 0.35rem 0.1rem;
@@ -111,7 +182,7 @@
   font-weight: 600;
   line-height: 0.98;
   letter-spacing: -0.02em;
-  font-size: clamp(2.4rem, 6vw, 4.9rem);
+  font-size: clamp(2.4rem, 4.6vw, 3.9rem);
   font-variation-settings: "SOFT" 60, "WONK" 1;
 }
 .headline > span {
@@ -166,24 +237,27 @@
 
 /* ---------- the case board (hero illustration) ---------- */
 
-/* No clipping box on wide screens: the frame's shadow and Hazel on its corner hang over the wall freely. Only a
-   phone narrower than the board scrolls it sideways, with room inside the scroller for Hazel's overhang. */
+/* No clipping box: the frame's shadow and Hazel on its corner hang over the wall freely. On a phone the wide board
+   is replaced by a vertical evidence stack (below) with the same cards, threads and labels, large enough to read. */
 .boardScroll {
   padding: 1.25rem 0 2.75rem;
 }
 .boardWrap {
   position: relative;
 }
+.desktopBoard {
+  display: block;
+}
+.mobileBoard {
+  display: none;
+}
 @media (max-width: 720px) {
-  .boardScroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 1.25rem 0.5rem 4.5rem 2.75rem;
-    margin-inline: -0.5rem;
-    scrollbar-width: thin;
+  .desktopBoard {
+    display: none;
   }
-  .boardWrap {
-    min-width: 640px;
+  .mobileBoard {
+    display: block;
+    padding: 1.25rem 0 0.5rem;
   }
 }
 .cork {
@@ -305,7 +379,7 @@
   display: inline-block;
   margin-left: 1.4cqw;
   padding: 0.5cqw 1.4cqw 0.3cqw;
-  font-size: 1.6cqw;
+  font-size: 1.9cqw;
   font-weight: 700;
   letter-spacing: 0.14em;
 }
@@ -316,14 +390,14 @@
 .stamp {
   display: inline-block;
   margin-top: 0.9cqw;
-  font-size: 1.5cqw;
+  font-size: 1.8cqw;
   rotate: -3deg;
 }
 .status {
   display: inline-block;
   margin-top: 0.8cqw;
   padding: 0.2cqw 0.9cqw;
-  font-size: 1.6cqw;
+  font-size: 1.9cqw;
   font-weight: 600;
   color: #fffbf4;
   background: #8e3b2a;
@@ -348,7 +422,7 @@
   translate: -50% -50%;
   rotate: var(--tilt, 0deg);
   padding: 0.5cqw 1.1cqw 0.4cqw;
-  font-size: 1.55cqw;
+  font-size: 1.95cqw;
   font-weight: 600;
   white-space: nowrap;
   color: var(--color-walnut);
@@ -376,9 +450,9 @@
 .explained {
   position: absolute;
   translate: -50% 0;
-  width: 30cqw;
+  width: 31cqw;
   padding: 1cqw 1.4cqw;
-  font-size: 1.6cqw;
+  font-size: 1.9cqw;
   line-height: 1.3;
   color: #1f2a17;
   background: #c9d6b5;
@@ -459,7 +533,130 @@
 .caption {
   font-family: var(--font-hand);
   font-size: 1.25rem;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+/* ---------- the phone's evidence stack: the same cards and threads, one column ---------- */
+
+.mCork {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  padding: 1.6rem 1rem 1.5rem;
+  border-radius: 3px;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgb(255 206 140 / 0.2), transparent 70%),
+    url("/assets/detective/cork-dark.webp") center / 520px auto,
+    #6a4426;
+}
+.mCard {
+  position: relative;
+  rotate: var(--tilt, 0deg);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--color-walnut);
+  filter: drop-shadow(0 8px 8px rgb(0 0 0 / 0.5));
+}
+.mBody {
+  padding: 1rem 1rem 0.9rem;
+}
+.mPin {
+  position: absolute;
+  left: 50%;
+  top: -0.7rem;
+  translate: -50% 0;
+  width: 1.5rem;
+  z-index: 2;
+}
+.mPin svg {
+  width: 100%;
+  height: auto;
+}
+.mLead {
+  display: inline-block;
+  margin-bottom: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  background: rgb(74 55 40 / 0.12);
+  border-radius: 2px;
+}
+.mId {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+.mStatus {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fffbf4;
+  background: #8e3b2a;
+  border-radius: 2px 3px 2px 3px;
+}
+/* A red thread between two cards, with its label taped on. */
+.mThread {
+  position: relative;
+  align-self: center;
+  width: 5px;
+  height: 3.6rem;
+  background: #b8342a;
+  border-radius: 3px;
+  box-shadow: 0 2px 2px rgb(0 0 0 / 0.45);
+}
+.mThreadGone {
+  background: none;
+  box-shadow: none;
+  width: 0;
+  border-left: 3px dashed rgb(243 241 220 / 0.9);
+  border-radius: 0;
+}
+.mLabel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  rotate: var(--tilt, 0deg);
+  padding: 0.3rem 0.75rem 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-walnut);
+  background: #fbf6ea;
+  box-shadow: 0 3px 5px rgb(0 0 0 / 0.4);
+}
+.mNote {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-cream);
+}
+.mDivider {
+  height: 0;
+  margin: 1.6rem 0 1.5rem;
+  border-top: 2px dashed rgb(240 194 126 / 0.4);
+}
+.mExplained {
+  margin: 0.2rem 0 0;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: #1f2a17;
+  background: #c9d6b5;
+  border-left: 0.35rem solid #5f7a4c;
+  box-shadow: 0 6px 10px -4px rgb(0 0 0 / 0.5);
+}
+.mHazel {
+  position: relative;
+  align-self: flex-end;
+  width: 5.5rem;
+  margin: -1.5rem -0.2rem -1.7rem 0;
+  pointer-events: none;
 }
 
 /* ---------- sections ---------- */
@@ -596,6 +793,8 @@
   color: var(--color-cream);
 }
 .footerLink {
+  display: inline-block;
+  padding-block: 0.6rem;
   color: var(--color-amber);
   text-underline-offset: 3px;
 }

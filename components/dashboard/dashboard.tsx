@@ -565,7 +565,7 @@ const STEPS: [string, string][] = [
   ["Prioritize", "Leads are ranked so the strongest connections are looked at first."],
   ["Verify selectively", "Hazel spends a fixed budget on outside checks, such as CRS credit-bureau lookups. The code enforces the budget."],
   ["Explain with evidence", "Every finding cites its sources. Suspicion comes down only when a cited check explains it."],
-  ["Human review", "A person approves the money decision. Threadpull recommends; it never acts on a borrower. The CRO review screen isn't built yet."],
+  ["Human review", "A person approves the money decision. Threadpull recommends; it never acts on a borrower. The CRO review screen (/cro) shows the deal for a recorded run."],
 ];
 
 // The investigation method, folded away.

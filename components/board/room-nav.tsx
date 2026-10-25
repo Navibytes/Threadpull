@@ -14,7 +14,7 @@ export const ROOM_TABS = [
   { id: "evidence", label: "Evidence", name: "Checks and evidence", kind: "panel" },
   { id: "notebook", label: "Notes", name: "Hazel's notebook", kind: "panel" },
   { id: "dashboard", label: "Dashboard", name: "Portfolio dashboard", kind: "link" },
-  { id: "cro", label: "Brief", name: "CRO brief, not built yet", kind: "unbuilt" },
+  { id: "cro", label: "Brief", name: "CRO review, needs a recorded run", kind: "unbuilt" },
 ] as const;
 
 export type RoomTab = (typeof ROOM_TABS)[number];
@@ -65,6 +65,7 @@ export function RoomNav({
   onToggle,
   onBoard,
   dashboardHref,
+  croHref,
   panelIds,
   tabRefs,
 }: {
@@ -72,6 +73,7 @@ export function RoomNav({
   onToggle: (id: PanelId) => void;
   onBoard: () => void;
   dashboardHref: string; // the dashboard tab: a page of its own, so it is a link, not a panel
+  croHref: string | null; // the CRO review of this run, when there is a recorded run to review; null for a sample
   panelIds: Record<PanelId, string>;
   tabRefs: RefObject<Partial<Record<PanelId, HTMLButtonElement | null>>>;
 }) {
@@ -98,9 +100,13 @@ export function RoomNav({
               <Link href={dashboardHref} className={cls}>
                 {text}
               </Link>
+            ) : tab.id === "cro" && croHref ? (
+              <Link href={croHref} className={cls}>
+                {text}
+              </Link>
             ) : tab.kind === "unbuilt" ? (
               // plain text, not a control: nothing to click yet
-              <span data-unbuilt="" title="The CRO brief isn't built yet" className={cls}>
+              <span data-unbuilt="" title="The CRO review shows a recorded run; a sample has none" className={cls}>
                 {text}
               </span>
             ) : tab.kind === "page" ? (
