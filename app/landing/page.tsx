@@ -59,7 +59,7 @@ function Hero() {
         </div>
         <p className={`${s.rise} mt-3 max-w-[34rem] text-[0.95rem] leading-snug text-walnut/85`} style={v({ "--i": 6 })}>
           The room opens a sample investigation: made-up loans, six cases, two taken down by a cited check, no live
-          checks. Uploading a tape checks its format; running Hazel on it isn&apos;t built yet.
+          checks. Uploading a tape checks its format, then lets you start a live investigation of it (it needs the API keys).
         </p>
         <p className={`${s.rise} mt-5 max-w-[34rem] leading-relaxed`} style={v({ "--i": 6 })}>
           Hazel, our investigator, pulls threads through 1,000 loans on a fixed verification budget. When a check reveals a
