@@ -186,9 +186,23 @@ export function BoardCamera({
               <button type="button" onClick={() => step(-1)} aria-label="Previous case" className={btn}>
                 <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
               </button>
-              <span className="min-w-[9.5rem] text-center font-semibold" aria-live="polite">
-                {current !== null ? `Case ${current + 1} of ${cases.length} · ${cases[current]?.lead}` : `All ${cases.length} cases`}
-              </span>
+              {/* jump straight to any case; the arrows still step one at a time */}
+              <select
+                aria-label="Go to case"
+                value={current !== null ? String(current) : "all"}
+                onChange={(e) => {
+                  setFollowing(false);
+                  go(e.target.value === "all" ? "all" : Number(e.target.value));
+                }}
+                className="max-w-[11rem] truncate rounded-sm border border-walnut/25 bg-paper/80 px-1.5 py-0.5 font-semibold text-walnut focus-visible:outline-2 focus-visible:outline-walnut"
+              >
+                <option value="all">All {cases.length} cases</option>
+                {cases.map((c, i) => (
+                  <option key={c.lead} value={i}>
+                    Case {i + 1} · {c.lead}
+                  </option>
+                ))}
+              </select>
               <button type="button" onClick={() => step(1)} aria-label="Next case" className={btn}>
                 <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
               </button>
