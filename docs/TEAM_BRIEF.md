@@ -82,7 +82,7 @@ The tape is messy on purpose: mixed date formats, SSNs with and without dashes, 
 | Fraud alert on file | P16 | Review: ask the CRO |
 | Frozen bureau / bureaus disagree | P15 / P17 | Review: partial data, recovery |
 | Risky but real (subprime, Ch. 13, eviction) | P05, P07, P11 | Reprice, never fraud |
-| Prompt injection hidden in a pay stub | 1 case loan | Attack logged, no effect on verdict |
+| Prompt injection hidden in a pay stub | 1 ring loan | Attack logged, no effect on verdict (stays Investigate) |
 
 A second seed (`--seed 99`) with the same pattern types in different places is the held-out test; the agent prompt is never tuned on it. Judges can pick any seed.
 
@@ -203,7 +203,7 @@ Rarity matters: an employer shared by 300 loans is weak evidence; a phone shared
 | Database | Supabase PostgreSQL | Loans, evidence, investigations, approvals |
 | Live synchronization | Supabase Realtime | Push investigation updates to the board |
 | AI | Claude Sonnet 5.5, Claude Haiku | Investigation planning and document extraction |
-| Agent orchestration | Vercel AI SDK, Zod | Structured tool calls and validation |
+| Agent orchestration | Anthropic TypeScript SDK (tool runner), Zod | Structured tool calls and validation |
 | Identity verification | CRS sandbox API | Actual external identity / fraud signals |
 | Evaluation | Bun tests and a baseline evaluator | Measure detection, accuracy and costs |
 

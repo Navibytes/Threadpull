@@ -13,3 +13,7 @@ export {
   LARGE_EMPLOYER_MIN_HEADCOUNT, MONTH_END_DAYS,
   type AddressCheck, type Burst, type DealerTimeline, type EmployerCheck, type HouseholdCheck,
 } from "./explanations";
+export {
+  withdrawAddress, withdrawBursts, withdrawHousehold,
+  type CheckEventRef, type ClueExplained,
+} from "./withdraw";

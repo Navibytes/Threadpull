@@ -1,0 +1,372 @@
+{
+  "endpoint": "credit_tu",
+  "persona": "P13",
+  "path": "/transunion/credit-report/standard/tu-prequal-fico9",
+  "status": 200,
+  "request_id": "21a0a636-2a39-4fce-abb3-c09f59af3943",
+  "request": {
+    "firstName": "KAYLA",
+    "lastName": "BRENNAN",
+    "ssn": "666701013",
+    "addresses": [
+      {
+        "addressLine1": "9021 KINGSTON PIKE",
+        "city": "KNOXVILLE",
+        "state": "TN",
+        "postalCode": "37923",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "KAYLA",
+      "lastName": "BRENNAN",
+      "ssn": "666701013",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "9021 KINGSTON PIKE",
+          "city": "KNOXVILLE",
+          "state": "TN",
+          "postalCode": "37923"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": true,
+      "experian": false,
+      "equifax": false
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:11:57.995437Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileInfileDate": "2024-10-01",
+          "creditFileResultStatusType": "FileReturned",
+          "sourceType": "TransUnion"
+        },
+        "aliases": [
+          {
+            "firstName": "KAYLA",
+            "lastName": "BRENNAN",
+            "middleName": "D"
+          }
+        ],
+        "employments": [
+          {
+            "employerName": "JOE",
+            "employmentReportedDate": "2024-10-10"
+          },
+          {
+            "employerName": "AGF",
+            "employmentReportedDate": "2024-10-10"
+          }
+        ]
+      }
+    ],
+    "inquiries": [
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-19",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-22",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-25",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-28",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-31",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-03",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-06",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-09",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      },
+      {
+        "creditorName": "RICHTEST",
+        "accountOwnershipType": "Individual",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-09-12",
+        "businessType": "RealEstateAndPublicAccommodation",
+        "subscriberCode": "R 00001962",
+        "sourceType": "TransUnion"
+      }
+    ],
+    "tradelines": [
+      {
+        "accountIdentifier": "CALHACKS-CARD-1",
+        "accountOpenedDate": "2025-08-01",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "2500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "800",
+        "lastActivityDate": "2026-08-20",
+        "monthlyPaymentAmount": "75",
+        "monthsReviewedCount": "14",
+        "creditorName": "NEW HORIZON BANK",
+        "subscriberCode": "B 01597029",
+        "pastDueAmount": "0",
+        "termsDescription": "48 months at $75 per month",
+        "termsMonthsCount": "48",
+        "currentBalanceAmount": "300",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "TransUnion"
+      },
+      {
+        "accountIdentifier": "CALHACKS-AU-1",
+        "accountOpenedDate": "2025-08-15",
+        "accountOwnershipType": "AuthorizedUser",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "3500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "1200",
+        "lastActivityDate": "2026-08-20",
+        "monthlyPaymentAmount": "75",
+        "monthsReviewedCount": "14",
+        "creditorName": "PREMIER CARD SERVICES",
+        "subscriberCode": "B 01597029",
+        "pastDueAmount": "0",
+        "termsDescription": "48 months at $75 per month",
+        "termsMonthsCount": "48",
+        "currentBalanceAmount": "600",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "TransUnion"
+      },
+      {
+        "accountIdentifier": "CALHACKS-AU-2",
+        "accountOpenedDate": "2025-09-01",
+        "accountOwnershipType": "AuthorizedUser",
+        "accountReportedDate": "2026-09-01",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "creditLimitAmount": "1500",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "350",
+        "lastActivityDate": "2026-08-20",
+        "monthlyPaymentAmount": "75",
+        "monthsReviewedCount": "13",
+        "creditorName": "DEPT STORE CHARGE",
+        "subscriberCode": "B 01597029",
+        "pastDueAmount": "0",
+        "termsDescription": "48 months at $75 per month",
+        "termsMonthsCount": "48",
+        "currentBalanceAmount": "0",
+        "businessType": "Banking",
+        "loanType": "ChargeAccount",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-01",
+        "sourceType": "TransUnion"
+      }
+    ],
+    "publicRecords": [],
+    "scores": [
+      {
+        "borrowerSourceType": "Borrower",
+        "modelName": "TransUnionVantageScore4.0",
+        "modelNameType": "001NN",
+        "sourceType": "TransUnion",
+        "factaInquiriesIndicator": false,
+        "scoreValue": "640",
+        "scoreRankPercentileValue": "23",
+        "scoreMaximumValue": "850",
+        "scoreMinimumValue": "300",
+        "scoreFactors": [
+          {
+            "scoreFactorCode": "27",
+            "scoreFactorText": "Delinquent or derogatory status on revolving accounts is too recent"
+          },
+          {
+            "scoreFactorCode": "16",
+            "scoreFactorText": "Total of credit limits and loan amounts is too low"
+          },
+          {
+            "scoreFactorCode": "15",
+            "scoreFactorText": "Lack of recently reported accounts"
+          },
+          {
+            "scoreFactorCode": "8",
+            "scoreFactorText": ""
+          }
+        ]
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {
+        "mortgageTradesCount": "0",
+        "mortgageBalanceTotal": "0",
+        "mortgageHighCreditTotal": "0",
+        "mortgagePaymentsTotal": "0",
+        "mortgagePastDueTotal": "0",
+        "autoTradesCount": "0",
+        "autoBalanceTotal": "0",
+        "autoHighCreditTotal": "0",
+        "autoPaymentsTotal": "0",
+        "autoPastDueTotal": "0",
+        "educationTradesCount": "0",
+        "educationBalanceTotal": "0",
+        "educationHighCreditTotal": "0",
+        "educationPaymentsTotal": "0",
+        "educationPastDueTotal": "0",
+        "openTradesCount": "0",
+        "openBalanceTotal": "0",
+        "openHighCreditTotal": "0",
+        "openPaymentsTotal": "0",
+        "openPastDueTotal": "0",
+        "revolvingTradesCount": "3",
+        "revolvingBalanceTotal": "900",
+        "revolvingHighCreditTotal": "7500",
+        "revolvingPaymentsTotal": "225",
+        "revolvingPastDueTotal": "0",
+        "unknownTradesCount": "0",
+        "unknownBalanceTotal": "0",
+        "unknownHighCreditTotal": "0",
+        "unknownPaymentsTotal": "0",
+        "unknownPastDueTotal": "0",
+        "installmentOtherTradesCount": "0",
+        "installmentOtherBalanceTotal": "0",
+        "installmentOtherHighCreditTotal": "0",
+        "installmentOtherPaymentsTotal": "0",
+        "installmentOtherPastDueTotal": "0",
+        "applicableMortgagePaymentsTotal": "0",
+        "applicableAutoPaymentsTotal": "0",
+        "applicableEducationPaymentsTotal": "0",
+        "applicableOpenPaymentsTotal": "0",
+        "applicableRevolvingPaymentsTotal": "150",
+        "applicableUnknownPaymentsTotal": "0",
+        "applicableInstallmentPaymentsTotal": "0",
+        "applicableInstallmentOtherPaymentsTotal": "0",
+        "applicableMortgageHighCreditTotal": "0",
+        "applicableAutoHighCreditTotal": "0",
+        "applicableEducationHighCreditTotal": "0",
+        "applicableOpenHighCreditTotal": "0",
+        "applicableRevolvingHighCreditTotal": "7500",
+        "applicableUnknownHighCreditTotal": "0",
+        "applicableInstallmentHighCreditTotal": "0",
+        "applicableInstallmentOtherHighCreditTotal": "0",
+        "tradesCount": "3",
+        "balanceTotal": "900",
+        "applicablePaymentsTotal": "150",
+        "applicableHighCreditTotal": "7500",
+        "highCreditTotal": "7500",
+        "paymentsTotal": "225",
+        "pastDueTotal": "0",
+        "securedDebtBalanceTotal": "0",
+        "unsecuredDebtBalanceTotal": "900",
+        "oldestTradelineDate": "2025-08-01",
+        "oldestTradelineCreditorName": "NEW HORIZON BANK",
+        "revolvingCreditUtilization": "12",
+        "totalDebtHighCreditRatio": "12"
+      },
+      "derogatorySummary": {
+        "chargeOffsCount": "0",
+        "collectionsCount": "0",
+        "bankruptciesCount": "0",
+        "publicRecordsCount": "0",
+        "satisfactoryTradelineCount": "3",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "inquiriesCount": "9",
+        "mostRecentLateDate": "",
+        "disputesCount": "0",
+        "currentAdverseTradelineCount": "0",
+        "priorAdverseTradelineCount": "0",
+        "otherCount": "0",
+        "securedDebtBalanceTotal": "0",
+        "unsecuredDebtBalanceTotal": "900"
+      }
+    }
+  }
+}

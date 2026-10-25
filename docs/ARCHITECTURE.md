@@ -54,31 +54,35 @@ components/
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
 
 lib/
-  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, event ○, rule ○   C (loan, tool-result: A)
+  contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
   ingest/                ✅ normalize the messy tape; load reference lookups               A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
-  crs/                   ○ CRS client, persona guard, cache                            B
-  ledger.ts              ○ acorn budget                                                B
-  graph/                 ○ graphology evidence graph, weights, clusters, priority      D
-  evidence/              ✅ document fingerprints, injection guard, explanation checks       A
-  agent/                 ○ Hazel loop (AI SDK), tools, prompts, models.ts              D
-  rules/                 ○ ask-once rule matching and storage                          D
+  crs/                   ✅ persona guard, client + cache, identity check, credit report, Fraud Finder, reverse phone   B
+  ledger.ts              ✅ acorn budget; its onSpend hook is where `budget_spent` is written   B
+  event-rows.ts          ✅ budget_spent and recovery event rows from the ledger and the CRS client (pure; C may fold into events/)   B
+  graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
+  evidence/              ✅ document fingerprints, injection guard, explanation checks, withdraw  A
+  agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts  D
+  rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
   deal/                  ○ verdicts, pricing, buyback + document-request drafts        B
   events/                ○ append an event row, read a run's events                    C
 
 data/                                                                                A
   generate.ts            ✅ seeded generator (`bun run data`)
   seed-db.ts             ✅ upsert normalized loans into Supabase
+  record-crs.ts          ✅ record every persona's CRS sandbox responses, run once by hand   B
+  crs-recordings/        ✅ its output: the real sandbox responses of 2026-10-24, one JSON per endpoint and persona (RequestID kept, scanned for secrets)   B
   personas.json          ✅ canonical CRS persona identities
   patterns/seed13.json   ✅ pattern spec; seed99.json ○ (C, after detector-frozen)
   out/  keys/            gitignored outputs: tape + lookups / ground truth
 
 eval/                                                                                D
+  hazel-run.ts           ✅ one Hazel run measured against the answer key (`bun run hazel`)
   baseline.ts            ○ fixed-rule baseline, same tools and budget
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
-supabase/migrations/     ✅ loans (A); runs, events, rules, questions, dispositions, crs_cache ○ (C, B)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations (.test.ts); one <module>.test.ts per lib module
+supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
@@ -140,7 +144,7 @@ eval/  ──►  lib/*, data/keys
 | I'm writing… | Put it in |
 | --- | --- |
 | A new field on the loan / event / tool result | `lib/contracts/` first, then tell the team (contracts are frozen after 12:00) |
-| A new Hazel tool | logic in the owning module (`lib/crs`, `lib/evidence`, `lib/graph`), the AI SDK tool wrapper in `lib/agent/tools.ts` |
+| A new Hazel tool | logic in the owning module (`lib/crs`, `lib/evidence`, `lib/graph`), the input schema in `lib/agent/tools.ts`, the tool-runner wrapper (events, ledger) in `lib/agent/hazel.ts` |
 | A new CRS call | `lib/crs/` (body built from `data/personas.json`, charged through `lib/ledger.ts`) |
 | An explanation check ("string comes down") | `lib/evidence/` |
 | Anything that computes money | `lib/deal/` |

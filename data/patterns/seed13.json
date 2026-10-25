@@ -70,6 +70,6 @@
     {"type": "review", "persona": "P15", "expected_status": "Insufficient evidence", "reason": "TransUnion file frozen"},
     {"type": "review", "persona": "P17", "expected_status": "Insufficient evidence", "reason": "bureaus disagree"},
     {"type": "risky_real", "personas": ["P05", "P07", "P11"], "expected_action": "Reprice"},
-    {"type": "injection", "persona": "P06"}
+    {"type": "injection", "target": "RING-1:bg1"}
   ]
 }

@@ -1,0 +1,515 @@
+{
+  "endpoint": "credit_exp",
+  "persona": "P17",
+  "path": "/experian/credit-report/standard/exp-prequal-vantage4",
+  "status": 200,
+  "request_id": "0644a6b6-36e8-41e3-b68f-6ce45d3bba3a",
+  "request": {
+    "firstName": "ELENA",
+    "lastName": "CASTELLANOS",
+    "ssn": "666701017",
+    "addresses": [
+      {
+        "addressLine1": "4400 N CENTRAL EXPY STE 100",
+        "city": "DALLAS",
+        "state": "TX",
+        "postalCode": "75206",
+        "borrowerResidencyType": "Current"
+      }
+    ]
+  },
+  "response": {
+    "requestData": {
+      "firstName": "ELENA",
+      "lastName": "CASTELLANOS",
+      "ssn": "666701017",
+      "addresses": [
+        {
+          "borrowerResidencyType": "Current",
+          "addressLine1": "4400 N CENTRAL EXPY STE 100",
+          "city": "DALLAS",
+          "state": "TX",
+          "postalCode": "75206"
+        }
+      ]
+    },
+    "repositoryIncluded": {
+      "transunion": false,
+      "experian": true,
+      "equifax": false
+    },
+    "responseDetail": {
+      "dateRequested": "2026-10-24T23:12:07.640108Z",
+      "requestingParty": {
+        "name": "CALHACKS13"
+      },
+      "creditBureauContact": {
+        "name": "CREDIT REPORTING SERVICES, INC",
+        "address": {
+          "addressLine1": "1024 IRON POINT ROAD",
+          "city": "FOLSOM",
+          "state": "CA",
+          "postalCode": "95630"
+        }
+      }
+    },
+    "responseAlertMessages": [],
+    "creditFiles": [
+      {
+        "creditFileDetail": {
+          "borrowerSourceType": "Borrower",
+          "creditFileInfileDate": "2024-11-19",
+          "creditFileResultStatusType": "FileReturned",
+          "sourceType": "Experian"
+        },
+        "aliases": [
+          {
+            "firstName": "ELENA",
+            "lastName": "CASTELLANOS"
+          }
+        ],
+        "employments": [
+          {
+            "employerName": "GABY JEWLERS HAIR",
+            "employmentStartDate": "2022-02-28",
+            "employmentReportedDate": "2022-02-28"
+          },
+          {
+            "employerName": "SCOTT KAY PLATINUM",
+            "employmentStartDate": "2019-11-02",
+            "employmentReportedDate": "2021-09-08"
+          }
+        ]
+      }
+    ],
+    "inquiries": [
+      {
+        "creditorName": "CAPITAL AUTO FINANCE",
+        "borrowerSourceType": "Borrower",
+        "inquiryDate": "2026-08-19",
+        "businessType": "PersonalServicesNotMedical",
+        "subscriberCode": "2996505",
+        "sourceType": "Experian"
+      }
+    ],
+    "tradelines": [
+      {
+        "accountIdentifier": "CALHACKS-COLL-1",
+        "accountOpenedDate": "2025-08-19",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Open",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "derogatoryDataIndicator": true,
+        "highBalanceAmount": "640",
+        "lastActivityDate": "2026-09-19",
+        "monthsReviewedCount": "14",
+        "creditorName": "NATIONAL RECOVERY 1",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "640",
+        "currentBalanceAmount": "640",
+        "businessType": "CollectionServices",
+        "loanType": "Collection",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "9",
+        "currentRatingType": "Collection",
+        "paymentPatternData": "CCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountIdentifier": "CALHACKS-REV-1",
+        "accountOpenedDate": "2015-10-20",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "creditLimitAmount": "5000",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "2000",
+        "lastActivityDate": "2026-09-19",
+        "monthsReviewedCount": "99",
+        "creditorName": "NORTHSTAR BANK VISA",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "700",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountIdentifier": "CALHACKS-REV-2",
+        "accountOpenedDate": "2023-04-20",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "creditLimitAmount": "5000",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "2000",
+        "lastActivityDate": "2026-09-19",
+        "monthsReviewedCount": "42",
+        "creditorName": "CAPITAL REWARDS MC",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "700",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountIdentifier": "CALHACKS-REV-3",
+        "accountOpenedDate": "2021-10-19",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "creditLimitAmount": "5000",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "2000",
+        "lastActivityDate": "2026-09-19",
+        "monthsReviewedCount": "60",
+        "creditorName": "UNION CREDIT CARD",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "700",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountIdentifier": "CALHACKS-REV-4",
+        "accountOpenedDate": "2020-04-19",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "creditLimitAmount": "5000",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "2000",
+        "lastActivityDate": "2026-09-19",
+        "monthsReviewedCount": "78",
+        "creditorName": "HOMETOWN BANK CARD",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "700",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountIdentifier": "CALHACKS-INST-1",
+        "accountOpenedDate": "2025-04-20",
+        "accountOwnershipType": "Individual",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Open",
+        "accountType": "Installment",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "13416",
+        "lastActivityDate": "2026-09-19",
+        "monthlyPaymentAmount": "162",
+        "monthsReviewedCount": "18",
+        "creditorName": "LAKESIDE AUTO FINANCE",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "termsDescription": "60 months at $162 per month",
+        "termsMonthsCount": "60",
+        "currentBalanceAmount": "7760",
+        "businessType": "Finance",
+        "loanType": "Automobile",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountClosedDate": "2025-10-19",
+        "accountIdentifier": "CALHACKS-CLOSED-1",
+        "accountOpenedDate": "2020-10-19",
+        "accountOwnershipType": "Individual",
+        "accountPaidDate": "2025-10-19",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Paid",
+        "accountType": "Revolving",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "4000",
+        "lastActivityDate": "2025-10-19",
+        "monthsReviewedCount": "72",
+        "creditorName": "FORMER LENDER 1",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "0",
+        "businessType": "Banking",
+        "loanType": "CreditCard",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      },
+      {
+        "accountClosedDate": "2025-04-20",
+        "accountIdentifier": "CALHACKS-CLOSED-2",
+        "accountOpenedDate": "2019-10-20",
+        "accountOwnershipType": "Individual",
+        "accountPaidDate": "2025-04-20",
+        "accountReportedDate": "2026-09-19",
+        "accountStatusType": "Paid",
+        "accountType": "Installment",
+        "borrowerSourceType": "Borrower",
+        "chargeOffAmount": "931",
+        "derogatoryDataIndicator": false,
+        "highBalanceAmount": "4900",
+        "lastActivityDate": "2025-04-20",
+        "monthsReviewedCount": "84",
+        "creditorName": "FORMER LENDER 2",
+        "subscriberCode": "1982788",
+        "originalCreditorName": "CIRCUIT CITY",
+        "pastDueAmount": "0",
+        "currentBalanceAmount": "0",
+        "businessType": "Finance",
+        "loanType": "Automobile",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "currentRatingCode": "C",
+        "currentRatingType": "AsAgreed",
+        "paymentPatternData": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "paymentPatternStartDate": "2026-09-19",
+        "sourceType": "Experian",
+        "comments": [
+          {
+            "commentSourceType": "CreditBureau",
+            "commentType": "BureauRemarks",
+            "commentText": "Original Creditor: CIRCUIT CITY"
+          }
+        ]
+      }
+    ],
+    "publicRecords": [],
+    "scores": [
+      {
+        "borrowerSourceType": "Borrower",
+        "modelName": "VantageScore 4.0",
+        "modelNameType": "V4",
+        "sourceType": "Experian",
+        "factaInquiriesIndicator": false,
+        "scoreValue": "700",
+        "scoreRankPercentileValue": "38",
+        "scoreMaximumValue": "850",
+        "scoreMinimumValue": "300",
+        "scoreFactors": [
+          {
+            "scoreFactorCode": "68",
+            "scoreFactorText": "Lack of real estate secured loan information"
+          },
+          {
+            "scoreFactorCode": "37",
+            "scoreFactorText": "No open bankcards in your credit file"
+          },
+          {
+            "scoreFactorCode": "17",
+            "scoreFactorText": "No open accounts in your credit file"
+          },
+          {
+            "scoreFactorCode": "87",
+            "scoreFactorText": "Unpaid collections"
+          }
+        ]
+      }
+    ],
+    "summaries": {
+      "tradeSummary": {
+        "mortgageTradesCount": "0",
+        "mortgageBalanceTotal": "0",
+        "mortgageHighCreditTotal": "0",
+        "mortgagePaymentsTotal": "0",
+        "mortgagePastDueTotal": "0",
+        "autoTradesCount": "2",
+        "autoBalanceTotal": "7760",
+        "autoHighCreditTotal": "18316",
+        "autoPaymentsTotal": "162",
+        "autoPastDueTotal": "0",
+        "educationTradesCount": "0",
+        "educationBalanceTotal": "0",
+        "educationHighCreditTotal": "0",
+        "educationPaymentsTotal": "0",
+        "educationPastDueTotal": "0",
+        "openTradesCount": "0",
+        "openBalanceTotal": "0",
+        "openHighCreditTotal": "0",
+        "openPaymentsTotal": "0",
+        "openPastDueTotal": "0",
+        "revolvingTradesCount": "5",
+        "revolvingBalanceTotal": "2800",
+        "revolvingHighCreditTotal": "24000",
+        "revolvingPaymentsTotal": "0",
+        "revolvingPastDueTotal": "0",
+        "unknownTradesCount": "1",
+        "unknownBalanceTotal": "640",
+        "unknownHighCreditTotal": "640",
+        "unknownPaymentsTotal": "0",
+        "unknownPastDueTotal": "640",
+        "installmentOtherTradesCount": "0",
+        "installmentOtherBalanceTotal": "0",
+        "installmentOtherHighCreditTotal": "0",
+        "installmentOtherPaymentsTotal": "0",
+        "installmentOtherPastDueTotal": "0",
+        "applicableMortgagePaymentsTotal": "0",
+        "applicableAutoPaymentsTotal": "162",
+        "applicableEducationPaymentsTotal": "0",
+        "applicableOpenPaymentsTotal": "0",
+        "applicableRevolvingPaymentsTotal": "0",
+        "applicableUnknownPaymentsTotal": "0",
+        "applicableInstallmentPaymentsTotal": "162",
+        "applicableInstallmentOtherPaymentsTotal": "0",
+        "applicableMortgageHighCreditTotal": "0",
+        "applicableAutoHighCreditTotal": "13416",
+        "applicableEducationHighCreditTotal": "0",
+        "applicableOpenHighCreditTotal": "0",
+        "applicableRevolvingHighCreditTotal": "20000",
+        "applicableUnknownHighCreditTotal": "0",
+        "applicableInstallmentHighCreditTotal": "13416",
+        "applicableInstallmentOtherHighCreditTotal": "0",
+        "tradesCount": "8",
+        "balanceTotal": "11200",
+        "applicablePaymentsTotal": "162",
+        "applicableHighCreditTotal": "33416",
+        "highCreditTotal": "42956",
+        "paymentsTotal": "162",
+        "pastDueTotal": "640",
+        "securedDebtBalanceTotal": "7760",
+        "unsecuredDebtBalanceTotal": "3440",
+        "oldestTradelineDate": "2015-10-20",
+        "oldestTradelineCreditorName": "NORTHSTAR BANK VISA",
+        "revolvingCreditUtilization": "14",
+        "totalDebtHighCreditRatio": "34"
+      },
+      "derogatorySummary": {
+        "chargeOffsCount": "0",
+        "collectionsCount": "1",
+        "bankruptciesCount": "0",
+        "publicRecordsCount": "0",
+        "satisfactoryTradelineCount": "7",
+        "_30DayLates": "0",
+        "_60DayLates": "0",
+        "_90DayLates": "0",
+        "inquiriesCount": "1",
+        "mostRecentLateDate": "2026-09-19",
+        "disputesCount": "0",
+        "currentAdverseTradelineCount": "0",
+        "priorAdverseTradelineCount": "0",
+        "otherCount": "0",
+        "securedDebtBalanceTotal": "7760",
+        "unsecuredDebtBalanceTotal": "3440"
+      }
+    }
+  }
+}

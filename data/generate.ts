@@ -12,12 +12,13 @@
 import { Faker, en, en_US } from "@faker-js/faker";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RawLoanSchema, type RawLoan } from "@/lib/contracts/loan";
 import { addressKey, normalizePortfolio } from "@/lib/ingest/normalize";
 import { seedSupabase } from "./seed-db";
 
-const ROOT = dirname(new URL(import.meta.url).pathname);
+const ROOT = dirname(fileURLToPath(import.meta.url)); // not URL.pathname: that gives /C:/... on Windows
 
 type Persona = {
   id: string; first_name: string; last_name: string; ssn: string; dob: string; street1: string;
@@ -472,7 +473,13 @@ class Generator {
           this.key.risky_real.push({ loan_ids: [], expected_action: pat.expected_action, fraud: false });
           this.pending.risky_real.push({ members: pat.personas.map((p: string) => `risky:${p}`) });
           break;
-        case "injection": {
+        case "injection": { // into an already planted loan, named by its tag ("RING-1:bg1"), or a persona's own loan
+          if (pat.target) {
+            const ln = loans.find((l) => l.tag === pat.target);
+            if (!ln) throw new Error(`injection target ${pat.target} is not a planted loan (list it after its pattern)`);
+            ln.inject = true;
+            break;
+          }
           const ln = caseLoan(pat.persona, `injection:${pat.persona}`);
           ln.inject = true;
           loans.push(ln);
