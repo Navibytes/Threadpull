@@ -13,6 +13,8 @@
 
 **Update (Sun 00:40, checked against `main`):** `close_lead` now scans a loan's documents before code decides its status (A, PR #40), so the injected stub is flagged in every run whichever tools Hazel chose; seen live in `r13-20261025T072822`. Haiku extraction: proposed out of scope (decision pending).
 
+**Update (Sun 01:45, Haiku trial):** `bun run haiku:trial` (`eval/haiku-extract.ts`, outside the detector) scored Claude Haiku 4.5 (`claude-haiku-4-5-20251001`, structured output into a fixed Zod schema) field by field against the generator's values on 132 seed-13 trials, live: 60/60 stubs in the generated layout (the parser: 60/60); 60/60 in three other layouts (dotted payroll advice, a table, a scanned line), where the fixed-label parser reads 0/60; 12/12 injection trials (the planted stub, and a line telling the extractor to report other amounts) with every value right. 0 errors, median 1.1 s per stub, about $0.16 in all (assumed price). Not wired into Hazel's loop: seed 13 and seed 99 stubs all use the generated layout, so the parser already reads every one, and a model call in the detector would change it before the freeze for no demo difference. Haiku is the path for real data-room documents (README known limits).
+
 - [x] Fingerprint from template id, font and creating tool, plus arithmetic checks (net below gross, net/gross ratio, year-to-date consistent with pay periods and time at employer). `lib/evidence/documents.ts`
 - [x] Returns a match score and the specific differences as sources, at 1 acorn per pair.
 - [x] Deterministic guard: `scanDocument` flags instruction-like text and off-form lines; `safeDocumentView` gives Hazel only the form fields and withholds any field carrying instructions. `lib/evidence/injection.ts`
