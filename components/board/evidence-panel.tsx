@@ -1,7 +1,19 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { crsRequestIds, threadWidth, type BoardCard, type BoardState, type BoardThread, type FeedMode } from "@/lib/events";
+import {
+  crsRequestIds,
+  loanName,
+  NOT_PROOF,
+  sharedLabel,
+  sharedPhrase,
+  threadWidth,
+  type BoardCard,
+  type BoardState,
+  type BoardThread,
+  type FeedMode,
+  type SourceRef,
+} from "@/lib/events";
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
@@ -25,7 +37,7 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.16 }}
         >
-          {card && <CardDetails card={card} mode={mode} />}
+          {card && <CardDetails card={card} board={board} mode={mode} />}
           {thread && <ThreadDetails thread={thread} mode={mode} />}
           {!card && !thread && <Empty board={board} />}
         </motion.div>
@@ -37,35 +49,86 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
 function Empty({ board }: { board: BoardState }) {
   return (
     <div className="mt-3 space-y-4 text-sm leading-relaxed">
-      <p>Select a card or a thread on the board to see the evidence behind it.</p>
-      <p className="text-walnut/80">
-        {board.cards.length} cards · {board.threads.length} threads · last event seq {board.lastSeq}
-      </p>
+      <p>Select a card or a red thread on the board to see what it is and where it comes from.</p>
       <div className="rounded border border-walnut/10 bg-cream/60 p-3 text-[13px]">
-        <p className="font-medium">Reading the yarn</p>
-        <p className="mt-1">
-          Thickness is 1 + 8 × weight, where weight reflects how rare the shared attribute is in the pool. It is a
-          design weight, not a fraud probability. A connection is not proof.
-        </p>
-        <p className="mt-1">
-          A pale dashed line is a link that was explained: the suspicion came down, the shared fact stays.
-        </p>
+        <p className="font-medium">How to read the board</p>
+        <p className="mt-1">Each card is a loan application. A red thread joins two loans that share a detail, such as a phone number.</p>
+        <p className="mt-1">{NOT_PROOF} A pale dashed thread is a match that was checked and has an innocent explanation.</p>
       </div>
+      <details className="text-[13px]">
+        <summary className="cursor-pointer font-medium">Technical details</summary>
+        <p className="mt-1 text-walnut/80">
+          {board.cards.length} cards · {board.threads.length} threads · last event seq {board.lastSeq}. Thread thickness is
+          1 + 8 × weight, where weight reflects how rare the shared detail is across the loans. It is a design weight, not a
+          fraud probability.
+        </p>
+      </details>
     </div>
   );
 }
 
-function CardDetails({ card, mode }: { card: BoardCard; mode: FeedMode }) {
+// What a kind of source is, in words: what it can and can't establish.
+const SOURCE_MEANING: Record<string, string> = {
+  row: "The loan file itself (the data room). It shows what the application says.",
+  crs: "A CRS credit-bureau lookup. It checks the applicant against an outside record.",
+  document: "A document attached to the loan, read as data.",
+  lookup: "A public-record lookup.",
+  rule: "A saved ruling from an earlier question.",
+  human: "An answer from a person.",
+  event: "An earlier step in this investigation.",
+};
+function whereFrom(sources: SourceRef[]): string[] {
+  return [...new Set(sources.map((s) => s.kind))].map((k) => SOURCE_MEANING[k]).filter(Boolean);
+}
+
+const PINNED_BECAUSE: Partial<Record<string, string>> = {
+  lead_opened: "Hazel opened this loan as the one to investigate.",
+  link_found: "It was added because it shares a detail with another loan.",
+};
+
+function CardDetails({ card, board, mode }: { card: BoardCard; board: BoardState; mode: FeedMode }) {
+  const links = board.threads.filter((t) => t.a === card.id || t.b === card.id);
+  const meaning = whereFrom(card.sources);
   return (
     <div className="mt-3 space-y-4">
       <div>
         <p className="text-xs font-medium uppercase tracking-[0.12em] text-walnut/80">Loan application</p>
-        <p className="text-2xl font-semibold">{card.id}</p>
+        <p className="text-2xl font-semibold">{loanName(card.id)}</p>
+        <p className="text-sm text-walnut/80">Original ID: {card.id}</p>
         <div className="mt-2">
-          <StatusChip status={card.status} />
+          {card.status !== "Not reviewed" ? <StatusChip status={card.status} /> : <p className="text-sm">No decision recorded yet.</p>}
         </div>
       </div>
-      {card.note && <p className="text-sm leading-relaxed">{card.note}</p>}
+      {PINNED_BECAUSE[card.pinnedBy] && <p className="text-sm leading-relaxed">{PINNED_BECAUSE[card.pinnedBy]}</p>}
+      {card.note && (
+        <p className="text-sm leading-relaxed">
+          <span className="font-medium">Hazel&rsquo;s note: </span>
+          {card.note}
+        </p>
+      )}
+      <Section title="Connections">
+        {links.length === 0 ? (
+          <p className="text-sm text-walnut/80">No connections found yet.</p>
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {links.map((t) => (
+              <li key={t.id}>
+                {sharedLabel(t.kind)} with {loanName(t.a === card.id ? t.b : t.a)}
+                {t.explained ? " (explained)" : ""}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-1.5 text-[13px] text-walnut/80">{NOT_PROOF}</p>
+      </Section>
+      <Section title="Where this comes from">
+        {meaning.map((m) => (
+          <p key={m} className="mb-1 text-sm">
+            {m}
+          </p>
+        ))}
+        <SourceList sources={card.sources} />
+      </Section>
       <Provenance
         rows={[
           ["Pinned by", `${card.pinnedBy}${card.tool ? ` (${card.tool})` : ""}`],
@@ -76,25 +139,46 @@ function CardDetails({ card, mode }: { card: BoardCard; mode: FeedMode }) {
         simulated={card.simulated}
         requestIds={crsRequestIds(card.sources)}
       />
-      <Section title="Sources">
-        <SourceList sources={card.sources} />
-      </Section>
     </div>
   );
 }
 
 function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }) {
+  const a = loanName(thread.a), b = loanName(thread.b);
+  const meaning = whereFrom(thread.sources);
   return (
     <div className="mt-3 space-y-4">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.12em] text-walnut/80">Thread</p>
-        <p className="text-2xl font-semibold">Shared {thread.kind}</p>
+        <p className="text-xs font-medium uppercase tracking-[0.12em] text-walnut/80">Connection</p>
+        <p className="text-2xl font-semibold">{sharedLabel(thread.kind)}</p>
         <p className="mt-1 text-sm">
-          {thread.a} ↔ {thread.b}
+          {a} and {b} share {sharedPhrase(thread.kind)}.
+        </p>
+        <p className="text-sm text-walnut/80">
+          Original IDs: {thread.a} and {thread.b}
         </p>
       </div>
-      {thread.note && <p className="text-sm leading-relaxed">{thread.note}</p>}
+      {thread.note && (
+        <p className="text-sm leading-relaxed">
+          <span className="font-medium">Hazel&rsquo;s note: </span>
+          {thread.note}
+        </p>
+      )}
+      <Section title="Why it matters">
+        <p className="text-sm leading-relaxed">
+          Applications that share a detail can be connected, but people also share phones, addresses and employers for
+          ordinary reasons. {NOT_PROOF} The rarer the shared detail is across all the loans, the more it counts.
+        </p>
+      </Section>
       {thread.explained && <Explanation thread={thread} />}
+      <Section title="Where this comes from">
+        {meaning.map((m) => (
+          <p key={m} className="mb-1 text-sm">
+            {m}
+          </p>
+        ))}
+        <SourceList sources={thread.sources} />
+      </Section>
       <div className="rounded border border-walnut/10 bg-cream/60 p-3 text-[13px]">
         {thread.explained ? (
           <p>
@@ -106,11 +190,12 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
             {threadWidth(thread.weight).toFixed(1)} px
           </p>
         )}
-        <p className="mt-1 text-walnut/80">Design weight from rarity, not a fraud probability. A connection is not proof.</p>
+        <p className="mt-1 text-walnut/80">A design weight from rarity, not a fraud probability.</p>
       </div>
       <Provenance
         rows={[
           ["Found by", `${thread.tool ?? "unknown tool"}`],
+          ["Kind", thread.kind],
           ["Event", `seq ${thread.firstSeq}`],
           ["Time", thread.ts],
           ["Edge id", thread.id],
@@ -119,9 +204,6 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
         simulated={thread.simulated}
         requestIds={crsRequestIds(thread.sources)}
       />
-      <Section title="Sources">
-        <SourceList sources={thread.sources} />
-      </Section>
     </div>
   );
 }
@@ -131,7 +213,7 @@ function Explanation({ thread }: { thread: BoardThread }) {
   const x = thread.explained!;
   return (
     <section className="rounded border border-sage bg-sage/15 p-3 text-[13px]">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-walnut">Explained · no longer a reason to suspect</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-walnut">Checked: there is an innocent explanation</h3>
       <p className="mt-1.5 leading-snug">{x.reason}</p>
       <dl className="mt-2 grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1">
         <dt className="text-walnut/80">Explained by</dt>
@@ -142,7 +224,7 @@ function Explanation({ thread }: { thread: BoardThread }) {
       <div className="mt-2">
         <SourceList sources={x.sources} />
       </div>
-      <p className="mt-2 text-walnut/80">The shared {thread.kind} is still on the board as a fact (pale dashed line).</p>
+      <p className="mt-2 text-walnut/80">The shared detail stays on the board as a fact (the pale dashed thread), but it is no longer a reason to suspect.</p>
     </section>
   );
 }
@@ -159,14 +241,17 @@ function Provenance({
   requestIds: string[];
 }) {
   return (
-    <Section title="Provenance">
-      <dl className="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1.5 text-sm">
+    <details className="text-sm">
+      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.12em] text-walnut/80">Technical details</summary>
+      <dl className="mt-2 grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1.5">
         {rows.map(([k, v]) => (
           <Row key={k} k={k} v={v} />
         ))}
+        <Row k="Data" v={simulated ? "Simulated (made-up sample data)" : "Recorded"} />
+        <Row k="Source feed" v={mode === "preview" ? "Built-in sample" : mode.toUpperCase()} />
         <Row k="CRS RequestID" v={requestIds.length ? requestIds.join(", ") : "none (no CRS call on this row)"} />
       </dl>
-    </Section>
+    </details>
   );
 }
 

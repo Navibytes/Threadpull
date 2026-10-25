@@ -3,7 +3,9 @@
 import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { memo } from "react";
-import type { BoardCard, BoardThread, SourceRef } from "@/lib/events";
+import { cardFinding, loanName, loanShortName, type BoardCard, type CardFinding, type SourceRef } from "@/lib/events";
+
+export { cardFinding };
 import { cardSize, cardTilt } from "./layout";
 import { Pushpin } from "./pushpin";
 import { StatusChip } from "./status-chip";
@@ -12,7 +14,6 @@ import { StatusChip } from "./status-chip";
 // `lead`: first pinned by lead_opened, so it is drawn as the case folder.
 // `showSeq`: the board's "event numbers" debug option.
 // `finding`: why the card is on the board, from its recorded threads (cardFinding).
-export type CardFinding = { text: string; explained: boolean };
 export type IndexCardNodeType = Node<
   { card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean; finding: CardFinding | null },
   "indexCard"
@@ -36,30 +37,6 @@ export function sourcesInWords(sources: SourceRef[]) {
   if (sources.length === 1 && sources[0].kind === "row") return "1 data-room row";
   const kinds = [...new Set(sources.map((s) => SOURCE_WORD[s.kind]))];
   return `${sources.length} source${sources.length === 1 ? "" : "s"}: ${kinds.join(", ")}`;
-}
-
-// Why a card is on the board, in one line, from the link_found threads it is on. A lead names how many loans
-// it is linked to and by what; a linked card names its strongest link. An explained link keeps its fact and is
-// marked explained. Nothing here is inferred beyond the recorded threads.
-const kindWords = (kind: string) => kind.replace(/_/g, " ");
-export function cardFinding(id: string, lead: boolean, threads: BoardThread[]): CardFinding | null {
-  const links = threads
-    .filter((t) => t.a === id || t.b === id)
-    .sort((x, y) => Number(!!x.explained) - Number(!!y.explained) || y.weight - x.weight);
-  if (links.length === 0) return lead ? { text: "No links found yet", explained: false } : null;
-  const other = (t: BoardThread) => (t.a === id ? t.b : t.a);
-  if (lead) {
-    const loans = new Set(links.map(other)).size;
-    const kinds = [...new Set(links.map((t) => kindWords(t.kind)))];
-    const explained = links.filter((t) => t.explained).length;
-    const text = `Linked to ${loans} loan${loans === 1 ? "" : "s"} by ${kinds.join(", ")}`;
-    return { text: explained ? `${text} · ${explained} explained` : text, explained: explained === links.length };
-  }
-  const [top] = links;
-  const more = links.length > 1 ? ` +${links.length - 1} more` : "";
-  return top.explained
-    ? { text: `Shared ${kindWords(top.kind)} with ${other(top)}${more}`, explained: true }
-    : { text: `Shares ${kindWords(top.kind)} with ${other(top)}${more}`, explained: false };
 }
 
 // Level of detail. At or above FULL_ZOOM every label renders at 12px or more, so the full face shows. Below it
@@ -138,8 +115,12 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
           className={`${lead ? "folder rounded-[3px] px-5 pb-4 pt-4" : `index-ruled worn-${h % 4} px-4 pb-3 pt-5`} flex h-full flex-col text-walnut`}
           style={{ backgroundPosition: lead ? undefined : `0 0, 0 0, ${-(h % 300)}px ${-(h % 200)}px` }}
         >
-          <h3 className="font-semibold leading-none tracking-tight tabular-nums" style={{ fontSize: idPx(zoom, lead, full) }}>
-            {card.id}
+          <h3
+            className="font-semibold leading-none tracking-tight tabular-nums"
+            style={{ fontSize: idPx(zoom, lead, full) }}
+            title={`Original ID: ${card.id}`}
+          >
+            {full ? loanName(card.id) : loanShortName(card.id)}
           </h3>
 
           {full && (
@@ -150,20 +131,23 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
               <p
                 className={
                   lead
-                    ? "mt-3 line-clamp-2 text-[14px] font-medium leading-[19px]"
-                    : "mt-1 truncate text-[13px] font-medium leading-[22px]"
+                    ? "mt-3 line-clamp-3 text-[14px] font-medium leading-[19px]"
+                    : "mt-1 line-clamp-2 text-[13px] font-medium leading-[19px]"
                 }
                 title={finding?.text}
               >
-                {finding?.text ?? "Loan application"}
+                {finding?.text ?? "A loan application on the board."}
               </p>
-              {/* 3 and 4: its recorded status, if any, then where the card's facts come from */}
-              <div className={`flex min-w-0 flex-wrap items-center gap-x-2 ${lead ? "mt-1.5" : ""}`}>
-                {showStatus && <StatusChip status={card.status} />}
+              {/* 3: its recorded status. A loan with no status row yet has no decision, which is not a status. */}
+              <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2">
+                {showStatus ? (
+                  <StatusChip status={card.status} />
+                ) : (
+                  lead && <p className="text-[13px] leading-[22px] text-walnut/80">No decision recorded yet.</p>
+                )}
                 {!lead && finding?.explained && (
                   <span className="rounded-sm bg-sage/25 px-1.5 text-[13px] font-medium leading-5 text-[#3f5233]">Explained</span>
                 )}
-                <p className="truncate text-[13px] leading-[22px] text-walnut/80">{sourcesInWords(card.sources)}</p>
               </div>
             </>
           )}
