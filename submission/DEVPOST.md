@@ -16,6 +16,18 @@ Upload the loan tape. We tell you which borrowers don't exist, which ones only l
 
 Fraud investigator on a bank's portfolio-acquisition due-diligence team.
 
+## Try it out
+
+- **Live demo:** https://threadpull.vercel.app
+  - Held-out seed 99 run on the board: https://threadpull.vercel.app/board?run=r99-20261025T102031
+  - Its CRO screen: https://threadpull.vercel.app/cro?run=r99-20261025T102031
+  - Seed 13 proof run: https://threadpull.vercel.app/board?run=r13-20261025T094302
+  - Ask once, remember forever (rule R-001 taking threads down): https://threadpull.vercel.app/board?run=r13-20261025T091630
+- **Upload a tape → Investigate** (`/upload`) runs Hazel live on the CRS sandbox and Claude; it asks for the team's
+  passcode because it spends real API calls. Ask us at the table.
+- **Code:** https://github.com/Navibytes/Threadpull (README: setup, where CRS and Claude are used, real vs simulated,
+  known limits; `docs/PROOF.md`: every measured number).
+
 ## Inspiration
 
 Banks buy pools of hundreds or thousands of auto loans from dealers. Before buying, they review only a sample, and
@@ -42,6 +54,11 @@ Hazel, the investigator agent, works a 1,000-loan portfolio like a detective at 
   buyback demands and a revised bid. A person approves. Hazel can't buy, reject, sign or send anything.
 - **Ignores instructions hidden in documents.** A pay stub that tells the reviewer to clear the loan is flagged
   and changes nothing.
+- **From a tape to a decision.** Upload a JSON or CSV loan tape; intake validates every row and refuses any SSN that
+  could belong to a real person; one click starts the investigation, the board shows its progress live, and the CRO
+  screen opens on the result.
+- **Spends what's left wisely.** When no lead is left, a verification sweep spends the rest of the budget checking the
+  largest unverified balances, shown on the board as spot checks, not suspects.
 
 ## Results (generated from recorded runs, `docs/PROOF.md`)
 
