@@ -1,0 +1,16 @@
+# Never uploaded to Vercel: local secrets, local runs and generated data (the build regenerates seeds 13 and 99).
+# Anchored with a leading slash: a bare "runs/" would also drop lib/runs/.
+.env
+.env.*
+!.env.example
+/runs/
+/data/out/
+/data/keys/
+/data/patterns/heldout/
+/.next/
+/node_modules/
+/.agents/
+/.scratch/
+/backend/
+*.pdf
+.DS_Store
