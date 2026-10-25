@@ -7,7 +7,7 @@
 
 **Blocked by:** 05 Hazel v1: the first ring, end to end; 06 More CRS tools and recovery cases
 
-**Status:** in progress (A). The four checks are done (PR #4, `lib/evidence/explanations.ts`); taking strings down in the graph is done (`lib/evidence/withdraw.ts`); waiting on 05 (Hazel writes the rows) and C (board, Twin Compare UI).
+**Status:** in progress (A). Evidence side done: the four checks (PR #4, `lib/evidence/explanations.ts`), taking strings down in the graph (PR #7, `lib/evidence/withdraw.ts`), payloads checked against the event contract (PR #9), and Hazel writes the rows (D, PR #13). Left: the UI (falling string, Twin Compare), which needs C's board on `main`.
 
 - [x] New tools (names and costs in `lib/contracts/tool-result.ts`): `check_address` (address-type lookup, labeled simulated), `check_household`, `check_employer` (headcount and group size in the pool), and `dealer_timeline` for month-end bursts. Each returns a `ToolResult` built with `toolOk` / `toolError`.
   - `check_employer` never takes a string down by itself: it reports `large_employer` / `small_employer` / `implausible`, and clearing a large employer is R-001's or a human's job (ticket 11), so the ask-once moment stays in the demo.

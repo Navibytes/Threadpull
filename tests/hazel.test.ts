@@ -8,6 +8,7 @@ import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import type { Loan } from "@/lib/contracts/loan";
+import { scanDocument } from "@/lib/evidence";
 import { loadReference, type Reference } from "@/lib/ingest/reference";
 import { HAZEL_MODEL, runHazel, type HazelRun } from "@/lib/agent";
 import { MemoryRuleStore } from "@/lib/rules";
@@ -140,6 +141,25 @@ describe("the code's guarantees hold whatever the model does", () => {
     const seenByModel = JSON.stringify(claude.requests.map((r) => r.body.messages));
     expect(seenByModel).not.toContain("ignore all prior instructions");
     expect(JSON.stringify(out.events)).not.toContain("ignore all prior instructions");
+  });
+
+  test("an injected pay stub changes no status, even when the model does what it asks", async () => {
+    const [doc] = key.injected_docs, loan = doc.replace(/-PS$/, "");
+    // the same tape with the injected lines cut out of that one pay stub
+    const cut = new Set(scanDocument(loans.find((l) => l.loan_id === loan)!.documents.find((d) => d.doc_id === doc)!).matches.map((m) => m.line));
+    const clean = loans.map((l) => l.loan_id !== loan ? l : { ...l, documents: l.documents.map((d) => d.doc_id !== doc ? d
+      : { ...d, text: d.text.split("\n").filter((_, i) => !cut.has(i + 1)).join("\n") }) });
+    const script = (): (Call[] | string)[] => [[{ name: "inspect_loan", input: { loan_id: loan } }],
+      [{ name: "close_lead", input: { loan_id: loan, proposed_status: "No material anomaly found" } }], "done"];
+    const [attacked, control] = await Promise.all([run(script()).done, run(script(), { loans: clean }).done]);
+    expect(ofType(attacked.events, "attack_detected")).toHaveLength(1);
+    expect(ofType(control.events, "attack_detected")).toHaveLength(0);
+    // apart from the attack row itself, the run is the same row for row: statuses, reasons, budget
+    const rows = (o: HazelRun) => o.events.filter((e) => e.type !== "attack_detected")
+      .map(({ type, loan_ids, tool, result, budget }) => ({ type, loan_ids, tool, result, spent: budget.spent }));
+    expect(rows(attacked)).toEqual(rows(control));
+    expect(ofType(attacked.events, "status_changed")).toHaveLength(1);
+    expect(attacked.statuses.get(loan)).toBe(control.statuses.get(loan)!);
   });
 
   test("ask_human: code routes and scores; the question waits; the loan stays under review", async () => {
