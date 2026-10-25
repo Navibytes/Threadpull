@@ -6,6 +6,7 @@ import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import { LoanSchema, type Loan } from "@/lib/contracts/loan";
+import { uploadRoots, writableRuns } from "@/lib/demo";
 import { TAPE_ID } from "@/lib/ingest/intake";
 import { loadTape } from "@/lib/ingest/tapes";
 import { buybackDemands, documentRequests, type BuybackDemand, type DocumentRequest } from "./drafts";
@@ -29,7 +30,15 @@ export const runsRoot = () => (process.env.THREADPULL_RUNS
 export type RunFiles = { meta: RunMeta; events: Event[]; skipped: number };
 
 /** One run's meta and event rows, in order. A malformed row is skipped and counted, never repaired. */
-export function readRun(runId: string, root = runsRoot()): RunFiles | null {
+/** The folders runs are read from: runsRoot, then where this server writes new runs (the same folder locally). */
+const runRoots = () => [...new Set([runsRoot(), writableRuns()])];
+
+export function readRun(runId: string, root?: string): RunFiles | null {
+  for (const r of root ? [root] : runRoots()) { const run = readRunIn(runId, r); if (run) return run; }
+  return null;
+}
+
+function readRunIn(runId: string, root: string): RunFiles | null {
   if (!RUN_ID.test(runId)) return null;
   const dir = join(/*turbopackIgnore: true*/ root, runId);
   const file = join(dir, "events.jsonl");
@@ -47,7 +56,11 @@ export function readRun(runId: string, root = runsRoot()): RunFiles | null {
   return { meta, events: events.sort((a, b) => a.seq - b.seq), skipped };
 }
 
-export function listRuns(root = runsRoot()): RunSummary[] {
+export function listRuns(root?: string): RunSummary[] {
+  if (!root) {
+    const seen = new Set<string>();
+    return runRoots().flatMap((r) => listRuns(r)).filter((x) => !seen.has(x.run_id) && seen.add(x.run_id));
+  }
   if (!existsSync(/*turbopackIgnore: true*/ root)) return [];
   return readdirSync(/*turbopackIgnore: true*/ root)
     .filter((id) => RUN_ID.test(id) && existsSync(/*turbopackIgnore: true*/ join(root, id, "events.jsonl")))
@@ -64,7 +77,8 @@ const loansCache = new Map<number, Loan[]>();
 export async function loansFor(meta: RunMeta): Promise<Loan[]> {
   if (meta.tape_id !== undefined) { // a run of an uploaded tape (lib/runs/tape-run.ts) reads that tape's accepted loans
     if (!TAPE_ID.test(meta.tape_id)) throw new Error(`run ${meta.run_id} names no valid tape`);
-    return loadTape(join(process.cwd(), "data", "out", "uploads"), meta.tape_id).loans;
+    for (const root of uploadRoots()) { try { return loadTape(root, meta.tape_id).loans; } catch { /* not in this folder */ } }
+    throw new Error(`the loans of uploaded tape ${meta.tape_id} are not on this server (an upload is kept on the server that took it)`);
   }
   if (!Number.isInteger(meta.seed)) throw new Error(`run ${meta.run_id} has no whole-number seed`); // the seed becomes part of a path
   const cached = loansCache.get(meta.seed);

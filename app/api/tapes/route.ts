@@ -1,10 +1,10 @@
 // POST /api/tapes: upload a loan tape (JSON or CSV), as a multipart field "tape" or as the raw request body.
-// Returns the intake report; accepted loans are kept under data/out/uploads/<tape_id>/ for a run to use.
+// Returns the intake report; accepted loans are kept under data/out/uploads/<tape_id>/ for a run to use (on a serverless
+// host, its /tmp: best effort, so Investigate also sends the tape again).
 // 201 saved · 400 unreadable tape · 413 too large · 422 no loan could be accepted (nothing saved).
-import { join } from "node:path";
 import { IntakeError, intakeTape } from "@/lib/ingest/intake";
 import { saveTape } from "@/lib/ingest/tapes";
-import { publicDemo } from "@/lib/demo";
+import { publicDemo, writableUploads } from "@/lib/demo";
 
 export const runtime = "nodejs";
 
@@ -26,10 +26,8 @@ export async function POST(req: Request) {
   try {
     const intake = intakeTape(text);
     if (!intake.report.accepted) return Response.json({ error: "no loan in the tape could be accepted", report: intake.report }, { status: 422 });
-    // the public demo reads the tape and reports on it, but keeps nothing (its disk is read-only and shared by no one)
-    if (publicDemo()) return Response.json({ report: intake.report, demo: true }, { status: 201 });
-    saveTape(join(process.cwd(), "data", "out", "uploads"), intake); // literal segments: keeps the build from tracing the whole repo
-    return Response.json({ report: intake.report }, { status: 201 });
+    saveTape(writableUploads(), intake);
+    return Response.json({ report: intake.report, ...(publicDemo() ? { demo: true } : {}) }, { status: 201 });
   } catch (e) {
     if (e instanceof IntakeError) return Response.json({ error: e.message }, { status: 400 });
     throw e;
