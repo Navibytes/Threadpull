@@ -49,7 +49,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [given, runId, client, sc, replay, take],
   );
-  const base = runId ? `/?run=${encodeURIComponent(runId)}` : `/?scenario=${sc.id}`;
+  const base = runId ? `/board?run=${encodeURIComponent(runId)}` : `/board?scenario=${sc.id}`;
   const { board, errors, animateAfterSeq, entry } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
@@ -157,7 +157,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
                     />
 {/* the wordmark is the visible brand; the status line is for screen readers only */}
           {/* the wordmark is also the way back to the landing page */}
-          <Link href="/landing" aria-label="Threadpull, back to the landing page" title="Back to the landing page" className="relative z-30 -mt-2 rounded-md focus-visible:outline-2 focus-visible:outline-terracotta">
+          <Link href="/" aria-label="Threadpull, back to the landing page" title="Back to the landing page" className="relative z-30 -mt-2 rounded-md focus-visible:outline-2 focus-visible:outline-terracotta">
             <img src="/brand/threadpull-wordmark.png" alt="" draggable={false} className="h-[clamp(100px,18vh,190px)] w-auto select-none" />
           </Link>
           <div className="sr-only">
@@ -179,7 +179,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
               <select
                 value={sc.id}
                 title={sc.summary}
-                onChange={(e) => router.push(`/?scenario=${e.target.value}${replay ? `&replay=${replay}` : ""}`)}
+                onChange={(e) => router.push(`/board?scenario=${e.target.value}${replay ? `&replay=${replay}` : ""}`)}
                 className="rounded-sm border border-walnut/25 bg-paper px-1 py-0.5"
               >
                 {SCENARIOS.map((s) => (

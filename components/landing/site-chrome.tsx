@@ -11,10 +11,10 @@ export { DEMO_HREF };
 
 /** Section links on the landing page; the other pages point back at them. */
 export const SITE_NAV = (onLanding: boolean): NavLink[] => [
-  { href: onLanding ? "#promises" : "/landing#promises", label: "What it does" },
-  { href: onLanding ? "#how" : "/landing#how", label: "How it works" },
-  { href: onLanding ? "#limits" : "/landing#limits", label: "Limits in code" },
-  { href: onLanding ? "#responsible" : "/landing#responsible", label: "Responsible design" },
+  { href: onLanding ? "#promises" : "/#promises", label: "What it does" },
+  { href: onLanding ? "#how" : "/#how", label: "How it works" },
+  { href: onLanding ? "#limits" : "/#limits", label: "Limits in code" },
+  { href: onLanding ? "#responsible" : "/#responsible", label: "Responsible design" },
   { href: "/upload", label: "Upload a tape", current: !onLanding },
 ];
 
@@ -27,7 +27,7 @@ export function SiteHeader({ nav }: { nav: NavLink[] }) {
       </a>
       <header className={s.header}>
         <div className={`${s.gutter} flex items-center justify-between gap-4 py-2.5`}>
-          <Link href="/landing" aria-label="Threadpull home" className="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-terracotta">
+          <Link href="/" aria-label="Threadpull home" className="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-terracotta">
             <Image src="/hazel/threadpull-full-logo.png" alt="Threadpull" width={1998} height={787} priority
               className="h-11 w-auto sm:h-13" sizes="160px" />
           </Link>
@@ -52,7 +52,7 @@ export function SiteHeader({ nav }: { nav: NavLink[] }) {
 }
 
 export function SiteFooter({ onLanding }: { onLanding: boolean }) {
-  const at = (hash: string) => (onLanding ? hash : `/landing${hash}`);
+  const at = (hash: string) => (onLanding ? hash : `/${hash}`);
   return (
     <footer className={`${s.footer} mt-10 pt-10 pb-12`}>
       <div className={`${s.gutter} flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center`}>

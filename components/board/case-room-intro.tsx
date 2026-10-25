@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./case-room-intro.module.css";
+import { INTRO_SEEN_KEY as SEEN_KEY } from "./intro-seen";
 
-const SEEN_KEY = "threadpull:case-room-intro:v1";
 const INTRO_DURATION_MS = 2900;
 
 type Phase = "checking" | "playing" | "finished";

@@ -36,7 +36,7 @@ docs/
   PROOF.md               ✅ status note (no measured claims yet); generated results ○ (ticket 13)   D
 
 app/                                                                                 C
-  page.tsx               ✅ investigator view: filing drawer + corkboard + evidence panel + notebook (`/?run=<id>` plays a Supabase run)
+  board/page.tsx         ✅ investigator view at /board (the landing page is the home page, /): filing drawer + corkboard + evidence panel + notebook (`/?run=<id>` plays a Supabase run)
   dashboard/page.tsx     ✅ Portfolio Intelligence: status counts and run metrics from recorded rows, Hazel's Case Notes
   cro/page.tsx           ✅ CRO screen: reads a run with `?run=<id>`, shows the report, takes approve/override   B
   landing/page.tsx       ✅ landing page: hero corkboard, promises, how it works, limits      A

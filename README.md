@@ -21,7 +21,7 @@ bun test
 
 `bun run data --no-db` creates the seed 13 files under `data/out/seed13/` and the separate answer key under `data/keys/seed13/`. Those generated directories are gitignored. To seed Supabase instead, fill in the server-only values in `.env.local` and run `bun run data`. See [data/README.md](data/README.md) for the loan shape, patterns, and output files.
 
-`bun run dev` starts the app: the board at `/?run=<run_id>`, the CRO screen at `/cro`. `bun run hazel` runs an investigation (needs `ANTHROPIC_API_KEY` and CRS credentials, or `--crs recorded`). A one-command demo with replay speed control is still open (ticket 15).
+`bun run dev` starts the app: the board at `/board?run=<run_id>`, the CRO screen at `/cro`. `bun run hazel` runs an investigation (needs `ANTHROPIC_API_KEY` and CRS credentials, or `--crs recorded`). A one-command demo with replay speed control is still open (ticket 15).
 
 ## Claude and CRS
 
@@ -32,7 +32,7 @@ CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sand
 ## From a loan tape to a decision, in the app
 
 1. `bun run dev`, then open `/upload`. Drop a JSON or CSV loan tape (the CSV template is on the page; `data/out/seed13/loans.json` is a 1,000-loan JSON tape). Intake validates every row, refuses any SSN that could belong to a real person, flags documents with instruction-like text, and shows the report.
-2. **Investigate these N loans** starts Hazel on the accepted loans on the server (live CRS sandbox and Claude; needs `ANTHROPIC_API_KEY`, `CRS_USERNAME`, `CRS_PASSWORD`), one run at a time. The board follows the run live at `/?run=<run_id>`; the filing drawer and Twin Compare read the tape's loans.
+2. **Investigate these N loans** starts Hazel on the accepted loans on the server (live CRS sandbox and Claude; needs `ANTHROPIC_API_KEY`, `CRS_USERNAME`, `CRS_PASSWORD`), one run at a time. The board follows the run live at `/board?run=<run_id>`; the filing drawer and Twin Compare read the tape's loans.
 3. `/cro?run=<run_id>`: the deal, the questions for a person, and Approve / Override on each proposed action.
 
 An uploaded tape has no address or employer reference data, so `check_address` and `check_employer` answer "unknown" rather than guess, and no thread comes down on them; a generated seed has both.
@@ -51,7 +51,7 @@ Without `--rules` every run starts with no rules, as the proof runs do.
 
 ## Real versus simulated
 
-The generator, normalizer, contracts, graph/agent/rule prototypes, and proof helpers are local code. Portfolio contents are synthetic. The address/employer reference lookups generated for the demo are simulated; they are not live external verification. Hazel's loop is tested with a scripted stand-in for Claude; live runs are written to the Supabase `events` table and shown on the board at `/?run=<run_id>`. The held-out seed 99 hasn't been run yet and no evaluator output exists, so the repo makes no measured performance or cost claims. See [docs/PROOF.md](docs/PROOF.md) for current measurement status.
+The generator, normalizer, contracts, graph/agent/rule prototypes, and proof helpers are local code. Portfolio contents are synthetic. The address/employer reference lookups generated for the demo are simulated; they are not live external verification. Hazel's loop is tested with a scripted stand-in for Claude; live runs are written to the Supabase `events` table and shown on the board at `/board?run=<run_id>`. The held-out seed 99 hasn't been run yet and no evaluator output exists, so the repo makes no measured performance or cost claims. See [docs/PROOF.md](docs/PROOF.md) for current measurement status.
 
 ## Known limits
 

@@ -6,6 +6,7 @@
 // carries instructions, resolved when it's in.
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { replayIntroNextTime } from "@/components/board/intro-seen";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { IntakeReportView } from "./intake-report";
 import { sendTape, TEMPLATE_URL, type UploadState } from "./upload-model";
@@ -30,7 +31,8 @@ export function UploadDesk() {
       const res = await fetch(`/api/tapes/${encodeURIComponent(tapeId)}/runs`, { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((body as { error?: string }).error ?? `The server answered HTTP ${res.status}.`);
-      router.push(`/?run=${encodeURIComponent((body as { run_id: string }).run_id)}`);
+      replayIntroNextTime(); // arriving from an upload always opens on the opening scene
+      router.push(`/board?run=${encodeURIComponent((body as { run_id: string }).run_id)}`);
     } catch (e) {
       setRunError(e instanceof Error ? e.message : String(e));
       setStarting(false);

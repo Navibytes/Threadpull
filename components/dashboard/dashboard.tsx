@@ -52,7 +52,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
   const runId = runs.selected;
   // the cases on this run's board, so the viewer can switch between them without going back to the board
   const leads = useMemo(() => (eventRows ? reduceEvents(eventRows).cards.filter((c) => c.pinnedBy === "lead_opened").map((c) => c.id) : []), [eventRows]);
-  const boardHref = sample ? `/?scenario=${scenId}` : !runId ? "/" : `/?run=${encodeURIComponent(runId)}`;
+  const boardHref = sample ? `/board?scenario=${scenId}` : !runId ? "/board" : `/board?run=${encodeURIComponent(runId)}`;
   // one case: its summary from the run's rows, and every row that names its loan (newest first)
   const caseSum = useMemo(() => (caseId && eventRows ? summarizeCase(reduceEvents(eventRows), caseId) : null), [caseId, eventRows]);
   const caseRows = useMemo(() => (caseId && eventRows ? eventRows.filter((e) => e.loan_ids.includes(caseId)).reverse() : []), [caseId, eventRows]);
@@ -64,7 +64,7 @@ export function Dashboard({ run, seed, sample, caseId, scenario }: { run?: strin
     <div className="dash-bg min-h-dvh px-3 py-4 text-[16px] leading-[1.65] sm:px-6 sm:py-8">
       <div className="dash-sheet mx-auto max-w-[1040px] min-[1700px]:max-w-[1200px]">
         <header className="dash-rule flex items-center justify-between gap-3 border-b px-5 py-3.5 sm:px-10">
-          <Link href="/" aria-label="Threadpull, investigation board" className="rounded-md">
+          <Link href="/" aria-label="Threadpull, home" className="rounded-md">
             <img src="/brand/threadpull-wordmark.png" alt="Threadpull" className="h-9 w-auto" draggable={false} />
           </Link>
           <Link href={boardHref} className="dash-btn dash-btn-dark">
