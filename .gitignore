@@ -16,4 +16,6 @@ data/keys/
 supabase/.temp/
 .next/
 next-env.d.ts
+# written by `next dev` (agentRules), not ours
+AGENTS.md
 *.tsbuildinfo
