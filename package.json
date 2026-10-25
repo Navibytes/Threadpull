@@ -12,7 +12,8 @@
     "freeze:check": "bun run data/freeze.ts",
     "test": "bun test",
     "hazel": "bun run eval/hazel-run.ts",
-    "eval": "bun run eval/evaluate.ts"
+    "eval": "bun run eval/evaluate.ts",
+    "haiku:trial": "bun run eval/haiku-extract.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.133.0",

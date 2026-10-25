@@ -41,6 +41,7 @@ The generator, normalizer, contracts, graph/agent/rule prototypes, and proof hel
 - There is no sign-in. The name on a decision is whatever is typed into "Deciding as", so it is not proof of who decided, and anyone who can open the page can write a memo, which spends the model API key. Run it only on a trusted machine.
 - `/dashboard` shows status counts and run metrics only.
 - Saved rules and questions live in memory for one run; the Supabase `rules`/`questions` tables are not built (ticket 11).
+- Pay stubs in the generated layout are read by a fixed-label parser. A stub it can't read (another payroll system, a table, a scan) is read by Claude Haiku in live runs (`bun run hazel`), and code accepts it only if every value is printed on the line Haiku cites; otherwise the stub is reported unreadable. `bun run haiku:trial` measures this on 102 stubs; the generated portfolios contain no such stubs, so the demo and proof runs never call it. Text only: no PDF or image OCR.
 - Address and employer lookups are simulated stand-ins and are labeled simulated wherever they appear.
 - The Python modules in `backend/` predate the TypeScript architecture and are not used by it.
 - Issue 13 proof helpers need the held-out set, the final TypeScript detector/baseline, and recorded runs before measured results can be published.

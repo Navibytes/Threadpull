@@ -11,3 +11,6 @@ export const MEMO_MAX_TOKENS = 4_000;
 export const HAZEL_MAX_ITERATIONS = 40;
 /** Server-side refusal fallback ("default" routing), Claude API only. */
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
+/** Reads a pay stub the fixed-label parser can't (ticket 08, lib/agent/extractor.ts); code verifies every value it returns. */
+export const EXTRACT_MODEL = "claude-haiku-4-5-20251001";
+export const EXTRACT_MAX_TOKENS = 1_024;

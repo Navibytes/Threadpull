@@ -16,7 +16,7 @@ import {
 import { budgetSpentRow, recoveryRow } from "@/lib/event-rows";
 import {
   attackEvent, withdrawAddress, withdrawBursts, withdrawHousehold, type AddressCheck, type ClueExplained,
-  type DealerTimeline, type EmployerCheck, type HouseholdCheck,
+  type DealerTimeline, type EmployerCheck, type HouseholdCheck, type StubExtractor,
 } from "@/lib/evidence";
 import type { LoanConnections } from "@/lib/graph";
 import type { Reference } from "@/lib/ingest/reference";
@@ -28,7 +28,7 @@ import { EventLog, type EventSink } from "./event-log";
 import { FALLBACK_BETA, HAZEL_EFFORT, HAZEL_MAX_ITERATIONS, HAZEL_MAX_TOKENS, HAZEL_MODEL } from "./models";
 import { HAZEL_SYSTEM } from "./prompt";
 import { decideStatus, type RunEvidence } from "./status";
-import { createDataRoom, runTool, TOOLS, type HazelToolName } from "./tools";
+import { createDataRoom, prepareTool, runTool, TOOLS, type HazelToolName } from "./tools";
 
 /** link_found rows per find_connections call: the board shows 20–30 cards, not every weak thread. */
 const MAX_LINKS_PER_QUERY = 8;
@@ -45,6 +45,7 @@ export type HazelOptions = {
   seed?: number; // the generated portfolio's seed, written on run_started so the board loads the same loans
   reference: Reference;
   anthropic: Anthropic;
+  documentReader?: StubExtractor; // reads pay stubs the parser can't (modelStubExtractor); without one they stay unreadable
   crs: CrsClient;
   rules: RuleStore;
   budget?: number;
@@ -68,7 +69,7 @@ const note = z.string().max(600).optional().describe("At most two sentences: wha
 const json = (x: unknown) => JSON.stringify(x);
 
 export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
-  const room = createDataRoom(opts.loans, opts.reference);
+  const room = createDataRoom(opts.loans, opts.reference, opts.documentReader);
   let callLoans: string[] = []; // loans of the paid call in progress, for its budget_spent row
   // Paid calls run one at a time even when Claude asks for several at once, so each budget_spent row carries its own
   // loan and the running total the board shows goes 3, 6, 9 instead of jumping. Free tools still run in parallel.
@@ -213,9 +214,10 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     return betaZodTool({
       name, description: `${t.description} (${TOOL_SPECS[name].unit})`, inputSchema: t.input.extend(extra),
       run: async ({ note: hazelNote, ...input }) => {
+        const run = async () => { await prepareTool(room, name, input); return runTool(room, name, input); };
         const result = TOOL_SPECS[name].acorns > 0
-          ? await onePaidCallAtATime(loansIn(input), () => ledger.run(name, () => runTool(room, name, input)))
-          : runTool(room, name, input);
+          ? await onePaidCallAtATime(loansIn(input), () => ledger.run(name, run))
+          : await run();
         return record(name, input, hazelNote as string | undefined, result);
       },
     });

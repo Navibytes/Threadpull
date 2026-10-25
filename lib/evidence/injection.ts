@@ -35,8 +35,12 @@ const RULES: { id: string; re: RegExp }[] = [
   { id: "suppress_checks",
     re: /\b(do not|don't|never|skip|no need to|stop)\b[^.\n]{0,30}\b(run|perform|call|use)\b[^.\n]{0,30}\b(checks?|crs|verification|review|tools?)\b/i },
   { id: "claims_pre_clearance", re: /\b(pre-?cleared|pre-?verified|already (been )?(verified|approved|cleared)) by\b/i },
+  // aimed at a model that reads the document's fields (ticket 08 extraction): "note to the parser", "report these values"
+  { id: "addressed_to_reader", re: /\bnotes? (to|for) (the |any )?(automated |ai )?(parser|extractor|reader|model|system|ai|llm|bot)s?\b/i },
+  { id: "replace_values",
+    re: /\b(report|use|enter|record|output|return)\b[^.\n]{0,30}\b(those|these|the following|the correct|instead)\b[^.\n]{0,30}\b(values?|amounts?|figures|numbers)\b/i },
 ];
-const INVISIBLE = /[\u200B-\u200F\u2060-\u2064\uFEFF\u202A-\u202E]/;
+export const INVISIBLE = /[\u200B-\u200F\u2060-\u2064\uFEFF\u202A-\u202E]/;
 export const WITHHELD = "[withheld: instruction-like text, see attack_detected]";
 
 export type InjectionMatch = { rule: string; line: number; excerpt: string };

@@ -2,8 +2,12 @@
 export {
   compareDocuments, fingerprint, parsePayStub, payStubIssues, periodsElapsed, templateUsage,
   RARE_TEMPLATE_MAX_USES, RECYCLED_THRESHOLD,
-  type DocumentComparison, type PayStub, type StubIssue,
+  type DocumentComparison, type PayStub, type ReadStub, type StubIssue,
 } from "./documents";
+export {
+  datesOn, ExtractionSchema, extractionInput, PayStubReader, READ_TIMEOUT_MS, STUB_FIELDS, verifyExtraction, WITHHELD_LINE,
+  type Extraction, type StubExtractor, type StubRead, type Verified,
+} from "./extract";
 export {
   attackEvent, DOCUMENT_FIELDS, safeDocumentView, scanDocument, WITHHELD,
   type AttackEventResult, type InjectionMatch, type InjectionScan, type SafeDocumentView, type ScanSummary,
