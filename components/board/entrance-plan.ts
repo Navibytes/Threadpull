@@ -1,6 +1,6 @@
-// Paper → Pin → Thread: the one sequence the corkboard uses whenever evidence appears on screen. A card's paper
-// drops and settles, its pin presses in as the paper lands, then the yarn that ties it to its partner is drawn
-// and its label is revealed. The same plan serves two triggers (see planBoardEntrance):
+// Paper → Pin → Thread: the one sequence the corkboard uses whenever evidence appears on screen. A paper is thrown
+// onto the board and slams down, a pin is struck through it, and only then does the yarn shoot to its partner, snap
+// taut and settle, and its label appear. The same plan serves two triggers (see planBoardEntrance):
 //   - entering the board: everything already recorded is put back on the wall, staggered. Nothing here claims
 //     the evidence was just found; it is the same rows, laid out again.
 //   - a live row: only what that row added (a new card, a new thread, or both) animates, and everything already
@@ -9,19 +9,31 @@
 // deterministic: the same board and the same sequence numbers always give the same delays, so a replay matches a
 // live run, and no randomness or clock is read.
 
+// Durations are far above the usual 300ms for UI on purpose: this is the rare moment a board is laid out, and the
+// brief asks for it to feel physical. Everything below that is not a landing or a strike stays quick.
 export const ENTRANCE = {
-  paperMs: 240, // a paper drops, tilts into place and settles
-  pinMs: 120, // a pin pops and presses in
-  pinLeadMs: 190, // the pin starts this far into the paper's drop, so it lands as the paper settles
-  yarnLeadMs: 60, // the yarn starts as its end pins press in
-  yarnMs: 300, // the yarn is drawn along the real curve
-  labelMs: 160, // the label is revealed once the yarn is drawn
-  staggerMaxMs: 80, // gap between consecutive cards when there are few
-  budgetMs: 1300, // the planned sequence finishes within this, however many cards there are; the yarn can only mount after React Flow has measured the cards, which adds about 0.2s on a large board, so the end-to-end entrance lands near 1.5s
+  paperMs: 420, // a paper is thrown, slams, squashes, rebounds and wobbles to rest
+  impactAt: 0.56, // the paper hits the cork this far through its animation
+  pinLeadMs: 300, // the pin starts falling this far into the paper's animation, just after it lands
+  pinMs: 200, // the pin falls, strikes, rebounds and rests
+  pinStrikeAt: 0.52, // the pin hits the paper this far through its own animation
+  tiePinMs: 140, // the pins that tie a yarn at each end are quicker
+  vibrateMs: 190, // the paper shudders where the pin went in
+  yarnLeadMs: 140, // a beat between the pins landing and the yarn starting: the card is secured before the thread begins
+  yarnDrawMs: 280, // the yarn shoots from pin to pin along a taut line
+  yarnSettleMs: 170, // then snaps and sags into its resting curve
+  labelMs: 200, // the label appears once the yarn has finished
+  staggerMaxMs: 340, // gap between consecutive cards on a small board: each slam and pin reads on its own before the next
+  budgetMs: 1800, // the planned sequence finishes within this, however many cards there are; the yarn can only mount after React Flow has measured the cards, which adds about 0.2s on a large board
+  fxCardLimit: 12, // up to this many cards animating at once get dust, ripple and shudder; beyond it the board overlaps and keeps only the slam and pins
 } as const;
 
-// Delays in seconds (what Motion takes).
-export type CardEnter = { paper: number; pin: number };
+// Dev only: slows every duration and delay (the rehearsal page sets it) so the feel can be checked frame by frame.
+export const entranceTime = { scale: 1 };
+export const secs = (ms: number) => (Math.round(ms) / 1000) * entranceTime.scale;
+
+// Delays in seconds from when the element mounts (what Motion takes), already scaled by entranceTime.
+export type CardEnter = { paper: number; pin: number; fx: boolean };
 export type ThreadEnter = { pins: number; yarn: number; label: number };
 export type EntrancePlan = { cards: Map<string, CardEnter>; threads: Map<string, ThreadEnter>; totalMs: number };
 
@@ -30,7 +42,6 @@ export type PlanThread = { id: string; a: string; b: string; firstSeq: number };
 
 export const EMPTY_PLAN: EntrancePlan = { cards: new Map(), threads: new Map(), totalMs: 0 };
 
-const sec = (ms: number) => Math.round(ms) / 1000;
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const inOrder = <T extends { id: string; firstSeq: number }>(items: T[]) =>
   [...items].sort((x, y) => x.firstSeq - y.firstSeq || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
@@ -40,8 +51,9 @@ const spacing = (count: number, tailMs: number) =>
   count > 1 ? clamp((ENTRANCE.budgetMs - tailMs) / (count - 1), 0, ENTRANCE.staggerMaxMs) : 0;
 
 // Plans the cards in `animateCards` and the threads in `animateThreads`; anything else is already on the board.
-// Cards go in the order they were pinned (firstSeq), each a stagger after the one before. A thread waits for the
-// pins of the cards it joins that are animating, then its end pins press in, its yarn is drawn, its label appears.
+// Cards go in the order they were pinned (firstSeq), each a stagger after the one before; on a big board the gap
+// shrinks until the slams overlap. A thread waits for the pins of the cards it joins that are animating, then its
+// end pins strike, a beat passes, its yarn shoots across and settles, and its label appears.
 export function planEntrance(
   cards: PlanCard[],
   threads: PlanThread[],
@@ -49,17 +61,19 @@ export function planEntrance(
   animateThreads: ReadonlySet<string>,
 ): EntrancePlan {
   const paperToPinEnd = ENTRANCE.pinLeadMs + ENTRANCE.pinMs;
-  const threadMs = ENTRANCE.yarnLeadMs + ENTRANCE.yarnMs + ENTRANCE.labelMs;
+  const yarnTotal = ENTRANCE.yarnDrawMs + ENTRANCE.yarnSettleMs;
+  const threadMs = ENTRANCE.yarnLeadMs + yarnTotal + ENTRANCE.labelMs;
   const plan: EntrancePlan = { cards: new Map(), threads: new Map(), totalMs: 0 };
   const pinReady = new Map<string, number>();
 
   const newCards = inOrder(cards.filter((c) => animateCards.has(c.id)));
   const cardGap = spacing(newCards.length, paperToPinEnd + threadMs);
+  const fx = newCards.length <= ENTRANCE.fxCardLimit;
   newCards.forEach((c, i) => {
     const start = i * cardGap;
-    plan.cards.set(c.id, { paper: sec(start), pin: sec(start + ENTRANCE.pinLeadMs) });
+    plan.cards.set(c.id, { paper: secs(start), pin: secs(start + ENTRANCE.pinLeadMs), fx });
     pinReady.set(c.id, start + paperToPinEnd);
-    plan.totalMs = Math.max(plan.totalMs, start + paperToPinEnd);
+    plan.totalMs = Math.max(plan.totalMs, start + Math.max(paperToPinEnd, ENTRANCE.pinLeadMs + ENTRANCE.pinMs * ENTRANCE.pinStrikeAt + ENTRANCE.vibrateMs));
   });
 
   const newThreads = inOrder(threads.filter((t) => animateThreads.has(t.id)));
@@ -68,7 +82,7 @@ export function planEntrance(
   newThreads.forEach((t, j) => {
     const ready = Math.max(pinReady.get(t.a) ?? 0, pinReady.get(t.b) ?? 0) + j * threadGap;
     const yarn = ready + ENTRANCE.yarnLeadMs;
-    plan.threads.set(t.id, { pins: sec(ready), yarn: sec(yarn), label: sec(yarn + ENTRANCE.yarnMs) });
+    plan.threads.set(t.id, { pins: secs(ready), yarn: secs(yarn), label: secs(yarn + yarnTotal) });
     plan.totalMs = Math.max(plan.totalMs, ready + threadMs);
   });
 

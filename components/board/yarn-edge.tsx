@@ -10,16 +10,17 @@ import {
   type InternalNode,
 } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { sharedLabel, threadWidth, type BoardThread } from "@/lib/events";
-import { EASE_OUT, PinPop } from "./entrance";
-import { ENTRANCE, type ThreadEnter } from "./entrance-plan";
+import { PinStrike } from "./entrance";
+import { type Bezier, EASE_OUT, yarnSettle } from "./entrance-motion";
+import { ENTRANCE, secs, type ThreadEnter } from "./entrance-plan";
 import type { IndexCardNodeType } from "./index-card-node";
 import { essentialPx, FULL_ZOOM } from "./index-card-node";
 import { LAYOUT } from "./layout";
 import { Pushpin } from "./pushpin";
 
-// `enter`: when this thread's pins press in, its yarn is drawn and its label appears (seconds from mount, from
+// `enter`: when this thread's end pins strike, its yarn shoots across and its label appears (seconds from mount, from
 // entrance-plan.ts), or null when it is simply on the wall. `retract`: its clue_explained row arrived after the
 // board loaded, so the suspicion yarn is pulled back; otherwise an explained thread shows only its fact line.
 export type YarnEdgeType = Edge<{ thread: BoardThread; enter: ThreadEnter | null; retract: boolean }, "yarn">;
@@ -41,10 +42,11 @@ function endpoints(a: InternalNode, b: InternalNode) {
   return { s: at(A, dx, dy), t: at(B, -dx, -dy) };
 }
 
-// Yarn sags a little between pins (the same sag the layout plans for).
-export function yarnPath(sx: number, sy: number, tx: number, ty: number) {
+// Yarn sags a little between pins (the same sag the layout plans for). `sag` scales that sag: 1 is the yarn at rest,
+// 0 a taut straight line between the pins, and the entrance moves through values around 1 as the tension releases.
+export function yarnPath(sx: number, sy: number, tx: number, ty: number, sag = 1) {
   const cx = (sx + tx) / 2;
-  const cy = (sy + ty) / 2 + LAYOUT.threadSag(Math.hypot(tx - sx, ty - sy));
+  const cy = (sy + ty) / 2 + LAYOUT.threadSag(Math.hypot(tx - sx, ty - sy)) * sag;
   return {
     path: `M ${sx},${sy} Q ${cx},${cy} ${tx},${ty}`,
     at: (u: number) => ({
@@ -93,6 +95,10 @@ function placeLabel(at: (u: number) => { x: number; y: number }, drop: number, t
 }
 
 const DRAW_S = 0.7; // pulling the yarn back when a check explains it (clue_explained): slower than drawing it in, on purpose
+// holding while the yarn is drawn (linear over an unchanging shape), then snapping past rest, rebounding, settling
+const SETTLE_EASE: Bezier[] = [[0, 0, 1, 1], EASE_OUT, [0.45, 0, 0.55, 1], EASE_OUT];
+const LABEL_FROM = "translateY(-6px) scale(0.9)"; // the label is revealed after the yarn has finished: it drops in with a small pop
+const LABEL_REST = "translateY(0px) scale(1)";
 const RETRACT = { duration: DRAW_S, ease: "easeInOut" } as const;
 
 function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
@@ -102,6 +108,7 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const zoom = useStore((st) => Math.round(st.transform[2] * 40) / 40);
   const px = tagPx(zoom);
   const reduce = useReducedMotion();
+  const played = useRef(!(reduce ? null : data?.enter)); // after its entrance, the yarn simply follows its cards
   // wait until both cards are measured: before that the yarn would be drawn along a guessed path and jump
   if (!a || !b || !data || !a.measured.width || !b.measured.width) return null;
   const { thread, retract } = data;
@@ -112,9 +119,25 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
   const shadow = yarnPath(s.x + 2, s.y + 4, t.x + 2, t.y + 4).path;
   const w = threadWidth(thread.weight);
   const drawIn = !!enter;
-  // drawing in follows the plan; pulling back after an explanation keeps its own, slower timing
-  const drawTransition = enter ? { duration: ENTRANCE.yarnMs / 1000, delay: enter.yarn, ease: EASE_OUT } : RETRACT;
+  // Drawing in follows the plan; pulling back after an explanation keeps its own, slower timing.
+  const drawTransition = enter ? { duration: secs(ENTRANCE.yarnDrawMs), delay: enter.yarn, ease: EASE_OUT } : RETRACT;
   const pathTransition = explained ? RETRACT : drawTransition;
+  // The shot: the yarn is drawn along the straight line between its pins (taut), and when it arrives the tension
+  // releases: it sags past its resting curve, rebounds, and settles into exactly the curve it always had.
+  const morph = !!enter && !played.current && !explained;
+  const settle = yarnSettle();
+  const frames = (dx: number, dy: number) => settle.sag.map((k) => yarnPath(s.x + dx, s.y + dy, t.x + dx, t.y + dy, k).path);
+  // The path's shape (`d`) is always driven through Motion, never also set as a prop: once Motion owns an attribute it
+  // ignores the prop. Outside the shot its transition is instant, so a dragged card's yarn follows with no lag.
+  const shootTransition = morph
+    ? {
+        pathLength: { duration: secs(ENTRANCE.yarnDrawMs), delay: enter.yarn, ease: EASE_OUT },
+        d: { duration: secs(ENTRANCE.yarnDrawMs + ENTRANCE.yarnSettleMs), delay: enter.yarn, times: settle.times, ease: SETTLE_EASE },
+      }
+    : { pathLength: pathTransition, d: { duration: 0 } };
+  const shootFrom = (dx: number, dy: number, rest: string) =>
+    morph ? { pathLength: 0, d: frames(dx, dy)[0] } : drawIn ? { pathLength: 0, d: rest } : false;
+  const shootTo = (dx: number, dy: number, rest: string) => ({ pathLength: explained ? 0 : 1, d: morph ? frames(dx, dy) : rest });
   const pullBack = retract && !reduce;
   const maskId = `reveal-${id.replace(/[^\w-]/g, "_")}`;
   const revealFact = !!enter && !pullBack; // an explained thread on the wall draws its dashed fact line in, along the same curve
@@ -175,36 +198,36 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
           pointerEvents="none"
         >
           <motion.path
-            d={shadow}
             fill="none"
             stroke="rgb(0 0 0 / 0.35)"
             strokeWidth={w + 0.5}
             strokeLinecap="round"
-            initial={drawIn ? { pathLength: 0 } : false}
-            animate={{ pathLength: explained ? 0 : 1 }}
-            transition={pathTransition}
+            initial={shootFrom(2, 4, shadow)}
+            animate={shootTo(2, 4, shadow)}
+            transition={shootTransition}
           />
           <motion.path
-            d={path}
             fill="none"
             stroke="#c0462f"
             strokeWidth={w}
             strokeLinecap="round"
-            initial={drawIn ? { pathLength: 0 } : false}
-            animate={{ pathLength: explained ? 0 : 1 }}
-            transition={pathTransition}
+            initial={shootFrom(0, 0, path)}
+            animate={shootTo(0, 0, path)}
+            transition={shootTransition}
+            onAnimationComplete={() => {
+              played.current = true;
+            }}
           />
           {/* fibre twist */}
           <motion.path
-            d={path}
             fill="none"
             stroke="rgb(255 220 200 / 0.35)"
             strokeWidth={Math.max(0.8, w / 3)}
             strokeDasharray="1.5 4"
             strokeLinecap="round"
-            initial={drawIn ? { pathLength: 0 } : false}
-            animate={{ pathLength: explained ? 0 : 1 }}
-            transition={pathTransition}
+            initial={shootFrom(0, 0, path)}
+            animate={shootTo(0, 0, path)}
+            transition={shootTransition}
           />
         </motion.g>
       )}
@@ -219,9 +242,9 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
             style={{ transform: `translate(-50%, -62%) translate(${p.x}px, ${p.y}px)`, zIndex: 1002 }}
           >
             {/* suspicion is tied with red; an explained thread (a fact only) with brass */}
-            <PinPop delay={enter?.pins}>
+            <PinStrike delay={enter?.pins} tie>
               <Pushpin color={explained ? "brass" : "red"} size={15} />
-            </PinPop>
+            </PinStrike>
           </div>
         ))}
         {/* positioned by a plain wrapper: Motion owns the transform of the element it animates */}
@@ -236,9 +259,16 @@ function Yarn({ id, source, target, data, selected }: EdgeProps<YarnEdgeType>) {
                 explained ? "bg-[#e3ecd6]" : "bg-[#fbf6e6]"
               }`}
               style={{ fontSize: px }}
-              initial={enter ? { opacity: 0, transform: "translateY(-4px)" } : false}
-              animate={{ opacity: 1, transform: "translateY(0px)" }}
-              transition={enter ? { duration: ENTRANCE.labelMs / 1000, delay: enter.label, ease: EASE_OUT } : { duration: 0 }}
+              initial={enter ? { opacity: 0, transform: LABEL_FROM } : false}
+              animate={{ opacity: 1, transform: enter ? [LABEL_FROM, "translateY(0px) scale(1.06)", LABEL_REST] : LABEL_REST }}
+              transition={
+                enter
+                  ? {
+                      opacity: { duration: secs(80), delay: enter.label },
+                      transform: { duration: secs(ENTRANCE.labelMs), delay: enter.label, times: [0, 0.6, 1], ease: [EASE_OUT, EASE_OUT] },
+                    }
+                  : { duration: 0 }
+              }
             >
               {/* a strip of tape across each end holds the label onto the thread */}
               <span aria-hidden className="tape absolute -left-1.5 top-1/2 h-[120%] w-4 -translate-y-1/2 -rotate-12" />
