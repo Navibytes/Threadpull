@@ -25,9 +25,17 @@ bun test
 
 ## Claude and CRS
 
-Hazel runs on Claude Sonnet 5.5 (`claude-sonnet-5-5`) through the Anthropic TypeScript SDK's tool runner (`lib/agent/hazel.ts`), with server-side refusal fallback enabled. Claude chooses the next tool and writes short notes. Code does everything else: it opens the lead, validates every tool input, charges the acorn budget, writes each event row, takes threads down only when a check proves an innocent explanation, applies saved rules, and decides every status (`lib/agent/status.ts`). Claude never sees raw document text, only form fields, and injected instructions are flagged as `attack_detected`.
+Hazel runs on Claude Sonnet 5.5 (`claude-sonnet-5-5`) through the Anthropic TypeScript SDK's tool runner (`lib/agent/hazel.ts`), with server-side refusal fallback enabled. Claude chooses the next tool and writes short notes. Code does everything else: it opens the lead, validates every tool input, charges the acorn budget, writes each event row, takes threads down only when a check proves an innocent explanation, applies saved rules, and decides every status (`lib/agent/status.ts`). When Hazel has no lead left and budget remains, code runs a verification sweep: it spends the rest checking the largest unverified balances (an identity check, then a credit report when the identity checks out), so a fraud alert, a frozen bureau or bureaus that disagree on a loan tied to nothing else can still surface. Claude never sees raw document text, only form fields, and injected instructions are flagged as `attack_detected`.
 
 CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sandbox (`lib/crs`). The persona guard builds request bodies only from `data/personas.json`, so a loan without a sandbox persona is refused before anything is sent. Every result keeps the CRS RequestID. Real sandbox responses recorded on 2026-10-24 are in `data/crs-recordings/` and back the tests and `bun run hazel --crs recorded`. Hazel also has the tri-bureau credit report (thick file, thin life features; frozen and disagreeing bureaus mean Insufficient evidence), AtData Fraud Finder and AccurateAppend reverse phone, each charged in acorns and logged with its RequestIDs. Any simulated lookup data is identified as simulated in [data/README.md](data/README.md).
+
+## From a loan tape to a decision, in the app
+
+1. `bun run dev`, then open `/upload`. Drop a JSON or CSV loan tape (the CSV template is on the page; `data/out/seed13/loans.json` is a 1,000-loan JSON tape). Intake validates every row, refuses any SSN that could belong to a real person, flags documents with instruction-like text, and shows the report.
+2. **Investigate these N loans** starts Hazel on the accepted loans on the server (live CRS sandbox and Claude; needs `ANTHROPIC_API_KEY`, `CRS_USERNAME`, `CRS_PASSWORD`), one run at a time. The board follows the run live at `/?run=<run_id>`; the filing drawer and Twin Compare read the tape's loans.
+3. `/cro?run=<run_id>`: the deal, the questions for a person, and Approve / Override on each proposed action.
+
+An uploaded tape has no address or employer reference data, so `check_address` and `check_employer` answer "unknown" rather than guess, and no thread comes down on them; a generated seed has both.
 
 ## Ask once, remember forever
 

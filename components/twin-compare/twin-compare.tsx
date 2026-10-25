@@ -6,21 +6,24 @@
 import { useMemo } from "react";
 import { compareTwins, type TwinComparison, type TwinRow, type TwinSplit } from "@/lib/evidence";
 import type { BoardThread, FeedMode, RunEvent } from "@/lib/events";
+import { portfolioLabel, type Portfolio } from "@/components/drawer/loan-source";
 import { useTwinLoans } from "./use-twin-loans";
 import t from "./twin-compare.module.css";
 
 /**
  * Which generated portfolio the board's loans come from: the seed on the run's run_started row. The preview board
- * uses example ids, so seed 13 there; a live run that names no seed (an uploaded tape) has no files to pull, since
- * the same ids in another portfolio are other loans.
+ * uses example ids, so seed 13 there. A run of an uploaded tape names the tape instead (run_started.result.tape_id);
+ * a run that names neither has no files to pull, since the same ids in another portfolio are other loans.
  */
-export function portfolioSeed(events: readonly RunEvent[], mode: FeedMode): number | null {
-  const seed = events.find((e) => e.type === "run_started")?.result.seed;
+export function portfolioSeed(events: readonly RunEvent[], mode: FeedMode): Portfolio | null {
+  const started = events.find((e) => e.type === "run_started")?.result;
+  const seed = started?.seed, tape = started?.tape_id;
   if (typeof seed === "number" && Number.isInteger(seed)) return seed;
+  if (typeof tape === "string" && /^t-[0-9a-f]{12}$/.test(tape)) return tape;
   return mode === "preview" ? 13 : null;
 }
 
-export function TwinCompare({ thread, seed }: { thread: BoardThread; seed: number | null }) {
+export function TwinCompare({ thread, seed }: { thread: BoardThread; seed: Portfolio | null }) {
   const loans = useTwinLoans(thread.a, thread.b, seed);
   const x = thread.explained;
   const comparison = useMemo(() => {
@@ -37,7 +40,7 @@ export function TwinCompare({ thread, seed }: { thread: BoardThread; seed: numbe
         <p className={t.quiet}>
           {seed === null
             ? "This run doesn't say which portfolio it used, so the two files can't be pulled."
-            : `No loan records for these cards in the seed-${seed} portfolio (the preview board uses example ids).`}
+            : `No loan records for these cards in the ${portfolioLabel(seed)} portfolio (the preview board uses example ids).`}
         </p>
       )}
       {loans.phase === "error" && <p className={t.quiet} role="alert">{loans.message}</p>}

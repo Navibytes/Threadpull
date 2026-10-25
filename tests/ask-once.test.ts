@@ -49,7 +49,7 @@ beforeAll(() => {
 });
 
 const hazel = (runId: string, leads: string[], turns: (Call[] | string)[]) => {
-  return runHazel({ runId, loans, seed: 13, reference, anthropic: scripted(turns), crs: replayCrs(), rules: store, leads,
+  return runHazel({ runId, loans, seed: 13, reference, anthropic: scripted(turns), crs: replayCrs(), rules: store, leads, sweep: false,
     sinks: [jsonlSink(join(root, runId, "events.jsonl"))], now: () => new Date("2026-10-25T03:00:00Z") });
 };
 const ofType = (events: readonly Event[], type: Event["type"]) => events.filter((e) => e.type === type);

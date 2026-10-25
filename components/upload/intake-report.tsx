@@ -106,14 +106,6 @@ export function IntakeReportView({ name, report, saved, headingRef, actions }: {
       )}
 
       <footer className={u.next}>
-        {saved && (
-          <p className="max-w-xl">
-            <button type="button" className={u.unbuilt} disabled aria-describedby="next-step">Open the case</button>
-            <span id="next-step" className="mt-2 block">
-              Running Hazel on an uploaded tape is the next step and isn&apos;t built yet. The tape is saved and ready for it.
-            </span>
-          </p>
-        )}
         {actions}
       </footer>
     </article>

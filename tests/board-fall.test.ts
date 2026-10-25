@@ -39,7 +39,7 @@ beforeAll(() => {
 });
 
 const run = (turns: (Call[] | string)[], rules = new MemoryRuleStore()): Promise<HazelRun> =>
-  runHazel({ runId: "r-fall", loans, reference, anthropic: scriptedClaude([...turns, "done"]), crs: replayCrs(), rules,
+  runHazel({ runId: "r-fall", loans, reference, anthropic: scriptedClaude([...turns, "done"]), crs: replayCrs(), rules, sweep: false,
     now: () => new Date("2026-10-24T20:00:00Z") });
 const ofType = (events: readonly Event[], type: Event["type"]) => events.filter((e) => e.type === type);
 const lookalike = (check: string) => key.lookalikes.find((x) => x.proving_check.startsWith(check))!.loan_ids;
