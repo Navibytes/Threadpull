@@ -62,7 +62,7 @@ components/
   twin-compare/          ✅ Twin Compare panel (in the evidence panel)                 A
   landing/               ✅ hero case board, shared site header and footer               A
   upload/                ✅ upload desk, intake report view, upload model                A
-  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions, memo, why (neutral Tailwind, not the cork look)  B
+  cro/                   ✅ CRO screen: totals, verdict table, drafts, decisions, questions to answer (questions.tsx, A), memo, why (neutral Tailwind, not the cork look)  B
 
 lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
@@ -74,8 +74,8 @@ lib/
   graph/                 ✅ graphology evidence graph, weights, clusters, priority      D
   evidence/              ✅ document fingerprints, injection guard, verified pay-stub reading (extract.ts), explanation checks, withdraw  A
   agent/                 ✅ Hazel loop (Anthropic SDK tool runner), tools, prompts, models.ts, the Haiku stub reader (extractor.ts, A)  D
-  rules/                 ✅ ask-once questions, rule matching and versions; in-memory store (Supabase ○)  D
-  deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy), CRO memo (Claude), why answers, wording rules  B
+  rules/                 ✅ ask-once questions, rule matching and versions; in-memory and file stores (runs/rules.json; Supabase ○)  D
+  deal/                  ✅ verdicts, pricing, report, buyback + document-request drafts, dispositions (file log + Supabase copy), answers to questions (questions.ts, A), CRO memo (Claude), why answers, wording rules  B
   events/                ✅ board state reducer, Supabase Realtime feed, preview fixture, Hazel's pose/notebook   C
   dashboard/             ✅ dashboard metrics from loans + one run's rows (no estimates)   C
 

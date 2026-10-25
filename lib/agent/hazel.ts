@@ -45,7 +45,10 @@ export type HazelOptions = {
   seed?: number; // the generated portfolio's seed, written on run_started so the board loads the same loans
   reference: Reference;
   anthropic: Anthropic;
-  documentReader?: StubExtractor; // reads pay stubs the parser can't (modelStubExtractor); without one they stay unreadable
+  documentReader?: StubExtractor;
+  // loans a person chose to start from, in order (the operator at a demo, an analyst with a hunch): worked before the
+  // ranked leads, recorded on run_started and on each lead_opened row as chosen by the operator, never by detection code
+  leads?: string[]; // reads pay stubs the parser can't (modelStubExtractor); without one they stay unreadable
   crs: CrsClient;
   rules: RuleStore;
   budget?: number;
@@ -102,14 +105,27 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     await log.append({ type: "lead_opened", loan_ids: [loanId], tool: null, result: { score: lead.score, origins: lead.origins },
       sources: [{ kind: "row", loan_id: loanId, field: "loan_id" }], note: why, simulated: false });
   }
-  const nextLead = () => ranked.find((l) => l.score > 0 && !opened.has(l.loan_id) && !statuses.has(l.loan_id));
+  const operatorLeads = [...new Set(opts.leads ?? [])];
+  const unknown = operatorLeads.filter((id) => !room.byId.has(id));
+  if (unknown.length) throw new Error(`operator lead${unknown.length > 1 ? "s" : ""} not in the portfolio: ${unknown.join(", ")}`);
+  type Lead = { loan_id: string; score: number; chosen: boolean };
+  const nextLead = (): Lead | undefined => {
+    const open = (id: string) => !opened.has(id) && !statuses.has(id);
+    const mine = operatorLeads.find(open);
+    if (mine) return { loan_id: mine, score: room.graph.score(mine).score, chosen: true };
+    const l = ranked.find((x) => x.score > 0 && open(x.loan_id));
+    return l && { loan_id: l.loan_id, score: l.score, chosen: false };
+  };
+  const leadWhy = (l: Lead, first: boolean) => l.chosen
+    ? `${first ? "Lead" : "Next lead"} chosen by the operator (score ${l.score}).`
+    : `${first ? "Top lead" : "Next lead"} by rank (score ${l.score}).`;
   // close_lead suggests the next lead; it only counts as opened (and shows on the board) once Hazel works on it
-  let suggested: { loan_id: string; score: number } | null = null;
+  let suggested: Lead | null = null;
   async function openIfSuggested(loanIds: string[]) {
     if (!suggested || !loanIds.includes(suggested.loan_id) || opened.has(suggested.loan_id)) return;
     const lead = suggested;
     suggested = null;
-    await openLead(lead.loan_id, `Next lead by rank (score ${lead.score}).`);
+    await openLead(lead.loan_id, leadWhy(lead, false));
   }
 
   // A link_found row per link the board hasn't drawn yet (at most a board's worth per call). Also written before a
@@ -315,16 +331,17 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
         result: { status: d.status, reason: d.reason, ...(proposed_status && proposed_status !== d.status ? { proposed: proposed_status } : {}) },
         sources: d.sources, note: hazelNote ?? `${d.status}: ${d.reason}.`, simulated: false });
       const next = nextLead();
-      suggested = next ? { loan_id: next.loan_id, score: next.score } : null;
+      suggested = next ?? null;
       return json({ ok: true, status: d.status, reason: d.reason, next_lead: next?.loan_id ?? null, budget: budget() });
     },
   });
 
   // ------------------------------------------------------------ the run
-  const first = ranked[0];
-  await log.append({ type: "run_started", loan_ids: [], tool: null, result: { model: HAZEL_MODEL, loans: opts.loans.length, budget: ledger.limit, ...(opts.seed !== undefined ? { seed: opts.seed } : {}) },
-    sources: [], note: "Run started.", simulated: false });
-  await openLead(first.loan_id, `Top lead by rank (score ${first.score}).`);
+  const first = nextLead() ?? { loan_id: ranked[0].loan_id, score: ranked[0].score, chosen: false };
+  await log.append({ type: "run_started", loan_ids: [], tool: null, result: { model: HAZEL_MODEL, loans: opts.loans.length, budget: ledger.limit,
+    ...(opts.seed !== undefined ? { seed: opts.seed } : {}), ...(operatorLeads.length ? { operator_leads: operatorLeads } : {}) },
+    sources: [], note: operatorLeads.length ? `Run started. The operator chose ${operatorLeads.join(", ")} as the first lead${operatorLeads.length > 1 ? "s" : ""}.` : "Run started.", simulated: false });
+  await openLead(first.loan_id, leadWhy(first, true));
 
   const runner = opts.anthropic.beta.messages.toolRunner({
     model: HAZEL_MODEL,
@@ -336,7 +353,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     cache_control: { type: "ephemeral" }, // system prompt and tools never change within a run, so each request reuses the cached prefix
     system: HAZEL_SYSTEM,
     tools: [...dataRoomTools, identityTool, creditTool, fraudTool, phoneTool, askTool, closeTool],
-    messages: [{ role: "user", content: `Portfolio: ${opts.loans.length} loans. Budget: ${ledger.limit} acorns. Your lead: ${first.loan_id} (rank 1, score ${first.score}). Begin.` }],
+    messages: [{ role: "user", content: `Portfolio: ${opts.loans.length} loans. Budget: ${ledger.limit} acorns. Your lead: ${first.loan_id} (${first.chosen ? "chosen by the operator" : "rank 1"}, score ${first.score}). Begin.` }],
   });
 
   let iterations = 0, stop_reason: string | null = null, recap = "";

@@ -13,7 +13,7 @@
 
 **Update (Sun 00:40, checked against `main`):** `close_lead` now scans a loan's documents before code decides its status (A, PR #40), so the injected stub is flagged in every run whichever tools Hazel chose; seen live in `r13-20261025T072822`. Haiku extraction: proposed out of scope (decision pending).
 
-**Update (Sun 02:15, Haiku in the detector):** A pay stub the fixed-label parser can't read is now read by Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) inside `compare_documents`, and code decides whether to believe it (`lib/evidence/extract.ts`, the client in `lib/agent/extractor.ts`, on in `bun run hazel`):
+**Update (Sun 01:55, Haiku in the detector):** A pay stub the fixed-label parser can't read is now read by Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) inside `compare_documents`, and code decides whether to believe it (`lib/evidence/extract.ts`, the client in `lib/agent/extractor.ts`, on in `bun run hazel`):
 - parser first: a stub it reads never reaches a model, so every generated stub (seeds 13 and 99 alike) is read exactly as before;
 - the model gets numbered lines with every line the injection guard flags withheld (two new guard rules: notes addressed to a parser or model, "report these values"), answers only a fixed schema of value + line number, and has no tools;
 - code accepts the answer only if every field is present and printed on the line it cites (same number, same date in any common format, same name, same check number); otherwise, or on an error or a 20 s timeout, the stub is unreadable and the comparison says why. Each stub is read once per run.
