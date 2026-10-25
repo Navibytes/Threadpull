@@ -11,11 +11,11 @@ import { defaultDispositionsDb, mirrorDisposition, type DispositionsTable, type 
 import { type Assumptions, DEFAULT_ASSUMPTIONS, withInputs } from "./pricing";
 import { buildReport, type DealReport } from "./report";
 
-export type RunMeta = { run_id: string; spec: string; seed: number; crs?: string; crs_note?: string; model_note?: string; started_at?: string };
+/** `spec` is whatever the run's writer recorded; this module never opens it (only data/ and eval/ read pattern specs). */
+export type RunMeta = { run_id: string; spec?: string; seed: number; crs?: string; crs_note?: string; model_note?: string; started_at?: string };
 export type RunSummary = { run_id: string; started_at: string | null; crs: string | null; note: string | null; events: number };
 
 const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/; // also keeps a run id from walking out of runs/
-const SPEC = /^data\/patterns\/[A-Za-z0-9._-]+\.json$/;
 const runsRoot = () => join(process.cwd(), "runs");
 
 export type RunFiles = { meta: RunMeta; events: Event[]; skipped: number };
@@ -26,7 +26,7 @@ export function readRun(runId: string, root = runsRoot()): RunFiles | null {
   const dir = join(/*turbopackIgnore: true*/ root, runId);
   const file = join(dir, "events.jsonl");
   if (!existsSync(/*turbopackIgnore: true*/ file)) return null;
-  let meta: RunMeta = { run_id: runId, spec: "data/patterns/seed13.json", seed: 13 };
+  let meta: RunMeta = { run_id: runId, seed: 13 };
   try { meta = { ...meta, ...JSON.parse(readFileSync(/*turbopackIgnore: true*/ join(dir, "run.json"), "utf8")) }; } catch { /* a run without run.json is read as seed 13 */ }
   const events: Event[] = [];
   let skipped = 0;
@@ -51,23 +51,16 @@ export function listRuns(root = runsRoot()): RunSummary[] {
     });
 }
 
-const loansCache = new Map<string, Promise<Loan[]>>();
-/** The run's loans: the generated file when `bun run data` has made it, otherwise the same seeded generator Hazel ran on. */
-export function loansFor(meta: RunMeta): Promise<Loan[]> {
-  if (!SPEC.test(meta.spec)) return Promise.reject(new Error(`run ${meta.run_id} names a spec outside data/patterns/`));
-  const key = `${meta.spec}:${meta.seed}`;
-  let loans = loansCache.get(key);
-  if (!loans) {
-    loans = (async () => {
-      const file = join(process.cwd(), "data", "out", `seed${meta.seed}`, "loans.normalized.json");
-      if (existsSync(/*turbopackIgnore: true*/ file)) return (JSON.parse(readFileSync(/*turbopackIgnore: true*/ file, "utf8")) as unknown[]).map((l) => LoanSchema.parse(l));
-      const [{ mkdtempSync }, { tmpdir }, { generate }] = await Promise.all([import("node:fs"), import("node:os"), import("@/data/generate")]);
-      const tmp = () => mkdtempSync(join(tmpdir(), "tp-"));
-      return generate(join(/*turbopackIgnore: true*/ process.cwd(), meta.spec), tmp(), tmp()).normalized;
-    })();
-    loansCache.set(key, loans);
-    loans.catch(() => loansCache.delete(key));
-  }
+const loansCache = new Map<number, Loan[]>();
+/** The run's loans, from the tape `bun run data --no-db` writes (eval/sample-run.ts writes it when it is missing). */
+export async function loansFor(meta: RunMeta): Promise<Loan[]> {
+  if (!Number.isInteger(meta.seed)) throw new Error(`run ${meta.run_id} has no whole-number seed`); // the seed becomes part of a path
+  const cached = loansCache.get(meta.seed);
+  if (cached) return cached;
+  const file = join(process.cwd(), "data", "out", `seed${meta.seed}`, "loans.normalized.json");
+  if (!existsSync(/*turbopackIgnore: true*/ file)) throw new Error(`the loans for seed ${meta.seed} are not generated yet: run bun run data --no-db`);
+  const loans = (JSON.parse(readFileSync(/*turbopackIgnore: true*/ file, "utf8")) as unknown[]).map((l) => LoanSchema.parse(l));
+  loansCache.set(meta.seed, loans);
   return loans;
 }
 

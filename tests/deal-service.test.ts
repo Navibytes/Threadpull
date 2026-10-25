@@ -4,7 +4,7 @@ import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EventSchema } from "@/lib/contracts/event";
-import { listRuns, loadReport, readRun, recordDisposition } from "@/lib/deal/service";
+import { listRuns, loadReport, loansFor, readRun, recordDisposition } from "@/lib/deal/service";
 import { dealRun, type DealRun } from "./deal-run";
 
 let run: DealRun, root: string;
@@ -40,6 +40,15 @@ describe("reading a run", () => {
     writeFileSync(file("damaged"), run.events.slice(0, 3).map((e) => JSON.stringify(e)).join("\n") + '\n{"not":"an event"}\nnot json at all\n');
     const r = readRun("damaged", root)!;
     expect([r.events.length, r.skipped]).toEqual([3, 2]);
+  });
+});
+
+describe("the run's loans", () => {
+  test("a seed whose tape has not been generated says how to make it", async () => {
+    await expect(loansFor({ run_id: "x", seed: 424242 })).rejects.toThrow("run bun run data --no-db");
+  });
+  test("a seed that is not a whole number never reaches a file path", async () => {
+    for (const seed of ["13/../../x", 1.5, Number.NaN, null]) await expect(loansFor({ run_id: "x", seed: seed as number })).rejects.toThrow("whole-number seed");
   });
 });
 
