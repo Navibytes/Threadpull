@@ -1,0 +1,9 @@
+{
+ "run_id": "r99-20261025T102031",
+ "spec": "data/patterns/seed99.json",
+ "seed": 99,
+ "crs": "live",
+ "crs_note": "live sandbox",
+ "detector": "detector-frozen f40ff3b2ef",
+ "note": "rows exported from the Supabase events table; the run was made by C on the frozen detector"
+}

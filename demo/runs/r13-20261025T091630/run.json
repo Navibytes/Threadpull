@@ -1,0 +1,15 @@
+{
+ "run_id": "r13-20261025T091630",
+ "spec": "data/patterns/seed13.json",
+ "seed": 13,
+ "crs": "live",
+ "detector": "not frozen",
+ "crs_note": "live sandbox",
+ "operator_leads": [
+  "L0742",
+  "L0168",
+  "L0398"
+ ],
+ "rules": "runs/rules.json",
+ "started_at": "2026-10-25T09:16:30.933Z"
+}

@@ -21,7 +21,10 @@ export type RunMeta = { run_id: string; spec?: string; seed: number; tape_id?: s
 export type RunSummary = { run_id: string; started_at: string | null; crs: string | null; note: string | null; events: number };
 
 const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/; // also keeps a run id from walking out of runs/
-const runsRoot = () => join(process.cwd(), "runs");
+/** Where runs live: runs/ locally; THREADPULL_RUNS points elsewhere (the public demo serves the recorded runs in demo/runs). */
+export const runsRoot = () => (process.env.THREADPULL_RUNS
+  ? join(/*turbopackIgnore: true*/ process.cwd(), process.env.THREADPULL_RUNS) // traced by next.config's outputFileTracingIncludes
+  : join(process.cwd(), "runs"));
 
 export type RunFiles = { meta: RunMeta; events: Event[]; skipped: number };
 
