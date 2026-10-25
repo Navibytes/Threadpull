@@ -7,7 +7,7 @@
 
 **Blocked by:** 07 Strings come down: explanations and Twin Compare; 08 Document fingerprints and injection guard; 11 Ask once, remember forever
 
-**Status:** tooling done (A, Sat 2026-10-24 ~23:00); the spec itself is C's, and the tag waits for 08 and 11.
+**Status:** done (A, C). `detector-frozen` tagged on `ea57806` (Sun 02:22), moved once to `f40ff3b` (02:45) for the verification sweep, before anyone ran seed 99; `bun run freeze:check` passes. Seed 99 written by C and run once (#50).
 A built everything except the held-out placements, which stay C's so no detection author sees them:
 `data/spec.ts` (the generator refuses an invalid spec), `bun run data:check` (validate, generate, verify end to end,
 prints nothing that reveals the set), `bun run freeze:check`, `bun run hazel` refusing a held-out seed on unfrozen

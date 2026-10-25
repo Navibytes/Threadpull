@@ -7,7 +7,7 @@
 
 **Blocked by:** 07 Strings come down: explanations and Twin Compare; 10 CRO screen and deal engine
 
-**Status:** in-progress (D). `ask_human` and saved-rule application are wired into Hazel's loop (`lib/agent/hazel.ts`). TypeScript core done: `lib/rules` + `lib/contracts/rule.ts`, tested on seed 13 in `tests/rules.test.ts` (q-001 → R-001 v1 → next hospital lookalike cleared citing R-001 → 38-staff dental group asks again). Remaining: Supabase `rules`/`questions` tables and the CRO answer API/UI (needs 10), real tenure from `crs_credit_report` (06), P16 routing live (03).
+**Status:** in-progress (D, A). Questions, rulings and the CRO screen work end to end (A, #46: `components/cro/questions.tsx`, `app/api/runs/[id]/questions`, `FileRuleStore` in `runs/rules.json`); R-001 cleared employer links live on A's runs. P16 exercised live (r13-20261025T102626, lead L0279 chosen by the operator): TU 2401, code set Investigate "fraud alert on file: needs the CRO"; Hazel proposed clearing it and asked no question. Her prompt is frozen detection code, so that is left as is. Remaining (optional): Supabase `rules`/`questions` tables.
 
 **Update (Sat 23:05, checked against `main`):** R-001 now applies only to the employer actually checked (A, PR #26: a hospital check with a ring loan's id used to clear the ring). Open as listed below; the CRO screen part depends on ticket 10.
 
@@ -30,7 +30,7 @@ Live, seed 13:
 - [ ] Supabase `rules`/`questions` tables behind `RuleStore` (migrations: C/B). For now: `FileRuleStore`, `runs/rules.json`.
 - [x] Wire question display, answer, and confirmation through the CRO screen/API from issue 10 (`components/cro/questions.tsx`, `app/api/runs/[id]/questions`, `lib/deal/questions.ts`).
 - [x] Integrate issue 07 explanation contexts so all scope fields have evidence-backed values; out-of-scope cases must ask again (`employerLink` over `check_employer`; tenure fact plugs in from `crs_credit_report`).
-- [ ] Exercise P16 fraud-alert routing with the issue 02 seed and issue 03 CRS integration.
+- [x] Exercise P16 fraud-alert routing with the issue 02 seed and issue 03 CRS integration. (r13-20261025T102626: routed to the CRO by status; no question asked.)
 
 The Python implementation is in `backend/rules.py` and `backend/agent.py`; it predates the TypeScript architecture. Its context provider must supply concrete scope values such as employer size and credit-file tenure; missing values never match a rule.
 
