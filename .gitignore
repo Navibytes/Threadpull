@@ -21,3 +21,7 @@ next-env.d.ts
 # written by `next dev` (agentRules), not ours
 AGENTS.md
 *.tsbuildinfo
+
+# Vercel CLI link (local)
+.vercel
+.env*
