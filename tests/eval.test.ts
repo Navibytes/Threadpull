@@ -8,7 +8,7 @@ import type { Event } from "@/lib/contracts/event";
 import type { Loan } from "@/lib/contracts/loan";
 import { generate, type AnswerKey } from "@/data/generate";
 import { checkEverything, fixedRules, type AgentResult } from "@/eval/baselines";
-import { hazelFromEvents, renderProof, score } from "@/eval/evaluate";
+import { hazelFromEvents, renderProof, ringCompleteAt, score } from "@/eval/evaluate";
 import { client as replayCrs } from "./crs-replay";
 
 let loans: Loan[], key: AnswerKey;
@@ -81,5 +81,18 @@ describe("the proof table", () => {
     expect(md).toContain("| Threadpull (Hazel) | 0 of 6 | 0 of 50 | 0 | 0 of 3 | 10 | 3 (1 simulated) | 0 | 58.1 s |");
     expect(md).toContain("detector: not frozen");
     expect(md).toContain("recorded, not live");
+  });
+});
+
+describe("when the ring was complete", () => {
+  test("the budget on the row where the last ring member Hazel flags was first marked Investigate", () => {
+    const ring = key.rings[0].loan_ids;
+    const at = (seq: number, ids: string[], status: string, spent: number) => row(seq, "status_changed", { loan_ids: ids, result: { status }, budget: { spent, limit: 60 } });
+    const events = [row(1, "run_started"), at(2, ring.slice(0, 3), "Investigate", 6), at(3, ["L0002"], "No material anomaly found", 7),
+      at(4, ring.slice(3), "Investigate", 9), at(5, ["L0003"], "Insufficient evidence", 60)];
+    expect(ringCompleteAt(events, key)).toBe(9);
+    expect(ringCompleteAt([row(1, "run_started")], key)).toBeNull();
+    const md = renderProof([], { seed: 13, run_id: "r", crs: "live", commit: "c", detector: "d", generated_at: "t", hazel_ring_acorns: { at: 9, total: 60 } });
+    expect(md).toContain("all marked Investigate after **9 acorns**; the other 51 went on");
   });
 });

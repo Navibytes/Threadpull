@@ -55,6 +55,12 @@ export function bodyForLoan(product: Exclude<CrsProduct, "reverse_phone">, loan:
   return body;
 }
 
+/** Whether CRS can be asked about this loan at all: the sandbox has a file for it (a real deployment: every loan). */
+export function canQuery(loan: LoanRef): boolean {
+  const ssn = digits(loan.applicant_info.ssn);
+  return file.personas.some((p) => p.ssn === ssn);
+}
+
 /** Body for a reverse lookup: only a persona's phone number is allowed. */
 export function bodyForPhone(phone: string): Body {
   const persona = file.personas.find((p) => p.phone === digits(phone));

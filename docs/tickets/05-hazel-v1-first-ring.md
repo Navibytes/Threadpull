@@ -25,3 +25,6 @@
 The TypeScript portfolio generator and loan contract are now available from main. The existing Python prototype uses the earlier flat loan shape and injected identity adapter; it is useful as behavior reference, not yet wired to the current dataset or application.
 
 Spec: `docs/SKELETON.md` (contracts, rules and the 24-hour plan). Where code goes: `docs/ARCHITECTURE.md`.
+
+**Update (Sun 02:45, A): the verification sweep.** The frozen seed 13 run (`r13-20261025T092328`) found the ring for 7 acorns and stopped with 53 unspent, 0 of 3 review cases: loans tied to nothing are never leads. Now, when Hazel is done, code spends what is left on the largest unverified balances (identity check, then a credit report when it checks out; `decideStatus` sets the status; `sweep: false` turns it off). Order is by amount financed only; nothing knows which loans are cases. Measured once, live: `r13-20261025T093238` ring 6 of 6 (complete after 9 acorns), 0 of 50 innocents, review cases 1 of 3 (a frozen bureau), 60 acorns. Changes detection code, so the freeze tag moves after the merge, before seed 99.
+
