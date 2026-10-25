@@ -39,6 +39,24 @@ export class EventLog {
 
 export const memorySink = (into: Event[]): EventSink => (e) => { into.push(e); };
 
+/** The slice of a Supabase client this sink needs (so tests can pass a fake). */
+export type EventsTable = { from(table: "events"): { insert(row: Event): PromiseLike<{ error: { message: string } | null }> } };
+
+/**
+ * Insert each row into the Supabase `events` table (insert-only; the board follows it over Realtime).
+ * A failed insert doesn't stop the run: it's passed to onError, and the row stays in the other sinks.
+ */
+export function supabaseSink(client: EventsTable, onError: (event: Event, message: string) => void): EventSink {
+  return async (e) => {
+    try {
+      const { error } = await client.from("events").insert(e);
+      if (error) onError(e, error.message);
+    } catch (err) {
+      onError(e, (err as Error).message);
+    }
+  };
+}
+
 /** One JSON object per line; the directory is created on first write. */
 export function jsonlSink(path: string): EventSink {
   let ready = false;

@@ -4,6 +4,7 @@
 //   bun run hazel                      seed 13, live CRS sandbox (CRS_USERNAME / CRS_PASSWORD)
 //   bun run hazel --crs recorded       CRS answers replayed from data/crs-recordings (real responses, 2026-10-24)
 //   bun run hazel --spec data/patterns/seed99.json --budget 60
+//   bun run hazel --no-db              don't write events to Supabase (otherwise they go there when it's configured)
 //
 // Needs ANTHROPIC_API_KEY (Bun loads .env.local). Writes runs/<run_id>/{run.json, events.jsonl, trace.jsonl} (gitignored).
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,7 +13,8 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import Anthropic from "@anthropic-ai/sdk";
 import { generate, type AnswerKey } from "@/data/generate";
-import { jsonlSink, runHazel, type TraceEntry } from "@/lib/agent";
+import { jsonlSink, runHazel, supabaseSink, type EventSink, type TraceEntry } from "@/lib/agent";
+import { serverClient } from "@/lib/db/server";
 import { defaultCrsClient } from "@/lib/crs";
 import { loadReference } from "@/lib/ingest/reference";
 import { MemoryRuleStore } from "@/lib/rules";
@@ -21,6 +23,7 @@ const { values: args } = parseArgs({ options: {
   spec: { type: "string", default: "data/patterns/seed13.json" },
   crs: { type: "string", default: "live" }, // live | recorded
   budget: { type: "string", default: "60" },
+  "no-db": { type: "boolean", default: false },
 } });
 
 const tmp = () => mkdtempSync(join(tmpdir(), "tp-"));
@@ -42,9 +45,12 @@ const started = Date.now();
 mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "run.json"), JSON.stringify({ run_id: runId, spec: args.spec, seed: gen.seed, crs: args.crs,
   crs_note: args.crs === "recorded" ? "real sandbox responses recorded 2026-10-24, replayed" : "live sandbox", started_at: new Date().toISOString() }, null, 1) + "\n");
-const sink = jsonlSink(join(dir, "events.jsonl"));
+const sinks: EventSink[] = [jsonlSink(join(dir, "events.jsonl"))];
+const db = args["no-db"] ? null : serverClient();
+const dbErrors: string[] = [];
+if (db) sinks.push(supabaseSink(db, (e, message) => dbErrors.push(`seq ${e.seq} (${e.type}): ${message}`)));
 const out = await runHazel({ runId, loans: gen.normalized, seed: gen.seed, reference: loadReference(gen.outDir), anthropic: new Anthropic(), crs,
-  rules: new MemoryRuleStore(), budget: Number(args.budget), sinks: [sink], trace });
+  rules: new MemoryRuleStore(), budget: Number(args.budget), sinks, trace });
 
 // ---------------------------------------------------------------- measured against the answer key
 const ring = key.rings.flatMap((r) => r.loan_ids);
@@ -64,3 +70,7 @@ const report = {
 };
 console.log(JSON.stringify(report, null, 2));
 console.log(`\nHazel's recap: ${out.recap}\n\nEvents: ${join(dir, "events.jsonl")}\nTrace:  ${traceFile}`);
+if (db) console.log(dbErrors.length
+  ? `Supabase: ${out.events.length - dbErrors.length} of ${out.events.length} rows written; failed:\n  ${dbErrors.join("\n  ")}`
+  : `Supabase: all ${out.events.length} rows written. Board: /?run=${runId}`);
+else console.log("Supabase: not written (--no-db, or SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set).");
