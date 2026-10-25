@@ -38,7 +38,7 @@
 .bubble::after {
   content: "";
   position: absolute;
-  left: 1.3rem;
+  left: calc(78% - 7px); /* points at Hazel's head, which sits toward the bubble's right */
   bottom: -8px;
   width: 15px;
   height: 15px;
