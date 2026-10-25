@@ -39,6 +39,7 @@ export type TraceEntry = {
 export type HazelOptions = {
   runId: string;
   loans: readonly Loan[];
+  seed?: number; // the generated portfolio's seed, written on run_started so the board loads the same loans
   reference: Reference;
   anthropic: Anthropic;
   crs: CrsClient;
@@ -150,6 +151,11 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     if (!loanId || !room.byId.has(loanId)) return undefined;
     const entity = room.graph.entitiesOf(loanId).find((e) => room.graph.kind(e) === "employer");
     if (!entity) return undefined;
+    // the facts must be about this loan's employer: a check of another employer (a 500-staff hospital) never
+    // clears this loan's link (a 4-staff shell company), whatever loan_id the model passes with it
+    const named = room.loans.find((l) => l.employment_info.employer_name === check.result.employer);
+    const checked = named && room.graph.entitiesOf(named.loan_id).find((e) => room.graph.kind(e) === "employer");
+    if (checked !== entity) return `no rule applied: ${check.result.employer} is not the employer on ${loanId}; check that loan's own employer`;
     const link = employerLink(room.graph, loanId, check);
     const match = matchRule(await currentRules(opts.rules), link.context);
     if (match.status === "missing") return `${match.rule.id} could cover this once ${match.missing.join(", ")} is checked`;
@@ -269,7 +275,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
 
   // ------------------------------------------------------------ the run
   const first = ranked[0];
-  await log.append({ type: "run_started", loan_ids: [], tool: null, result: { model: HAZEL_MODEL, loans: opts.loans.length, budget: ledger.limit },
+  await log.append({ type: "run_started", loan_ids: [], tool: null, result: { model: HAZEL_MODEL, loans: opts.loans.length, budget: ledger.limit, ...(opts.seed !== undefined ? { seed: opts.seed } : {}) },
     sources: [], note: "Run started.", simulated: false });
   await openLead(first.loan_id, `Top lead by rank (score ${first.score}).`);
 
@@ -287,22 +293,32 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
   });
 
   let iterations = 0, stop_reason: string | null = null, recap = "";
-  for await (const message of runner) {
-    iterations++;
-    stop_reason = message.stop_reason;
-    const text = message.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("\n").trim();
-    if (text) recap = text;
-    opts.trace?.({
-      iteration: iterations, stop_reason: message.stop_reason, model: message.model,
-      usage: { input_tokens: message.usage.input_tokens, output_tokens: message.usage.output_tokens,
-        cache_read_input_tokens: message.usage.cache_read_input_tokens, cache_creation_input_tokens: message.usage.cache_creation_input_tokens },
-      content: message.content.map((b) => b.type === "tool_use" ? { type: b.type, name: b.name } : b.type === "text" ? { type: b.type, text: b.text } : { type: b.type }),
-    });
+  // A failed model request (overloaded, network) still ends the log with run_finished, so the board and the run's
+  // files show where it stopped instead of a run that never ends; the error is then passed on to the caller.
+  let failure: unknown = null;
+  try {
+    for await (const message of runner) {
+      iterations++;
+      stop_reason = message.stop_reason;
+      const text = message.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("\n").trim();
+      if (text) recap = text;
+      opts.trace?.({
+        iteration: iterations, stop_reason: message.stop_reason, model: message.model,
+        usage: { input_tokens: message.usage.input_tokens, output_tokens: message.usage.output_tokens,
+          cache_read_input_tokens: message.usage.cache_read_input_tokens, cache_creation_input_tokens: message.usage.cache_creation_input_tokens },
+        content: message.content.map((b) => b.type === "tool_use" ? { type: b.type, name: b.name } : b.type === "text" ? { type: b.type, text: b.text } : { type: b.type }),
+      });
+    }
+  } catch (e) {
+    failure = e;
+    stop_reason = "error";
   }
 
   await log.append({ type: "run_finished", loan_ids: [...statuses.keys()].sort(), tool: null,
     result: { iterations, stop_reason, statuses: Object.fromEntries([...statuses].sort()) },
-    sources: [], note: stop_reason === "refusal" ? "The model declined to continue; run stopped." : "Run finished.", simulated: false });
+    sources: [], note: failure ? `Run stopped on an error: ${failure instanceof Error ? failure.message : String(failure)}.`
+      : stop_reason === "refusal" ? "The model declined to continue; run stopped." : "Run finished.", simulated: false });
+  if (failure) throw failure;
 
   return { events: log.rows, statuses, spent: ledger.spent, limit: ledger.limit, iterations, stop_reason, recap };
 }

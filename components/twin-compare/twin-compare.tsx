@@ -5,12 +5,23 @@
 // explained the link, or that nothing has yet. A connection is not proof, and the panel says so.
 import { useMemo } from "react";
 import { compareTwins, type TwinComparison, type TwinRow, type TwinSplit } from "@/lib/evidence";
-import type { BoardThread } from "@/lib/events";
+import type { BoardThread, FeedMode, RunEvent } from "@/lib/events";
 import { useTwinLoans } from "./use-twin-loans";
 import t from "./twin-compare.module.css";
 
-export function TwinCompare({ thread }: { thread: BoardThread }) {
-  const loans = useTwinLoans(thread.a, thread.b);
+/**
+ * Which generated portfolio the board's loans come from: the seed on the run's run_started row. The preview board
+ * uses example ids, so seed 13 there; a live run that names no seed (an uploaded tape) has no files to pull, since
+ * the same ids in another portfolio are other loans.
+ */
+export function portfolioSeed(events: readonly RunEvent[], mode: FeedMode): number | null {
+  const seed = events.find((e) => e.type === "run_started")?.result.seed;
+  if (typeof seed === "number" && Number.isInteger(seed)) return seed;
+  return mode === "preview" ? 13 : null;
+}
+
+export function TwinCompare({ thread, seed }: { thread: BoardThread; seed: number | null }) {
+  const loans = useTwinLoans(thread.a, thread.b, seed);
   const x = thread.explained;
   const comparison = useMemo(() => {
     if (loans.phase !== "ready") return null;
@@ -23,7 +34,11 @@ export function TwinCompare({ thread }: { thread: BoardThread }) {
       <h3 id={`twin-${thread.id}`} className={t.title}>Twin Compare</h3>
       {loans.phase === "loading" && <p className={t.quiet} role="status">Pulling both files…</p>}
       {loans.phase === "missing" && (
-        <p className={t.quiet}>No loan records for these cards in the seed-13 portfolio (the preview board uses example ids).</p>
+        <p className={t.quiet}>
+          {seed === null
+            ? "This run doesn't say which portfolio it used, so the two files can't be pulled."
+            : `No loan records for these cards in the seed-${seed} portfolio (the preview board uses example ids).`}
+        </p>
       )}
       {loans.phase === "error" && <p className={t.quiet} role="alert">{loans.message}</p>}
       {comparison && <TwinCompareView comparison={comparison} threadKind={thread.kind} />}

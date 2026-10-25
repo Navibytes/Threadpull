@@ -25,10 +25,12 @@ export function portfolio(seed: number, source: LoanSource = apiLoanSource): Pro
   return p;
 }
 
-export function useTwinLoans(a: string, b: string, seed = 13, source: LoanSource = apiLoanSource): TwinLoans {
+/** seed null: the run names no generated portfolio, so there is nothing to fetch ("missing"). */
+export function useTwinLoans(a: string, b: string, seed: number | null, source: LoanSource = apiLoanSource): TwinLoans {
   const [state, setState] = useState<{ key: string; loans: TwinLoans }>({ key: "", loans: { phase: "loading" } });
   const key = `${seed}:${a}:${b}`;
   useEffect(() => {
+    if (seed === null) return;
     let live = true;
     portfolio(seed, source).then(
       (byId) => {
@@ -39,5 +41,6 @@ export function useTwinLoans(a: string, b: string, seed = 13, source: LoanSource
     );
     return () => { live = false; };
   }, [key, a, b, seed, source]);
+  if (seed === null) return { phase: "missing" };
   return state.key === key ? state.loans : { phase: "loading" };
 }

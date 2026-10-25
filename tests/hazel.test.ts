@@ -220,6 +220,29 @@ describe("the code's guarantees hold whatever the model does", () => {
     expect(reply.asked.id).toBe("q-001");
   });
 
+  test("a failed model request still ends the log with run_finished, then the error reaches the caller", async () => {
+    let n = 0;
+    const fetch = (async () => n++ === 0
+      ? new Response(JSON.stringify({ id: "msg_1", type: "message", role: "assistant", model: HAZEL_MODEL, stop_reason: "tool_use",
+        stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 },
+        content: [{ type: "tool_use", id: "toolu_1", name: "inspect_loan", input: { loan_id: "L0037" } }] }),
+      { status: 200, headers: { "content-type": "application/json" } })
+      : new Response(JSON.stringify({ type: "error", error: { type: "overloaded_error", message: "Overloaded" } }),
+        { status: 529, headers: { "content-type": "application/json" } })) as unknown as typeof globalThis.fetch;
+    const rows: Event[] = [];
+    const failed = await runHazel({ runId: "r13-test", loans, reference, crs: replayCrs(), rules: new MemoryRuleStore(),
+      anthropic: new Anthropic({ apiKey: "test-key", fetch, maxRetries: 0 }), sinks: [(e) => { rows.push(e); }] }).catch((e) => e);
+    expect(failed).toBeInstanceOf(Error);
+    const last = rows.at(-1)!;
+    expect(last).toMatchObject({ type: "run_finished", result: { stop_reason: "error", iterations: 1 } });
+    expect(last.note).toStartWith("Run stopped on an error");
+  });
+
+  test("run_started names the portfolio's seed when the caller gives it", async () => {
+    const out = await run(["done"], { seed: 13 }).done;
+    expect(ofType(out.events, "run_started")[0].result.seed).toBe(13);
+  });
+
   test("a model that calls a tool with bad input gets an error back; nothing is charged or logged", async () => {
     const { claude, done } = run([[{ name: "crs_identity_check", input: { loan: "L0037" } }], "done"]);
     const out = await done;

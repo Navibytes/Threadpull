@@ -112,6 +112,28 @@ describe("a thread falls on the board", () => {
     expect(ofType(out.events, "rule_applied")[0].seq).toBeGreaterThan(links.at(-1)!.seq);
   });
 
+  test("a closed lead's card shows the status code decided, and a junk status changes nothing", async () => {
+    const out = await run([[{ name: "crs_identity_check", input: { loan_id: "L0037" } }],
+      [{ name: "close_lead", input: { loan_id: "L0037", proposed_status: "No material anomaly found" } }]]);
+    const board = reduceEvents([...out.events]);
+    expect(board.cards.find((c) => c.id === "L0037")!.status).toBe("Investigate");
+    const [closed] = ofType(out.events, "status_changed");
+    const junk = { ...closed, seq: out.events.length + 1, result: { status: "Approved by the AI" } };
+    expect(reduceEvents([...out.events, junk]).cards.find((c) => c.id === "L0037")!.status).toBe("Investigate");
+  });
+
+  test("a check of another employer never clears this loan's link, whatever loan_id comes with it", async () => {
+    const rules = new MemoryRuleStore();
+    await rules.addRuleVersion({ id: "R-001", version: 1, created_from: "test", when: { link_kind: "employer", min_group_size: 500 },
+      then: "explain_link", reason_text: "Large employer: sharing it is expected.", ruled_at: "2026-10-24T20:00:00Z", confirmed_by: "CRO" });
+    const hospital = key.lookalikes.find((x) => x.loan_ids.length === 40)!.loan_ids[0];
+    const employer = loans.find((l) => l.loan_id === hospital)!.employment_info.employer_name;
+    const lead = key.rings[0].loan_ids[0]; // the ring's small employer: the hospital's 500+ staff say nothing about it
+    const out = await run([[{ name: "check_employer", input: { employer, loan_id: lead } }]], rules);
+    expect(ofType(out.events, "rule_applied")).toHaveLength(0);
+    expect(ofType(out.events, "clue_explained")).toHaveLength(0);
+  });
+
   test("a dealer burst explains no link: nothing is drawn for it", async () => {
     const dealer = key.dealer_bursts[0].dealer_id;
     const out = await run([[{ name: "dealer_timeline", input: { dealer_id: dealer } }]]);

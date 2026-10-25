@@ -5,7 +5,7 @@ import { crsRequestIds, threadWidth, type BoardCard, type BoardState, type Board
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
-import { TwinCompare } from "@/components/twin-compare/twin-compare";
+import { portfolioSeed, TwinCompare } from "@/components/twin-compare/twin-compare";
 
 export function EvidencePanel({ board, selection, mode }: { board: BoardState; selection: Selection; mode: FeedMode }) {
   const card = selection?.kind === "card" ? board.cards.find((c) => c.id === selection.id) : undefined;
@@ -27,7 +27,7 @@ export function EvidencePanel({ board, selection, mode }: { board: BoardState; s
           transition={{ duration: 0.16 }}
         >
           {card && <CardDetails card={card} mode={mode} />}
-          {thread && <ThreadDetails thread={thread} mode={mode} />}
+          {thread && <ThreadDetails thread={thread} mode={mode} seed={portfolioSeed(board.events, mode)} />}
           {!card && !thread && <Empty board={board} />}
         </motion.div>
       </AnimatePresence>
@@ -84,7 +84,7 @@ function CardDetails({ card, mode }: { card: BoardCard; mode: FeedMode }) {
   );
 }
 
-function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }) {
+function ThreadDetails({ thread, mode, seed }: { thread: BoardThread; mode: FeedMode; seed: number | null }) {
   return (
     <div className="mt-3 space-y-4">
       <div>
@@ -96,7 +96,7 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
       </div>
       {thread.note && <p className="text-sm leading-relaxed">{thread.note}</p>}
       {thread.explained && <Explanation thread={thread} />}
-      <TwinCompare thread={thread} />
+      <TwinCompare thread={thread} seed={seed} />
       <div className="rounded border border-walnut/10 bg-cream/60 p-3 text-[13px]">
         {thread.explained ? (
           <p>

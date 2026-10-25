@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Loan } from "@/lib/contracts/loan";
 import { compareTwins } from "@/lib/evidence";
-import { TwinCompareView } from "@/components/twin-compare/twin-compare";
+import { portfolioSeed, TwinCompareView } from "@/components/twin-compare/twin-compare";
 import { portfolio } from "@/components/twin-compare/use-twin-loans";
 import type { LoanSource } from "@/components/drawer/loan-source";
 import { generate, type AnswerKey } from "@/data/generate";
@@ -96,6 +96,14 @@ describe("the card", () => {
 });
 
 describe("loading the two files", () => {
+  const started = (result: Record<string, unknown>) => [{ run_id: "r", seq: 1, ts: "2026-10-24T20:00:00Z", type: "run_started" as const,
+    loan_ids: [], tool: null, result, sources: [], note: "", budget: { spent: 0, limit: 60 }, simulated: false }];
+  test("the files come from the run's own portfolio, never a default one for a live run", () => {
+    expect(portfolioSeed(started({ seed: 99 }), "live")).toBe(99);
+    expect(portfolioSeed(started({}), "live")).toBeNull(); // an uploaded tape: seed 13's L0037 is another loan
+    expect(portfolioSeed([], "preview")).toBe(13);
+  });
+
   test("the portfolio is fetched once for every comparison, and a failure is retried next time", async () => {
     let calls = 0, fail = true;
     const source: LoanSource = { kind: "preview", load: async () => { calls++; if (fail) throw new Error("down"); return [...byId.values()]; } };
