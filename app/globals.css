@@ -48,8 +48,10 @@ body {
 /* The detective's room: quiet dark wallpaper (a small ornament drawn in SVG, in the board's dusty-blue family,
    kept darker and calmer than the board), lit by an amber lamp from the upper left. */
 .room {
-  /* a quiet pastel wall: one flat tone, no ornament or lamp glow, so the board is the only thing to look at */
-  background-color: #dfe8e2;
+  /* a pale yellow wall with a faint ornament pattern (low-opacity strokes) */
+  background-color: #f7f0c8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='132' viewBox='0 0 96 132'%3E%3Cg fill='none' stroke='%23b8a25a' stroke-opacity='0.16' stroke-width='1.6'%3E%3Cpath d='M48 14c10 10 10 22 0 32-10-10-10-22 0-32zM48 86c10 10 10 22 0 32-10-10-10-22 0-32z'/%3E%3Cpath d='M48 46c-6 6-16 8-24 4 4-8 14-12 24-4zM48 46c6 6 16 8 24 4-4-8-14-12-24-4zM48 86c-6-6-16-8-24-4 4 8 14 12 24 4zM48 86c6-6 16-8 24-4-4 8-14 12-24 4z'/%3E%3Ccircle cx='48' cy='66' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 96px 132px;
   color: var(--color-walnut);
 }
 
