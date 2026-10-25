@@ -17,10 +17,10 @@ output is byte-for-byte unchanged.
 
 **Update (Sat 23:35, checked against `main`):** C writes the spec next, following `data/patterns/HELDOUT.md`. Not done: C's spec, the `detector-frozen` tag (after 08's Haiku decision and D's 11; PR #35's prompt change already landed before it, as detection changes must), then loading and running seed 99.
 
-- [ ] The `detector-frozen` tag is created only after 07, 08 and 11 are merged. (07 done; 08 and 11 open. `bun run freeze:check` then guards it.)
-- [ ] C writes the seed 99 pattern spec using only SKELETON §5.1 fields: the same pattern types in new places, plus at least one variation (for example a ring linked by a shared bank account instead of a phone).
+- [x] The `detector-frozen` tag is created only after 07, 08 and 11 are merged. (Tagged on `ea57806`, Sun 02:22, after #45 and #46; moved to `f40ff3b` at 02:45 for the verification sweep (#48), before anyone ran seed 99; `bun run freeze:check` ✓.)
+- [x] C writes the seed 99 pattern spec using only SKELETON §5.1 fields: the same pattern types in new places, plus at least one variation (for example a ring linked by a shared bank account instead of a phone). (Done by C: two rings, two of most lookalike patterns; committed as `data/patterns/seed99.json` after the proof run, #50.)
 - [x] The held-out answer key is stored where A and D don't read it before the proof run. (Tooling: `--keys` outside the repo, spec in the ignored `data/patterns/heldout/`, `data:check` output reveals nothing.)
-- [ ] `bun run data --spec data/patterns/seed99.json` loads seed 99 into Supabase and it runs end to end. (Verified on seed 13 and a varied practice spec with `data:check`; the board's drawer and Twin Compare follow the run's seed. Seed 99 itself after C writes it.)
+- [x] `bun run data --spec data/patterns/seed99.json` loads seed 99 into Supabase and it runs end to end. (Verified on seed 13 and a varied practice spec with `data:check`; the board's drawer and Twin Compare follow the run's seed. Seed 99 itself after C writes it.) (Loaded and run once by C: `r99-20261025T102031`.)
 
 **Notes:** C is the right owner because C writes no detection code.
 
