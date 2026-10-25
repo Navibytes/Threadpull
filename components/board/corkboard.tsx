@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import type { BoardState } from "@/lib/events";
 import { BoardCamera, type BoardCase, type CardFocusRequest } from "./board-camera";
 import { CorkSurface } from "./cork-surface";
-import { IndexCardNode, type IndexCardNodeType } from "./index-card-node";
+import { cardFinding, IndexCardNode, type IndexCardNodeType } from "./index-card-node";
 import { layoutBoard } from "./layout";
 import { YarnEdge, type YarnEdgeType } from "./yarn-edge";
 
@@ -69,18 +69,19 @@ export function Corkboard({
         const position = old && moved.current.has(card.id) ? old.position : { x: spot.x, y: spot.y };
         const lead = card.pinnedBy === "lead_opened";
         const crs = card.sources.some((s) => s.kind === "crs");
+        const finding = cardFinding(card.id, lead, board.threads);
         return {
           ...old,
           id: card.id,
           type: "indexCard",
           position,
           zIndex: lead ? 2 : 1,
-          ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${card.id}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
-          data: { card, lead, showSeq, animate: card.firstSeq > animateAfterSeq },
+          ariaLabel: `${lead ? "Lead loan application" : "Loan application"} ${card.id}${finding ? `: ${finding.text}${finding.explained && !lead ? " (explained)" : ""}` : ""}${card.simulated ? ", simulated" : ""}${crs ? ", CRS source" : ""}`,
+          data: { card, lead, showSeq, finding, animate: card.firstSeq > animateAfterSeq },
         };
       }),
     );
-  }, [board.cards, layout, animateAfterSeq, showSeq, setNodes]);
+  }, [board.cards, board.threads, layout, animateAfterSeq, showSeq, setNodes]);
 
   useEffect(() => {
     setEdges((prev) =>
