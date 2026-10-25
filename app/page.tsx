@@ -1,5 +1,5 @@
 // Landing page (docs/DESIGN.md), the home page at `/`. The investigator room is at /board. Copy follows the truth rules in DESIGN.md §2: no invented numbers, and anything not built yet
-// says so. The proof strip waits for measured results in docs/PROOF.md.
+// says so. The results section shows the measured runs in docs/PROOF.md (components/landing/proof-data.ts, kept in step by a test).
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Pushpin } from "@/components/board/pushpin";
 import { CaseBoard } from "@/components/landing/case-board";
+import { PROOF, PROOF_URL, type ProofSeed } from "@/components/landing/proof-data";
 import { DEMO_HREF } from "@/components/landing/demo";
 import { SITE_NAV, SiteFooter, SiteHeader } from "@/components/landing/site-chrome";
 import s from "@/components/landing/landing.module.css";
@@ -37,6 +38,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
         <Hero />
         <Promises />
         <HowItWorks />
+        <Results />
         <Limits />
         <Responsible />
       </main>
@@ -176,6 +178,80 @@ function HowItWorks() {
           ))}
         </ol>
       </div>
+    </section>
+  );
+}
+
+function ResultsTable({ p, tilt }: { p: ProofSeed; tilt: number }) {
+  return (
+    <li className={`${s.sheet} ${s.reveal} min-w-0`} style={v({ "--tilt": `${tilt}deg` })}>
+      <span className={`tape ${s.sheetTape}`} aria-hidden />
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 className="font-display text-2xl font-semibold">Seed {p.seed}</h3>
+        <span className={`${s.kicker} !tracking-[0.12em]`}>{p.label}</span>
+      </div>
+      <p className="mt-1 text-sm leading-relaxed text-walnut/85">{p.note}</p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[22rem] border-collapse text-left text-[15px] tabular-nums">
+          <caption className="sr-only">Seed {p.seed} results by agent</caption>
+          <thead>
+            <tr className="border-b border-walnut/30 text-xs uppercase tracking-wide text-walnut/80">
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Agent</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Ring found</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Innocents flagged</th>
+              <th scope="col" className="py-1.5 pr-3 font-semibold">Review cases right</th>
+              <th scope="col" className="py-1.5 font-semibold">Acorns</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.rows.map((r) => {
+              const hazel = r.agent === "Threadpull (Hazel)";
+              return (
+                <tr key={r.agent} className={`border-b border-walnut/15 ${hazel ? "bg-amber/15 font-semibold" : ""}`}>
+                  <th scope="row" className={`py-2 pr-3 ${hazel ? "font-semibold" : "font-normal"}`}>{hazel ? "Threadpull" : r.agent}</th>
+                  <td className="whitespace-nowrap py-2 pr-3">{r.ring}</td>
+                  <td className="whitespace-nowrap py-2 pr-3">{r.innocents}</td>
+                  <td className="whitespace-nowrap py-2 pr-3">{r.review}</td>
+                  <td className="py-2">{r.acorns}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-walnut/85">
+        Every ring member was marked Investigate after <strong>{p.ringCompleteAt} acorns</strong>; the rest of the budget went on
+        other leads and checking the largest balances. Run <span className={s.monoLight}>{p.run}</span>.
+      </p>
+    </li>
+  );
+}
+
+function Results() {
+  return (
+    <section id="results" aria-labelledby="results-title" className={`${s.gutter} scroll-mt-24 py-24`}>
+      <div className={`${s.reveal} max-w-2xl`}>
+        <p className={s.kicker}>Measured results</p>
+        <h2 id="results-title" className={`${s.sectionTitle} mt-3`}>Every ring member found. No innocent left flagged.</h2>
+        <p className="mt-4 leading-relaxed">
+          Each portfolio has 1,000 loans and a separate answer key that only the evaluator reads. Threadpull is compared with
+          two baselines on the same loans, with CRS live: <strong>fixed rules</strong> flag every loan that shares a phone, email,
+          bank account, device, IP or address, then spend the same budget; <strong>check everything</strong> runs all four
+          CRS products on every loan, with no budget.
+        </p>
+      </div>
+      <ol className="mt-12 grid list-none gap-10 p-0 lg:grid-cols-2 lg:gap-8">
+        {PROOF.map((p, i) => <ResultsTable key={p.seed} p={p} tilt={i ? 0.6 : -0.5} />)}
+      </ol>
+      <p className={`${s.reveal} mt-10 max-w-3xl text-sm leading-relaxed`}>
+        Hazel reaches the review cases (fraud alert, frozen bureau, bureaus that disagree) only when checking the largest
+        balances, so she got 1 of 3; checking everything gets all 3 at about four times the cost. On seed 13 she also held
+        one more loan (L0742) for an open question to the CRO; it is cleared once the CRO answers. Hazel picks her own path,
+        so figures vary between runs: across five seed 13 runs the ring was complete after 7 to 14 acorns. Numbers are
+        generated by <span className={s.monoLight}>bun run eval</span> from the runs&apos; recorded events, on the detector frozen
+        before the held-out seed was run.{" "}
+        <a href={PROOF_URL} className="font-semibold underline underline-offset-2">Full tables and method in PROOF.md</a>
+      </p>
     </section>
   );
 }
