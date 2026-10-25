@@ -17,3 +17,4 @@ export {
   withdrawAddress, withdrawBursts, withdrawHousehold,
   type CheckEventRef, type ClueExplained,
 } from "./withdraw";
+export { compareTwins, type TwinComparison, type TwinRow, type TwinSplit } from "./twin";

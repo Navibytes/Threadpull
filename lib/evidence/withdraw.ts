@@ -19,6 +19,9 @@ export type ClueExplained = {
   result: ClueExplainedResult; // the shape lib/contracts/event.ts checks for clue_explained
   sources: SourceRef[];
   simulated: boolean; // true when the proof came from a simulated stand-in (e.g. the address lookup)
+  // The links as they stood before this explanation (original weight, unexplained). A board only shows a thread
+  // fall if it drew it first, so the agent loop writes link_found for any of these it hasn't shown yet.
+  links: GraphEdge[];
 };
 
 type ExplainingTool = "check_address" | "check_household" | "dealer_timeline";
@@ -29,13 +32,16 @@ function explanation(check: ExplainingTool, reason: string, sources: SourceRef[]
   return { check, reason, sources: [eventSource(at), ...sources] };
 }
 
+// `edges` are the links before they came down (captured before the graph explains them).
 function clue(tool: ExplainingTool, edges: GraphEdge[], loanIds: string[], reason: string, sources: SourceRef[],
   simulated: boolean, at: CheckEventRef): ClueExplained {
+  const links = [...edges].sort((x, y) => x.edge_id.localeCompare(y.edge_id));
   return {
     loan_ids: [...new Set(loanIds)].sort(),
-    result: { edge_ids: edges.map((e) => e.edge_id).sort(), explained_by: tool, reason },
+    result: { edge_ids: links.map((e) => e.edge_id), explained_by: tool, reason },
     sources: [eventSource(at), ...sources],
     simulated,
+    links,
   };
 }
 
@@ -52,8 +58,7 @@ export function withdrawAddress(graph: EvidenceGraph, check: ToolResult<AddressC
   const pending = loans.flatMap((x, i) => loans.slice(i + 1).map((y) => graph.edge(entity, x, y))).filter((e) => !e.explained);
   if (!pending.length) return null; // already down: nothing new to show
   graph.explainEntity(entity, explanation("check_address", r.reason, check.sources, at));
-  const dropped = pending.map((e) => graph.edgeById(e.edge_id)!);
-  return clue("check_address", dropped, loans, r.reason, check.sources, check.simulated, at);
+  return clue("check_address", pending, loans, r.reason, check.sources, check.simulated, at);
 }
 
 /**
@@ -70,8 +75,8 @@ export function withdrawHousehold(graph: EvidenceGraph, check: ToolResult<Househ
     .map((n) => graph.edge(n, r.loan_a, r.loan_b)).filter((e) => !e.explained);
   if (!pending.length) return null;
   const why = explanation("check_household", r.reason, check.sources, at);
-  const dropped = pending.map((e) => graph.explainEdge(e.edge_id, why));
-  return clue("check_household", dropped, [r.loan_a, r.loan_b], r.reason, check.sources, check.simulated, at);
+  for (const e of pending) graph.explainEdge(e.edge_id, why);
+  return clue("check_household", pending, [r.loan_a, r.loan_b], r.reason, check.sources, check.simulated, at);
 }
 
 /**

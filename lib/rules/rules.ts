@@ -72,6 +72,7 @@ export function applyRule(graph: EvidenceGraph, rule: Rule, loanId: string, enti
   return {
     edges,
     applied: { rule_id: rule.id, version: rule.version, edge_ids, reason_text: rule.reason_text },
-    clue: { loan_ids, result: { edge_ids, explained_by: "rule", rule_id: rule.id, reason: rule.reason_text }, sources, simulated: opts.simulated },
+    clue: { loan_ids, result: { edge_ids, explained_by: "rule", rule_id: rule.id, reason: rule.reason_text }, sources, simulated: opts.simulated,
+      links: [...pending].sort((x, y) => x.edge_id.localeCompare(y.edge_id)) },
   };
 }

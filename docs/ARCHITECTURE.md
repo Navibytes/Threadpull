@@ -53,7 +53,7 @@ components/
   board/                 ○ corkboard (React Flow + Motion), index cards, yarn         C
   drawer/                ○ filing drawer, status chips                                C
   notebook/              ○ Hazel's notebook, acorn meter                              C
-  twin-compare/          ○ Twin Compare panel                                         A
+  twin-compare/          ✅ Twin Compare panel (in the evidence panel)                 A
   landing/               ✅ hero case board, shared site header and footer               A
   upload/                ✅ upload desk, intake report view, upload model                A
   cro/                   ○ CRO panels: totals, actions, drafts, proof                 B
@@ -87,7 +87,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger, ingest-intake, upload (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger, ingest-intake, upload, board-fall, twin-compare (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows

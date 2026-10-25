@@ -5,6 +5,7 @@ import { crsRequestIds, threadWidth, type BoardCard, type BoardState, type Board
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
+import { TwinCompare } from "@/components/twin-compare/twin-compare";
 
 export function EvidencePanel({ board, selection, mode }: { board: BoardState; selection: Selection; mode: FeedMode }) {
   const card = selection?.kind === "card" ? board.cards.find((c) => c.id === selection.id) : undefined;
@@ -95,6 +96,7 @@ function ThreadDetails({ thread, mode }: { thread: BoardThread; mode: FeedMode }
       </div>
       {thread.note && <p className="text-sm leading-relaxed">{thread.note}</p>}
       {thread.explained && <Explanation thread={thread} />}
+      <TwinCompare thread={thread} />
       <div className="rounded border border-walnut/10 bg-cream/60 p-3 text-[13px]">
         {thread.explained ? (
           <p>

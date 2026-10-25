@@ -5,6 +5,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { Event } from "@/lib/contracts/event";
+import type { GraphEdge } from "@/lib/contracts/graph";
 import { LOAN_STATUSES, type Loan, type LoanStatus } from "@/lib/contracts/loan";
 import { QuestionTopicSchema } from "@/lib/contracts/rule";
 import { TOOL_SPECS, type SourceRef, type ToolName, type ToolResult } from "@/lib/contracts/tool-result";
@@ -104,10 +105,22 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     await openLead(lead.loan_id, `Next lead by rank (score ${lead.score}).`);
   }
 
+  // A link_found row per link the board hasn't drawn yet (at most a board's worth per call). Also written before a
+  // link comes down, so the board always shows a thread before it falls (a check can explain links never shown).
+  async function showLinks(edges: readonly GraphEdge[], tool: ToolName) {
+    for (const e of edges.filter((e) => !e.explained && !shownEdges.has(e.edge_id)).slice(0, MAX_LINKS_PER_QUERY)) {
+      shownEdges.add(e.edge_id);
+      await log.append({ type: "link_found", loan_ids: [e.a, e.b], tool,
+        result: { edge_id: e.edge_id, kind: e.kind, weight: e.weight }, sources: e.sources,
+        note: `Same ${e.kind.replace("_", " ")}; ${e.shared_by} loans in the pool share it.`, simulated: false });
+    }
+  }
+
   // ------------------------------------------------------------ what a tool call writes besides check_run
   async function afterCheck(name: ToolName, input: Record<string, unknown>, result: ToolResult<unknown>, at: { run_id: string; seq: number }) {
     const clue = async (c: ClueExplained | null, by: string) => {
       if (!c) return;
+      await showLinks(c.links, name);
       await log.append({ type: "clue_explained", loan_ids: c.loan_ids, tool: name, result: c.result, sources: c.sources,
         note: `${by}: ${c.result.reason}.`, simulated: c.simulated });
     };
@@ -122,13 +135,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
       }
     }
     if (name === "find_connections") {
-      const r = result.result as Partial<LoanConnections>;
-      for (const e of (r.edges ?? []).filter((e) => !e.explained && !shownEdges.has(e.edge_id)).slice(0, MAX_LINKS_PER_QUERY)) {
-        shownEdges.add(e.edge_id);
-        await log.append({ type: "link_found", loan_ids: [e.a, e.b], tool: "find_connections",
-          result: { edge_id: e.edge_id, kind: e.kind, weight: e.weight }, sources: e.sources,
-          note: `Same ${e.kind.replace("_", " ")}; ${e.shared_by} loans in the pool share it.`, simulated: false });
-      }
+      await showLinks((result.result as Partial<LoanConnections>).edges ?? [], "find_connections");
     }
     if (name === "check_address") await clue(withdrawAddress(room.graph, result as ToolResult<AddressCheck>, at), "check_address");
     if (name === "check_household") await clue(withdrawHousehold(room.graph, result as ToolResult<HouseholdCheck>, at), "check_household");
@@ -149,6 +156,7 @@ export async function runHazel(opts: HazelOptions): Promise<HazelRun> {
     if (match.status !== "match") return match.status === "outside_scope" ? "outside every saved rule's scope" : "no saved rule";
     const done = applyRule(room.graph, match.rule, loanId, entity, { at, simulated: link.simulated });
     if (!done) return `${match.rule.id} applies; nothing left to take down`;
+    await showLinks(done.clue.links, "check_employer");
     await log.append({ type: "rule_applied", loan_ids: done.clue.loan_ids.slice(0, 50), tool: "check_employer", result: done.applied,
       sources: done.clue.sources, note: `${match.rule.id} covers this link: ${match.rule.reason_text}`, simulated: link.simulated });
     await log.append({ type: "clue_explained", loan_ids: done.clue.loan_ids.slice(0, 50), tool: "check_employer", result: done.clue.result,
