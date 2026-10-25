@@ -15,6 +15,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RawLoanSchema, type RawLoan } from "@/lib/contracts/loan";
+import { formatTapeCsv } from "@/lib/ingest/csv";
 import { addressKey, normalizePortfolio } from "@/lib/ingest/normalize";
 import { seedSupabase } from "./seed-db";
 
@@ -614,11 +615,6 @@ class Generator {
   }
 }
 
-const flatten = (o: Record<string, unknown>, prefix = ""): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(o).flatMap(([k, v]) =>
-    v && typeof v === "object" && !Array.isArray(v) ? Object.entries(flatten(v as Record<string, unknown>, `${prefix}${k}.`))
-      : [[`${prefix}${k}`, v]]));
-const csvCell = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 export function generate(specPath: string, outRoot: string, keyRoot: string) {
   const spec = JSON.parse(readFileSync(specPath, "utf8"));
@@ -627,9 +623,7 @@ export function generate(specPath: string, outRoot: string, keyRoot: string) {
   mkdirSync(join(outDir, "reference"), { recursive: true });
   mkdirSync(keyDir, { recursive: true });
   writeFileSync(join(outDir, "loans.json"), JSON.stringify(tape, null, 1) + "\n");
-  const rows = tape.map(({ documents: _docs, ...rest }) => flatten(rest as Record<string, unknown>));
-  const cols = Object.keys(rows[0]);
-  writeFileSync(join(outDir, "loans.csv"), [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(","))].join("\n") + "\n");
+  writeFileSync(join(outDir, "loans.csv"), formatTapeCsv(tape)); // fixed columns, so no row's fields are dropped
   writeFileSync(join(outDir, "reference", "public_lookups.json"), JSON.stringify(reference, null, 1) + "\n");
   const normalized = normalizePortfolio(tape);
   writeFileSync(join(outDir, "loans.normalized.json"), JSON.stringify(normalized, null, 1) + "\n");

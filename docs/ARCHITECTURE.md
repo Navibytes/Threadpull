@@ -13,7 +13,7 @@ Threadpull/
 ├── components/        React UI only
 ├── lib/               all logic: contracts, CRS, graph, agent, evidence, deal (no React)
 ├── data/              generator, persona fixtures, pattern specs (outputs gitignored)
-├── public/            static files served as-is: hazel/ (Hazel's poses), assets/detective/ (cork, walnut, paper textures)  C
+├── public/            static files served as-is: hazel/ (Hazel's poses), assets/detective/ (cork, walnut, paper textures), templates/ (loan-tape CSV template, A)  C
 ├── eval/              baseline agent and evaluator: the ONLY code that reads answer keys
 ├── supabase/          SQL migrations (tables, RLS)
 └── tests/             bun tests, one file per module
@@ -39,6 +39,7 @@ app/                                                                            
   page.tsx               ○ filing drawer + corkboard + notebook (investigator view)
   cro/page.tsx           ○ CRO screen
   api/loans/route.ts     ✅ GET /api/loans                                            A
+  api/tapes/route.ts     ✅ POST /api/tapes: upload a loan tape (JSON or CSV), intake report  A
   api/runs/…             ○ POST /api/runs, GET /api/runs/[id]/report, /why/[loan]     D, B
   api/questions/…        ○ POST /api/questions/[id]/answer                           D
   api/dispositions/…     ○ POST /api/dispositions                                     B
@@ -55,7 +56,7 @@ components/
 
 lib/
   contracts/             ✅ Zod schemas + types: loan ✅, tool-result ✅, graph ✅, event (C's draft, used unchanged), rule ✅   C (loan, tool-result: A; graph, rule: D)
-  ingest/                ✅ normalize the messy tape; load reference lookups               A
+  ingest/                ✅ normalize the messy tape; reference lookups; tape intake (CSV/JSON upload, row checks, synthetic-SSN guard)  A
   db/                    ○ Supabase clients: server.ts (service role), browser.ts (anon) C
   crs/                   ✅ persona guard, client + cache, identity check, credit report, Fraud Finder, reverse phone   B
   ledger.ts              ✅ acorn budget; its onSpend hook is where `budget_spent` is written   B
@@ -82,7 +83,7 @@ eval/                                                                           
   evaluate.ts            ○ metrics vs answer key → docs/PROOF.md
 
 supabase/migrations/     ✅ loans (A), crs_cache (B); runs, events, rules, questions, dispositions ○ (C)
-tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger (.test.ts); one <module>.test.ts per lib module
+tests/                   ✅ portfolio, architecture, contracts, evidence-documents, evidence-injection, evidence-explanations, evidence-withdraw, graph, crs-guard, crs-client, crs-credit-features, crs-tools, crs-recorded, crs-recorded-tools, event-rows, ledger, ingest-intake (.test.ts); one <module>.test.ts per lib module
 ```
 
 ## 3. How data flows
