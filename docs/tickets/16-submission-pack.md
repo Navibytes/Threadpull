@@ -9,6 +9,8 @@
 
 **Status:** in-progress (README, proof-status note, Devpost draft, and recording script prepared; demo and external submission steps pending)
 
+**Update (Sat 23:05, checked against `main`):** README updated to match `main` (A, this PR). Open: the video, generated PROOF results, the secret scan of git history before the repo goes public, Devpost teammates.
+
 - [ ] Video of at most 3 minutes opens with the live TU result on loan #37 (2201 + 2202 + 2101); a backup video of a real run is recorded.
 - [x] README covers setup, where CRS is used, how Claude is used, real vs simulated, known limits, and the team.
 - [ ] `docs/PROOF.md` contains generated results from ticket 13. Current report only documents that measurements are pending and makes no numerical claims.

@@ -9,6 +9,8 @@
 
 **Status:** in-progress (D). `ask_human` and saved-rule application are wired into Hazel's loop (`lib/agent/hazel.ts`). TypeScript core done: `lib/rules` + `lib/contracts/rule.ts`, tested on seed 13 in `tests/rules.test.ts` (q-001 → R-001 v1 → next hospital lookalike cleared citing R-001 → 38-staff dental group asks again). Remaining: Supabase `rules`/`questions` tables and the CRO answer API/UI (needs 10), real tenure from `crs_credit_report` (06), P16 routing live (03).
 
+**Update (Sat 23:05, checked against `main`):** R-001 now applies only to the employer actually checked (A, PR #26: a hospital check with a ring loan's id used to clear the ring). Open as listed below; the CRO screen part depends on ticket 10.
+
 - [x] The Python prototype routes questions, computes confidence from evidence weights, and distinguishes `no precedent` from `sources disagree`.
 - [x] Answers can become scoped, versioned drafts; confirmed rules persist and matching clues emit rule/explanation events.
 - [x] Port rule schemas, matching and event payloads to TypeScript (`lib/contracts/rule.ts`, `lib/rules`); code sets recipient, confidence and reason; storage behind a `RuleStore` interface (in-memory now).

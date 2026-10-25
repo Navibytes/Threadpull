@@ -27,16 +27,19 @@ The repository does not yet have a complete Next.js application or `bun run dev`
 
 Hazel runs on Claude Sonnet 5.5 (`claude-sonnet-5-5`) through the Anthropic TypeScript SDK's tool runner (`lib/agent/hazel.ts`), with server-side refusal fallback enabled. Claude chooses the next tool and writes short notes. Code does everything else: it opens the lead, validates every tool input, charges the acorn budget, writes each event row, takes threads down only when a check proves an innocent explanation, applies saved rules, and decides every status (`lib/agent/status.ts`). Claude never sees raw document text, only form fields, and injected instructions are flagged as `attack_detected`.
 
-CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sandbox (`lib/crs`). The persona guard builds request bodies only from `data/personas.json`, so a loan without a sandbox persona is refused before anything is sent. Every result keeps the CRS RequestID. Real sandbox responses recorded on 2026-10-24 are in `data/crs-recordings/` and back the tests and `bun run hazel --crs recorded`. The credit report, Fraud Finder and reverse phone tools are not wired yet (ticket 06). Any simulated lookup data is identified as simulated in [data/README.md](data/README.md).
+CRS: `crs_identity_check` calls TransUnion identity verification on the CRS sandbox (`lib/crs`). The persona guard builds request bodies only from `data/personas.json`, so a loan without a sandbox persona is refused before anything is sent. Every result keeps the CRS RequestID. Real sandbox responses recorded on 2026-10-24 are in `data/crs-recordings/` and back the tests and `bun run hazel --crs recorded`. Hazel also has the tri-bureau credit report (thick file, thin life features; frozen and disagreeing bureaus mean Insufficient evidence), AtData Fraud Finder and AccurateAppend reverse phone, each charged in acorns and logged with its RequestIDs. Any simulated lookup data is identified as simulated in [data/README.md](data/README.md).
 
 ## Real versus simulated
 
-The generator, normalizer, contracts, graph/agent/rule prototypes, and proof helpers are local code. Portfolio contents are synthetic. The address/employer reference lookups generated for the demo are simulated; they are not live external verification. Hazel's loop is tested with a scripted stand-in for Claude, not a live model; the repo has no recorded live Hazel runs or completed seed 99 held-out results, so it makes no measured performance or cost claims. See [docs/PROOF.md](docs/PROOF.md) for current measurement status.
+The generator, normalizer, contracts, graph/agent/rule prototypes, and proof helpers are local code. Portfolio contents are synthetic. The address/employer reference lookups generated for the demo are simulated; they are not live external verification. Hazel's loop is tested with a scripted stand-in for Claude; live runs are written to the Supabase `events` table and shown on the board at `/?run=<run_id>`. The held-out seed 99 hasn't been run yet and no evaluator output exists, so the repo makes no measured performance or cost claims. See [docs/PROOF.md](docs/PROOF.md) for current measurement status.
 
 ## Known limits
 
-- No complete web UI or demo/replay command yet. Run events are written to `runs/<run_id>/events.jsonl`; writing them to Supabase waits on the `events` table.
-- Statuses cover Investigate and No material anomaly found. Insufficient evidence (frozen bureau, bureaus disagree) waits on the credit report tool (ticket 06).
+- No `bun run demo` or replay with speed control yet (ticket 15); the board plays a recorded run from Supabase.
+- No CRO screen yet (ticket 10): pricing, buyback drafts and Approve/Override are not built. `/dashboard` shows status counts and run metrics only.
+- Saved rules and questions live in memory for one run; the Supabase `rules`/`questions` tables are not built (ticket 11).
+- A CRS 429 is retried after Retry-After, but `bun run hazel` doesn't write the `recovery` row yet.
+- Address and employer lookups are simulated stand-ins and are labeled simulated wherever they appear.
 - The Python modules in `backend/` predate the TypeScript architecture and are not used by it.
 - Issue 13 proof helpers need the held-out set, the final TypeScript detector/baseline, and recorded runs before measured results can be published.
 - This is not a credit decision system. It is designed for synthetic data and human review; production use would require approved data access, legal review, and validation.

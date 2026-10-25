@@ -7,7 +7,9 @@
 
 **Blocked by:** 05 Hazel v1: the first ring, end to end
 
-**Status:** ready-for-agent
+**Status:** in-progress
+
+**Update (Sat 23:05, checked against `main`):** In progress (team chat). On `main` so far: `/dashboard` (Portfolio Intelligence: status counts and run metrics from recorded rows). Not on `main` yet: `lib/deal` (price, exclusions, buybacks), the Approve/Override actions and `disposition_recorded`, the `dispositions` table.
 
 - [ ] The deal engine (plain TypeScript, `lib/deal`) computes total principal, proposed price, balance under review, concentration by dealer and by ring, and spend vs the cost of checking everything.
 - [ ] Actions: Exclude, Reprice (price scenarios from analyst-entered assumptions), Protect.
