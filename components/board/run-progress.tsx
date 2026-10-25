@@ -40,6 +40,10 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
       className="pointer-events-auto absolute left-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-[3px] border border-walnut/20 bg-paper/95 px-3 py-1.5 text-[12px] text-walnut shadow-[0_4px_10px_rgb(0_0_0/0.3)]">
       <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full bg-terracotta ${done ? "" : "animate-pulse"}`} />
       <span className="whitespace-nowrap font-semibold">{done ? "Done" : PHASES[Math.max(0, current)].label}</span>
+      {done && p.loans !== null && <><span aria-hidden className="text-walnut/40">·</span>
+        <span className="whitespace-nowrap">all {nf(p.loans)} loans scored</span>
+        <span aria-hidden className="text-walnut/40">·</span>
+        <span className="whitespace-nowrap tabular-nums">{p.leadAcorns} on leads{p.spotChecks > 0 ? ` + ${p.sweepAcorns} on spot checks` : ""}</span></>}
       <span aria-hidden className="text-walnut/40">·</span>
       <span className="whitespace-nowrap tabular-nums">{p.spent} of {p.limit ?? "?"} acorns</span>
       <span aria-hidden className="text-walnut/40">·</span>
@@ -78,7 +82,7 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
         </div>
       </div>
       <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-walnut/80">
-        {p.loans !== null && <span>{nf(p.loans)} loans scanned</span>}
+        {p.loans !== null && <span>{nf(p.loans)} loans scored</span>}
         <span aria-hidden>·</span><span>{plural(p.cases, "case")} opened</span>
         {p.spotChecks > 0 && <><span aria-hidden>·</span><span>{plural(p.spotChecks, "spot check")}</span></>}
         <span aria-hidden>·</span><span>{nf(p.decided)} decided ({nf(p.flagged)} Investigate)</span>
@@ -87,7 +91,7 @@ export function RunProgressStrip({ events, runId }: { events: readonly RunEvent[
       </p>
       <p className="mt-1 text-[11.5px] text-walnut/70">
         {done
-          ? <>Finished{p.stopReason === "error" ? " on an error" : ""}. <Link href={`/cro?run=${encodeURIComponent(runId)}`} className="font-semibold text-terracotta underline underline-offset-2">Open the CRO screen →</Link></>
+          ? <>{p.loans !== null ? <>All {nf(p.loans)} loans were scored by the evidence graph for shared links, at no cost. Hazel followed {plural(p.cases, "lead")} for {p.leadAcorns} acorns{p.spotChecks > 0 ? <>; with no lead left, code spent {p.sweepAcorns} more spot-checking {nf(p.spotChecks)} of the largest unverified balances</> : null}{p.limit !== null && p.limit > p.spent ? <>; {p.limit - p.spent} left</> : null}. </> : null}Finished{p.stopReason === "error" ? " on an error" : ""}. <Link href={`/cro?run=${encodeURIComponent(runId)}`} className="font-semibold text-terracotta underline underline-offset-2">Open the CRO screen →</Link></>
           : quiet > 20_000
             ? `Waiting for the next step (${clock(quiet)} since the last one; the model or CRS may be slow).`
             : "Usually a minute or two. The run ends when the budget is spent or no lead is left."}
