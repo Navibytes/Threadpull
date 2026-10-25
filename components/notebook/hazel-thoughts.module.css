@@ -1,0 +1,176 @@
+/* Hazel's thought bubble and verdict stamp, above her head at the lower left of the room. Paper and ink, like the rest
+   of the board. Only transform and opacity animate; nothing here takes a click. */
+
+.spot {
+  position: absolute;
+  z-index: 25;
+  pointer-events: none;
+  left: calc(40px + var(--hazel-w) * 0.5);
+  bottom: calc(var(--ledge) + 18px + var(--hazel-w) * 0.98);
+  width: min(22rem, 52vw);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+@media (max-width: 760px) {
+  .spot {
+    left: 12px;
+    bottom: calc(var(--ledge) + 18px + var(--hazel-w) * 0.9);
+    width: min(19rem, calc(100vw - 24px));
+  }
+}
+
+/* ---------- what she is doing now ---------- */
+
+.bubble {
+  position: relative;
+  max-width: 100%;
+  padding: 0.7rem 0.95rem 0.65rem;
+  color: #3a2a1d;
+  background: #fbf6ea;
+  border: 1px solid rgb(74 55 40 / 0.32);
+  border-radius: 16px 16px 16px 4px;
+  box-shadow: 0 12px 20px -10px rgb(0 0 0 / 0.6);
+}
+/* the tail points down toward her head */
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 1.3rem;
+  bottom: -8px;
+  width: 15px;
+  height: 15px;
+  background: #fbf6ea;
+  border-right: 1px solid rgb(74 55 40 / 0.32);
+  border-bottom: 1px solid rgb(74 55 40 / 0.32);
+  transform: rotate(45deg);
+  border-bottom-right-radius: 3px;
+}
+.stage {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9c4630;
+}
+.title {
+  margin: 0.15rem 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.detail {
+  display: -webkit-box;
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #5b4636;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.meter {
+  margin: 0.4rem 0 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #6b5643;
+}
+/* three dots that pulse while a check runs */
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+.dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9c4630;
+  animation: pulse 1.1s ease-in-out infinite;
+}
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ---------- what she concluded ---------- */
+
+.verdict {
+  --v: #9c4630;
+  position: relative;
+  max-width: 100%;
+  padding: 0.65rem 0.95rem 0.65rem 1.05rem;
+  color: #3a2a1d;
+  background: #fffaf0;
+  border-left: 0.5rem solid var(--v);
+  border-radius: 3px 6px 6px 3px;
+  box-shadow: 0 14px 24px -10px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.25);
+}
+.verdict[data-tone="investigate"] {
+  --v: #b23a28;
+}
+.verdict[data-tone="clear"],
+.verdict[data-tone="explained"] {
+  --v: #4a6b38;
+}
+.verdict[data-tone="unsure"] {
+  --v: #8a5f10;
+}
+.verdict[data-tone="human"] {
+  --v: #3f5d7a;
+}
+/* the ink stamp: the exact status word, boxed and tilted */
+.stamp {
+  display: inline-block;
+  padding: 0.15rem 0.6rem 0.1rem;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--v);
+  border: 2.5px solid var(--v);
+  border-radius: 3px;
+  rotate: -2.5deg;
+}
+.names {
+  margin: 0.4rem 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.reason {
+  display: -webkit-box;
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #4a3a2c;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.cited {
+  margin: 0.35rem 0 0;
+  font-size: 13px;
+  color: #6b5643;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i {
+    animation: none;
+    opacity: 0.7;
+  }
+}

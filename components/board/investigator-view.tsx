@@ -5,12 +5,13 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
-import { hazelState, previewFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed, type RunEventFeed } from "@/lib/events";
+import { hazelState, previewFeed, replayFeed, SCENARIOS, scenarioById, scenarioRunId, supabaseFeed, supabaseReplayFeed, type RunEventFeed } from "@/lib/events";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { portfolioSeed } from "@/components/twin-compare/twin-compare";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
+import { HazelThoughts } from "@/components/notebook/hazel-thoughts";
 import type { BoardCase, CardFocusRequest } from "./board-camera";
 import { Corkboard, type Selection } from "./corkboard";
 import { resolveDrawerSelection } from "./drawer-selection";
@@ -29,14 +30,26 @@ import { dashboardHref } from "@/lib/dashboard/links";
 // evidence inspector or Hazel's notebook from the right, over the board, instead of splitting the room.
 // With ?run=<run_id> and Supabase configured, the board follows that run's event rows (history, then
 // Realtime). Otherwise it shows the fixture board.
-export function InvestigatorView({ runId, scenario, feed: given }: { runId?: string; scenario?: string; feed?: RunEventFeed }) {
+export function InvestigatorView({ runId, scenario, replay, feed: given }: { runId?: string; scenario?: string; replay?: number; feed?: RunEventFeed }) {
   const router = useRouter();
   const sc = useMemo(() => scenarioById(scenario), [scenario]); // the sample situation, when no run is given
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
+  const [take, setTake] = useState(0); // a replay starts again when this changes
+  // A replay plays the rows back in order, spaced like the original; a sample replay stays labelled as a sample.
   const feed = useMemo(
-    () => given ?? (runId && client ? supabaseFeed(client, runId) : previewFeed(sc.events, scenarioRunId(sc))),
-    [given, runId, client, sc],
+    () =>
+      given ??
+      (replay
+        ? runId && client
+          ? supabaseReplayFeed(client, runId, { speed: replay })
+          : replayFeed(sc.events, scenarioRunId(sc), { speed: replay, mode: "preview" })
+        : runId && client
+          ? supabaseFeed(client, runId)
+          : previewFeed(sc.events, scenarioRunId(sc))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [given, runId, client, sc, replay, take],
   );
+  const base = runId ? `/?run=${encodeURIComponent(runId)}` : `/?scenario=${sc.id}`;
   const { board, errors, animateAfterSeq, entry } = useRunEvents(feed);
   // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
   const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
@@ -162,10 +175,11 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
           {!runId && (
             <label className="absolute right-[var(--wall)] top-3 z-30 flex items-center gap-2 rounded-sm border border-walnut/20 bg-paper/90 px-2 py-1 text-[12px] text-walnut shadow-[0_3px_8px_rgb(0_0_0/0.2)]">
               <span className="font-semibold">Sample situation</span>
+              {/* keeps the replay speed when you switch situation */}
               <select
                 value={sc.id}
                 title={sc.summary}
-                onChange={(e) => router.push(`/?scenario=${e.target.value}`)}
+                onChange={(e) => router.push(`/?scenario=${e.target.value}${replay ? `&replay=${replay}` : ""}`)}
                 className="rounded-sm border border-walnut/25 bg-paper px-1 py-0.5"
               >
                 {SCENARIOS.map((s) => (
@@ -176,7 +190,37 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
               </select>
             </label>
           )}
-          <p className="absolute right-[var(--wall)] top-14 hidden max-w-[15rem] text-right text-[13px] text-walnut/75 min-[1600px]:block">
+          {/* Replay: the same rows, played back in order so Hazel's thinking can be watched again */}
+          <div className="absolute right-[var(--wall)] top-[3.6rem] z-30 flex items-center gap-2 rounded-sm border border-walnut/20 bg-paper/90 px-2 py-1 text-[12px] text-walnut shadow-[0_3px_8px_rgb(0_0_0/0.2)]">
+            {replay ? (
+              <>
+                <span className="font-semibold">Replay</span>
+                <select
+                  aria-label="Replay speed"
+                  value={replay}
+                  onChange={(e) => router.push(`${base}&replay=${e.target.value}`)}
+                  className="rounded-sm border border-walnut/25 bg-paper px-1 py-0.5"
+                >
+                  {[...new Set([0.5, 1, 2, 4, 8, replay])].sort((a, b) => a - b).map((x) => (
+                    <option key={x} value={x}>
+                      {x}×
+                    </option>
+                  ))}
+                </select>
+                <button type="button" onClick={() => setTake((n) => n + 1)} className="rounded-sm border border-walnut/25 bg-paper px-2 py-0.5 font-semibold hover:bg-white">
+                  Restart
+                </button>
+                <button type="button" onClick={() => router.push(base)} className="rounded-sm px-1 py-0.5 underline">
+                  Stop
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => router.push(`${base}&replay=2`)} className="rounded-sm px-1 py-0.5 font-semibold underline">
+                ▶ Watch a replay
+              </button>
+            )}
+          </div>
+          <p className="absolute right-[var(--wall)] top-[7rem] hidden max-w-[15rem] text-right text-[13px] text-walnut/75 min-[1600px]:block">
             Find the ring. Protect the innocent. Decide the deal.
           </p>
         </header>
@@ -274,6 +318,8 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
         <div ref={hazelCorner} className={`${styles.hazelSpot} pointer-events-none absolute z-20`}>
           <HazelStanding pose={hazel.pose} cue={hazel.cue} />
         </div>
+        {/* her thought bubble and verdict stamp, above her head; they follow the live rows only */}
+        <HazelThoughts events={board.events} animateAfterSeq={animateAfterSeq} />
       </div>
     </MotionConfig>
   );
