@@ -258,20 +258,57 @@ body {
 }
 
 /* Hazel's poses are stacked; the active one fades in with a small lift. No motion when reduced. */
+/* Hazel's pose change: a short crossfade between sprites. The movement that goes with it (lean, perk, nod) is
+   on her own layers (HazelStanding), so the sprites only fade. Kept under reduced motion: it isn't movement. */
 .hazel-pose {
   opacity: 0;
-  transform: translateY(3px) scale(0.98);
-  transition:
-    opacity 220ms ease-out,
-    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .hazel-pose[data-active="true"] {
   opacity: 1;
-  transform: none;
+}
+
+/* Idle: slow breathing, and every so often a small sway; still most of the time. Predetermined loops, so CSS
+   (off the main thread, unaffected by the board re-rendering). Both pivot at her feet. */
+.hazel-breathe {
+  transform-origin: 50% 94%;
+  animation: hazel-breathe 5.2s cubic-bezier(0.37, 0, 0.63, 1) infinite; /* easeInOutSine: a breath, not a UI snap */
+}
+.hazel-sway {
+  transform-origin: 50% 94%;
+  animation: hazel-sway 17s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+@keyframes hazel-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  45% {
+    transform: scale(1.006, 1.014);
+  }
+}
+@keyframes hazel-sway {
+  0%,
+  74%,
+  100% {
+    transform: rotate(0deg);
+  }
+  81% {
+    transform: rotate(0.9deg);
+  }
+  89% {
+    transform: rotate(-0.6deg);
+  }
+  95% {
+    transform: rotate(0.2deg);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
+  .hazel-breathe,
+  .hazel-sway {
+    animation: none;
+  }
   .hazel-pose {
-    transition: none;
-    transform: none;
+    transition-duration: 120ms;
   }
 }

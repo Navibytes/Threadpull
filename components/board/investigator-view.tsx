@@ -6,7 +6,7 @@ import { browserClient } from "@/lib/db/browser";
 import type { Loan } from "@/lib/contracts/loan";
 import { FilingDrawer } from "@/components/drawer";
 import { previewLoanSource } from "@/components/drawer/preview-loan-source";
-import { hazelPose, previewFeed, supabaseFeed } from "@/lib/events";
+import { hazelState, previewFeed, supabaseFeed } from "@/lib/events";
 import { HazelNotebook } from "@/components/notebook/hazel-notebook";
 import { HazelStanding } from "@/components/notebook/hazel-standing";
 import type { BoardCase, CardFocusRequest } from "./board-camera";
@@ -28,6 +28,8 @@ export function InvestigatorView({ runId }: { runId?: string }) {
   const client = useMemo(() => (runId ? browserClient() : null), [runId]);
   const feed = useMemo(() => (runId && client ? supabaseFeed(client, runId) : previewFeed()), [runId, client]);
   const { board, errors, animateAfterSeq } = useRunEvents(feed);
+  // Hazel's pose and the reaction to play, from the applied rows; history rows set the pose without a reaction.
+  const hazel = useMemo(() => hazelState(board.events, animateAfterSeq), [board.events, animateAfterSeq]);
   const [selection, setSelection] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [rightPanel, setRightPanel] = useState<"evidence" | "notebook" | null>(null);
@@ -106,7 +108,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
-          <p className="hidden max-w-[15rem] shrink-0 pb-2 text-right text-[13px] text-cream/75 min-[1440px]:block">
+          <p className="hidden max-w-[15rem] shrink-0 pb-2 text-right text-[13px] text-cream/75 min-[1600px]:block">
             Find the ring. Protect the innocent. Decide the deal.
           </p>
         </header>
@@ -210,7 +212,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             size and mirrors her; her own component and pose logic are unchanged. The camera keeps cards out of
             the part of the board she covers. */}
         <div ref={hazelCorner} className={`${styles.hazelSpot} pointer-events-none absolute z-20`}>
-          <HazelStanding pose={hazelPose(board.events).pose} />
+          <HazelStanding pose={hazel.pose} cue={hazel.cue} />
         </div>
       </div>
     </MotionConfig>
