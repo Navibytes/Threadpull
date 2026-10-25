@@ -11,6 +11,7 @@ export { DEMO_HREF };
 
 /** Section links on the landing page; the other pages point back at them. */
 export const SITE_NAV = (onLanding: boolean): NavLink[] => [
+  { href: onLanding ? "#problem" : "/#problem", label: "The problem" },
   { href: onLanding ? "#promises" : "/#promises", label: "What it does" },
   { href: onLanding ? "#how" : "/#how", label: "How it works" },
   { href: onLanding ? "#results" : "/#results", label: "Results" },
