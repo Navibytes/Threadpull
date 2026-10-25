@@ -19,6 +19,7 @@ import styles from "./investigator-layout.module.css";
 import { RoomNav, type PanelId } from "./room-nav";
 import { SidePanel } from "./side-panel";
 import { CaseSummary } from "./case-summary";
+import { RunProgressStrip } from "./run-progress";
 import { StatusPlaque } from "./status-plaque";
 import { CaseRoomIntro } from "./case-room-intro";
 import { useRunEvents } from "./use-run-events";
@@ -197,6 +198,7 @@ export function InvestigatorView({ runId, scenario, feed: given }: { runId?: str
                   caseHref={caseHref}
                   entry={entry}
                 />
+                {runId && feed.mode !== "preview" && <RunProgressStrip events={board.events} runId={runId} />}
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
                 <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />
