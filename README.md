@@ -12,6 +12,27 @@ Upload the loan tape. We tell you which borrowers don't exist, which ones only l
 
 Threadpull is a prototype. The TypeScript code includes a deterministic portfolio generator and normalizer, the evidence graph (`lib/graph`), explanation and document checks (`lib/evidence`), the CRS client with persona guard and acorn ledger (`lib/crs`, `lib/ledger.ts`), ask-once rules (`lib/rules`), and Hazel's tool loop (`lib/agent`), plus the Next.js app (landing, upload, the investigator board, the CRO screen, the dashboard) and its API routes. The earlier Python prototypes in `backend/` are kept for reference only. The full status is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), with product/data contracts in [docs/SKELETON.md](docs/SKELETON.md).
 
+## Architecture
+
+Claude plans the checks; code holds the evidence and the math. A model runs in three places (marked **Claude**): Hazel choosing the next check, reading a pay stub the parser can't, and drafting the CRO memo. The graph, the budget, every status and every number are plain, tested code.
+
+```mermaid
+flowchart TD
+  nGen["<b>Portfolio generator</b><br/>planted rings and lookalikes<br/>data/generate.ts"] --> nIntake["<b>Intake</b><br/>validate rows, refuse real SSNs<br/>lib/ingest"]
+  nGen -.->|answer key, kept apart| nEval
+  nIntake --> nGraph["<b>Evidence graph</b><br/>rarity-weighted links, graphology<br/>lib/graph"]
+  nGraph -->|leads| nHazel["<b>Hazel</b> · Claude Sonnet 5.5<br/>picks the next check, writes notes<br/>lib/agent"]
+  nLedger["<b>Budget ledger</b><br/>refuses overspend<br/>lib/ledger.ts"] -->|limit| nHazel
+  nHazel <-->|results back as evidence| nTools["<b>Checks</b> · CRS sandbox, explanations<br/>Claude Haiku: unreadable stubs only<br/>lib/crs, lib/evidence"]
+  nHazel -->|rows| nLog["<b>Event log</b><br/>append-only, code sets statuses<br/>Supabase Postgres"]
+  nLog -->|live, Realtime| nBoard["<b>Corkboard</b><br/>React Flow<br/>components/board"]
+  nLog --> nDeal["<b>Deal engine</b><br/>exclusions, bid, buybacks<br/>lib/deal"]
+  nLog --> nEval["<b>Evaluator</b><br/>only reader of the answer key<br/>eval/"]
+  nDeal --> nCro["<b>CRO review</b> · memo by Claude<br/>a person approves, rules saved<br/>app/cro, lib/rules"]
+  classDef llm fill:#fdf3e3,stroke:#b5533c,stroke-width:2px;
+  class nHazel,nTools,nCro llm;
+```
+
 ## Setup and data
 
 Install [Bun](https://bun.sh/) and run:

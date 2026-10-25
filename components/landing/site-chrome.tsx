@@ -13,10 +13,9 @@ export { DEMO_HREF };
 export const SITE_NAV = (onLanding: boolean): NavLink[] => [
   { href: onLanding ? "#problem" : "/#problem", label: "The problem" },
   { href: onLanding ? "#promises" : "/#promises", label: "What it does" },
-  { href: onLanding ? "#how" : "/#how", label: "How it works" },
   { href: onLanding ? "#results" : "/#results", label: "Results" },
+  { href: onLanding ? "#architecture" : "/#architecture", label: "How it's built" },
   { href: onLanding ? "#limits" : "/#limits", label: "Limits in code" },
-  { href: onLanding ? "#responsible" : "/#responsible", label: "Responsible design" },
   { href: "/upload", label: "Upload a tape", current: !onLanding },
 ];
 
