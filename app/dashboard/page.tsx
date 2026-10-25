@@ -1,15 +1,16 @@
 // Portfolio Intelligence (separate from the investigator room at `/`). `?run=<run_id>` picks a run, `?seed=` a
-// portfolio, `?sample=1` the built-in sample run (labelled as such on the page).
+// generated portfolio or `?tape=` an uploaded one, `?sample=1` the built-in sample run (labelled as such on the page).
 import type { Metadata } from "next";
 import { Dashboard } from "@/components/dashboard/dashboard";
 
 export const metadata: Metadata = { title: "Portfolio Intelligence · Threadpull" };
 
-type Params = { run?: string | string[]; seed?: string | string[]; sample?: string | string[]; case?: string | string[]; scenario?: string | string[] };
+type Params = { run?: string | string[]; seed?: string | string[]; tape?: string | string[]; sample?: string | string[]; case?: string | string[]; scenario?: string | string[] };
 const one = (v: string | string[] | undefined) => (typeof v === "string" && v ? v : undefined);
 
 export default async function Page({ searchParams }: { searchParams: Promise<Params> }) {
   const p = await searchParams;
-  const seed = Number(one(p.seed) ?? 13);
-  return <Dashboard run={one(p.run)} seed={Number.isInteger(seed) && seed > 0 ? seed : 13} sample={one(p.sample) === "1"} caseId={one(p.case)} scenario={one(p.scenario)} />;
+  const seed = Number(one(p.seed) ?? 13), tape = one(p.tape);
+  const portfolio = tape && /^t-[0-9a-f]{12}$/.test(tape) ? tape : Number.isInteger(seed) && seed > 0 ? seed : 13;
+  return <Dashboard run={one(p.run)} seed={portfolio} sample={one(p.sample) === "1"} caseId={one(p.case)} scenario={one(p.scenario)} />;
 }

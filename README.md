@@ -42,12 +42,13 @@ An uploaded tape has no address or employer reference data, so `check_address` a
 When Hazel can't decide and nobody has ruled on a case like it, she asks one person once (`ask_human`). Code routes the question (CRO, credit analyst, legal, compliance), computes the confidence and the reason from the evidence, and proposes the scope a yes would save, using only facts the run can check. The person answers on the CRO screen (`/cro?run=<run_id>`, "Questions for you"): a yes becomes a versioned rule, a no saves nothing, and either way a `question_answered` row is added to the run's log and the board. Later runs apply the rule on their own and cite it when a thread comes down; a link outside the rule's scope stays up.
 
 ```sh
-bun run hazel --rules runs/rules.json                  # questions and rulings kept in runs/rules.json
+bun run hazel                  # questions and rulings are kept in runs/rules.json (run.json lists the rules in force)
 # answer on /cro?run=<run_id>, then:
-bun run hazel --rules runs/rules.json --lead L0742     # --lead: the operator picks the first leads (recorded as such)
+bun run hazel --lead L0742     # --lead: the operator picks the first leads (recorded as such)
+bun run hazel --no-rules       # a clean run that remembers nothing, as the proof runs were
 ```
 
-Without `--rules` every run starts with no rules, as the proof runs do.
+Runs started from the upload page use the same `runs/rules.json`. A fresh clone has no rulings, so `bun run hazel` there starts as clean as `--no-rules`.
 
 ## Real versus simulated
 

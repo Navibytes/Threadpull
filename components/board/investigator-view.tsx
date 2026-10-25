@@ -20,6 +20,7 @@ import styles from "./investigator-layout.module.css";
 import { RoomNav, type PanelId } from "./room-nav";
 import { SidePanel } from "./side-panel";
 import { CaseSummary } from "./case-summary";
+import { RunProgressStrip } from "./run-progress";
 import { StatusPlaque } from "./status-plaque";
 import { CaseRoomIntro } from "./case-room-intro";
 import { useRunEvents } from "./use-run-events";
@@ -110,7 +111,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
     if (lead) setFocusRequest({ cardId: lead, replay: true }); // move the camera to the case, and lay its evidence out again
   }, []);
   // a case's detail page on the dashboard: the same run, with that case's lead loan
-  const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId, scenario: runId ? undefined : sc.id }, leadId), [runId, sc.id]);
+  const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId, scenario: runId ? undefined : sc.id, portfolio: seed }, leadId), [runId, sc.id, seed]);
 
   const selectFromBoard = useCallback((next: Selection) => {
     setSelection(next);
@@ -167,7 +168,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
             isOpen={isOpen}
             onToggle={toggle}
             onBoard={() => setOpen(null)}
-            dashboardHref={dashboardHref({ run: runId, scenario: runId ? undefined : sc.id })}
+            dashboardHref={dashboardHref({ run: runId, scenario: runId ? undefined : sc.id, portfolio: seed })}
             croHref={runId ? `/cro?run=${encodeURIComponent(runId)}` : null}
             panelIds={panelIds}
             tabRefs={tabRefs}
@@ -241,6 +242,7 @@ export function InvestigatorView({ runId, scenario, replay, feed: given }: { run
                   caseHref={caseHref}
                   entry={entry}
                 />
+                {runId && feed.mode !== "preview" && <RunProgressStrip events={board.events} runId={runId} />}
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />
                 <div aria-hidden className="board-recess pointer-events-none absolute inset-0 z-10" />

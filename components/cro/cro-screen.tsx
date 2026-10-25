@@ -8,6 +8,7 @@ import type { ReportBundle, RunSummary } from "@/lib/deal/service";
 import { Actions, type Decide } from "./actions";
 import { plural } from "./format";
 import { MemoPanel } from "./memo";
+import { AdaptPanel } from "./adapt";
 import { QuestionsPanel } from "./questions";
 import { Concentration, LoansTable, Section, Spend, Totals } from "./sections";
 
@@ -140,6 +141,9 @@ export function CroScreen() {
             </Section>
             <Section title="Every investigated loan" hint={`${plural(bundle.report.totals.reviewed, "loan")} closed by the run. The other ${bundle.report.totals.not_reviewed.toLocaleString("en-US")} were not investigated and are counted at base price.`}>
               <LoansTable loans={bundle.report.loans} runId={bundle.report.run_id} />
+            </Section>
+            <Section title="Adapting to a client" hint="Configured, not retrained: what a bank changes to fit this to its own policies, tapes and documents, and what this run used.">
+              <AdaptPanel bundle={bundle} />
             </Section>
           </>
         ) : null}

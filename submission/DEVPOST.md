@@ -4,9 +4,9 @@
 
 Threadpull
 
-## One-line description
+## Tagline
 
-An AI fraud investigator that follows evidence across an auto-loan portfolio, spends verification budget on the strongest leads, and withdraws suspicion when a normal explanation is supported.
+Find the ring. Protect the innocent. Decide the deal.
 
 ## Opening line
 
@@ -16,35 +16,99 @@ Upload the loan tape. We tell you which borrowers don't exist, which ones only l
 
 Fraud investigator on a bank's portfolio-acquisition due-diligence team.
 
-## Description
+## Inspiration
 
-Banks buying an auto-loan portfolio need to find coordinated fraud without treating every shared phone, address, employer, or dealer as proof. Threadpull is a prototype for that investigation seat.
+Banks buy pools of hundreds or thousands of auto loans from dealers. Before buying, they review only a sample, and
+each loan is judged on its own. Coordinated fraud slips through that way: synthetic borrowers who each look fine,
+but share phones, bank accounts, devices and recycled pay stubs through one dealer. Meanwhile a naive "shared value =
+fraud" rule accuses innocent people who simply live in the same apartment building or work at the same hospital.
 
-Hazel follows weighted links between loans and their evidence. A connection is a lead, not a verdict: the system is designed to spend limited checks where they matter, record the sources behind each step, and lower suspicion when a check supports an ordinary explanation. Questions that need policy judgment can become scoped rules, so the same question does not have to be asked again outside that rule's scope.
+## What it does
 
-The project is built around a human decision-maker. Hazel cannot approve a purchase or take action against a borrower. The intended CRO review brings investigation evidence and proposed portfolio actions together for a person to decide.
+Hazel, the investigator agent, works a 1,000-loan portfolio like a detective at a corkboard:
 
-The repository includes the TypeScript portfolio generator, evidence graph, explanation checks, CRS identity check with persona guard and acorn ledger, ask-once rules, and Hazel's tool loop. The complete UI/demo, the remaining CRS tools, and measured seed results are still in progress; update this draft with the final demo and generated `docs/PROOF.md` before submission.
+- **Follows the threads.** An evidence graph links loans that share a value, weighted by how rare that value is: a
+  phone shared by two strangers is strong, an employer shared by forty people is weak, and location alone is never a
+  signal.
+- **Spends a limited budget.** Paid checks on the CRS sandbox (TransUnion identity, the three-bureau credit report,
+  AtData Fraud Finder, reverse phone) cost acorns from a fixed budget. Code charges the budget and refuses what she
+  can't afford.
+- **Takes suspicion back down.** A thread comes down only when a check proves an ordinary explanation (an apartment
+  building, one household, a dealer's usual month-end push), and the board shows the check that proved it.
+- **Asks once, remembers forever.** When she can't decide, the right person gets one precise question with a
+  code-computed confidence and reason. The CRO's answer becomes a rule that clears the next lookalike by itself, and a
+  case outside the rule asks again.
+- **Hands over a decision, not a list.** The CRO screen shows the balance under review, dealer concentration, drafted
+  buyback demands and a revised bid. A person approves. Hazel can't buy, reject, sign or send anything.
+- **Ignores instructions hidden in documents.** A pay stub that tells the reviewer to clear the loan is flagged
+  and changes nothing.
+
+## Results (generated from recorded runs, `docs/PROOF.md`)
+
+Measured on frozen detection code (`detector-frozen`). Seed 99 is a held-out portfolio written by a teammate who
+wrote no detection code; it was run once and is reported as it came out.
+
+| Seed 99 (held out) | Ring members found | Innocents flagged | Acorns |
+| --- | --- | --- | --- |
+| Threadpull (Hazel) | 12 of 12 | 0 of 65 | 59 |
+| Fixed rules (same budget) | 12 of 12 | 8 of 65 | 60 |
+| Check everything (no budget) | 3 of 12 | 0 of 65 | 233 |
+
+On the development seed 13, Hazel found 6 of 6 ring members with 0 of 50 innocents flagged; the fixed rules flagged
+4 of 50. Run ids, commits and the full tables are in `docs/PROOF.md`. Acorn prices are design choices; each tool
+shows its real unit (one CRS call, three bureau pulls, one free lookup).
+
+## How we built it
+
+- **Agent:** Claude Sonnet 5.5 through the Anthropic TypeScript SDK tool runner. Claude picks the next tool and writes
+  short, source-cited notes; plain code enforces the budget, the allowed tools, every status and every number.
+- **Evidence graph:** graphology, with rarity weights, household fade, same-origin grouping and connected clusters.
+- **Verification:** the CRS sandbox API behind a persona guard (only sandbox identities are ever sent), an acorn
+  ledger, a response cache, and recovery from rate limits.
+- **Board:** Next.js, React, React Flow, Tailwind and Motion. Every animation on the corkboard is a row in the
+  Supabase `events` table, replayed in order or streamed live over Realtime.
+- **Data:** a seeded generator (Bun, Faker) that builds a messy dealer-application loan tape with planted patterns and
+  a separate answer key that only the evaluator reads.
+- **Proof:** an evaluator that scores Hazel's recorded run against two baselines on the same portfolio.
 
 ## How we use AI
 
-Claude selects Hazel's next allowed tool and writes short, source-cited notes. Plain backend code enforces the tool boundary, budget, saved statuses, and event log. The model does not determine final dispositions or compute deal prices.
+Claude runs the investigation loop: it reads the evidence, chooses the next check and explains its reasoning in two
+sentences. It never sets a status, computes a price or touches the budget; code does, and overrules Hazel when the
+evidence disagrees with her proposal. Claude Haiku reads pay stubs the fixed parser can't, and code verifies every
+value it returns. Document text reaches the model only as form fields, never as instructions.
+
+## Challenges
+
+- Telling a ring from innocent lookalikes without any location-based signal.
+- Keeping the agent honest: code decides statuses, and the board shows only recorded events.
+- Loans connected to nothing are never leads; a verification sweep spends Hazel's leftover budget on the largest
+  unverified balances, and it still reaches only some of the review cases (1 of 3 on both seeds).
+
+## What's next
+
+Production would need a permissible purpose under the FCRA and a legal review. The output is a recommendation for
+human review, never an adverse action on a consumer. The prototype uses sandbox personas and synthetic data only.
 
 ## Tracks to select
 
-- Hyphenate — Autonomous Systems for Finance
-- CRS — Identity/Fraud
-- CRS — Financial AI Agent
-- CRS — Best Overall
-- Microsoft — Built for the Real World
+- Hyphenate: Autonomous Systems for Finance
+- CRS: Identity/Fraud
+- CRS: Financial AI Agent
+- CRS: Best Overall
+- Microsoft: Built for the Real World
 - Anthropic
+- Cal Hacks: Most Technically Complex
 
-Confirm the exact track names and eligibility in Devpost before submitting.
+Confirm the exact track names and eligibility on Devpost before submitting.
 
 ## Built with
 
-TypeScript, Bun, Zod, Faker, graphology, Anthropic TypeScript SDK (Claude Sonnet 5.5), CRS sandbox API, Supabase. Planned: a React/React Flow investigator board.
+TypeScript, Bun, Next.js, React, React Flow, Tailwind CSS, Motion, graphology, Zod, Faker, Supabase (Postgres +
+Realtime), Anthropic TypeScript SDK (Claude Sonnet 5.5, Claude Haiku), CRS sandbox API (TransUnion identity, credit
+report, AtData Fraud Finder, AccurateAppend reverse phone).
 
 ## Team members
 
-Add the four project teammates to the Devpost project: Person A (Evidence), Person B (Verification), Person C (Board), and Person D (Investigation). Replace role labels with each teammate's Devpost account/name.
+Add the four project teammates to the Devpost project: Person A (Evidence), Person B (Verification), Person C (Board),
+and Person D (Investigation). Replace role labels with each teammate's Devpost account/name.

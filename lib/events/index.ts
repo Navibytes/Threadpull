@@ -9,3 +9,4 @@ export * from "./plain";
 export * from "./case-summary";
 export { replayFeed, replayGapMs, supabaseReplayFeed } from "./replay-feed";
 export { DEFAULT_SCENARIO, SCENARIOS, scenarioById, scenarioRunId, type Scenario } from "./scenarios";
+export * from "./progress";

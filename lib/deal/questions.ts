@@ -11,7 +11,7 @@ import type { Question, Rule } from "@/lib/contracts/rule";
 import { serverClient } from "@/lib/db/server";
 import { answerQuestion, currentRules, FileRuleStore, type RuleStore } from "@/lib/rules";
 import type { Mirror } from "./dispositions-db";
-import { readRun } from "./service";
+import { readRun, STILL_RUNNING, stillRunning } from "./service";
 
 export const rulesPath = () => process.env.THREADPULL_RULES ?? join(process.cwd(), "runs", "rules.json");
 
@@ -52,6 +52,7 @@ export async function recordAnswer(raw: unknown, deps: Deps = {}): Promise<Answe
   const input = parsed.data;
   const run = readRun(input.run_id, deps.root);
   if (!run) return { ok: false, status: 404, error: `no run ${input.run_id}` };
+  if (stillRunning(run.events)) return { ok: false, status: 409, error: STILL_RUNNING };
   const store = storeOf(deps);
   const q = (await store.questions()).find((x) => x.id === input.question_id);
   if (!q || q.run_id !== input.run_id) return { ok: false, status: 404, error: `run ${input.run_id} asked no question ${input.question_id}` };
@@ -62,8 +63,11 @@ export async function recordAnswer(raw: unknown, deps: Deps = {}): Promise<Answe
 
   let out;
   try {
-    out = await answerQuestion(store, { question_id: q.id, decision: input.decision, text: input.text, answered_by: input.answered_by, when },
-      deps.now?.() ?? new Date());
+    out = input.decision === "yes" && !q.proposed_rule
+      // a question that is not about a shared link has no scope to save: the yes is recorded, no rule is made
+      ? await answerWithoutRule(store, q, input, deps.now?.() ?? new Date())
+      : await answerQuestion(store, { question_id: q.id, decision: input.decision, text: input.text, answered_by: input.answered_by, when },
+        deps.now?.() ?? new Date());
   } catch (e) {
     return { ok: false, status: 422, error: e instanceof Error ? e.message : String(e) };
   }
@@ -71,12 +75,28 @@ export async function recordAnswer(raw: unknown, deps: Deps = {}): Promise<Answe
   const last = run.events.at(-1);
   const note = out.rule
     ? `${input.answered_by} answered yes; saved as ${out.rule.id} v${out.rule.version}: ${out.rule.reason_text}`
-    : `${input.answered_by} answered no; no rule saved: ${input.text}`;
+    : `${input.answered_by} answered ${input.decision}; no rule saved (${input.decision === "yes" ? "the question is not about a shared link" : "a no saves none"}): ${input.text}`;
   const event = EventSchema.parse({ run_id: input.run_id, seq: (last?.seq ?? 0) + 1, ts: (deps.now?.() ?? new Date()).toISOString(),
     type: "question_answered", loan_ids: out.event.loan_ids, tool: "ask_human", result: out.event.result, sources: out.event.sources,
     note, budget: last?.budget ?? { spent: 0, limit: 0 }, simulated: false });
   appendFileSync(/*turbopackIgnore: true*/ join(deps.root ?? join(process.cwd(), "runs"), input.run_id, "events.jsonl"), `${JSON.stringify(event)}\n`);
   return { ok: true, event, rule: out.rule, mirror: await mirror(event, deps.db === undefined ? defaultEventsDb() : deps.db) };
+}
+
+/** A yes to a question with no proposed scope: saved as answered, with no rule, in the shape answerQuestion returns. */
+async function answerWithoutRule(store: RuleStore, q: Question, input: { decision: "yes" | "no"; text: string; answered_by: string }, now: Date) {
+  const at = now.toISOString();
+  const question: Question = { ...q, status: "answered",
+    answer: { decision: input.decision, text: input.text.trim(), answered_by: input.answered_by.trim(), answered_at: at, rule_id: null } };
+  await store.saveQuestion(question);
+  return {
+    question, rule: null as Rule | null,
+    event: {
+      result: { question_id: q.id, decision: input.decision, answered_by: input.answered_by.trim(), rule_id: null, version: null },
+      loan_ids: q.loan_ids,
+      sources: [{ kind: "human" as const, question_id: q.id, answered_by: input.answered_by.trim() }],
+    },
+  };
 }
 
 async function mirror(event: Event, db: EventsInsert | null): Promise<Mirror> {

@@ -15,6 +15,8 @@ export type BoardCard = {
   note: string | null;
   sources: SourceRef[];
   simulated: boolean;
+  // pinned by the verification sweep (lead_opened with result.sweep): a routine check of a large balance, not a suspicion
+  spotCheck?: boolean;
 };
 
 // Why a thread came down: copied from the clue_explained row, with the row's own sources (the check's event
@@ -71,6 +73,7 @@ function pinCard(cards: BoardCard[], id: string, e: RunEvent): BoardCard[] {
     tool: e.tool,
     ts: e.ts,
     note: e.type === "lead_opened" ? e.note : null,
+    ...(e.type === "lead_opened" && e.result?.sweep === true ? { spotCheck: true } : {}),
     sources: e.sources.filter((s) => s.kind !== "row" || s.loan_id === id),
     simulated: e.simulated,
   };

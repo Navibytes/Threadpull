@@ -15,13 +15,19 @@ import { TAPE_ID } from "@/lib/ingest/intake";
 import { loadTape } from "@/lib/ingest/tapes";
 import { FileRuleStore } from "@/lib/rules";
 
+/** Longest wait for one model request before it is dropped and retried (the SDK's own default is 10 minutes). */
+export const MODEL_TIMEOUT_MS = 120_000;
+
 export const uploadsRoot = () => join(process.cwd(), "data", "out", "uploads");
 const runsRoot = () => join(process.cwd(), "runs");
 const rulesFile = () => process.env.THREADPULL_RULES ?? join(process.cwd(), "runs", "rules.json");
 
 export type TapeRunState = { run_id: string; tape_id: string; state: "running" | "finished" | "failed"; error?: string; started_at: string };
-const runs = new Map<string, TapeRunState>();
-let current: Promise<unknown> | null = null;
+// Kept on globalThis: Next.js can load this module more than once in one server (one copy per route bundle, again after
+// a reload), and a module variable per copy let the status route miss a run and a second run start beside the first.
+type Registry = { runs: Map<string, TapeRunState>; current: Promise<unknown> | null };
+const registry: Registry = ((globalThis as { __threadpullTapeRuns?: Registry }).__threadpullTapeRuns ??= { runs: new Map(), current: null });
+const runs = registry.runs;
 
 /** What a run needs that isn't in the repo; names only, never values. */
 export function missingConfig(env: Record<string, string | undefined> = process.env): string[] {
@@ -43,7 +49,7 @@ export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
   if (!TAPE_ID.test(tapeId)) return { ok: false, status: 400, error: "not a tape id" };
   const missing = missingConfig(deps.env);
   if (missing.length) return { ok: false, status: 503, error: `a live run needs ${missing.join(", ")} in .env.local` };
-  if (current) return { ok: false, status: 409, error: "a run is already in progress; wait for it to finish" };
+  if (registry.current) return { ok: false, status: 409, error: "a run is already in progress; wait for it to finish" };
   let tape;
   try { tape = loadTape(deps.uploads ?? uploadsRoot(), tapeId); } catch { return { ok: false, status: 404, error: `no uploaded tape ${tapeId}` }; }
 
@@ -58,15 +64,15 @@ export function startTapeRun(tapeId: string, deps: Deps = {}): StartResult {
   // never the hosted project under bun test: tests load real keys, so they pass a fake or nothing
   const db = deps.db !== undefined ? deps.db : process.env.NODE_ENV === "test" ? null : serverClient();
   if (db) sinks.push(supabaseSink(db, (e, message) => console.error(`run ${run_id}: Supabase row ${e.seq} (${e.type}) failed: ${message}`)));
-  // a request that hangs (the venue Wi-Fi switching mid-call) is dropped after 90 s and retried, not waited on for 10 min
-  const anthropic = deps.anthropic ?? new Anthropic({ timeout: 90_000, maxRetries: 2 });
+  // a request that hangs (the venue Wi-Fi switching mid-call) is dropped after 2 min and retried, not waited on for 10
+  const anthropic = deps.anthropic ?? new Anthropic({ timeout: MODEL_TIMEOUT_MS, maxRetries: 2 });
   const state: TapeRunState = { run_id, tape_id: tapeId, state: "running", started_at: now.toISOString() };
   runs.set(run_id, state);
-  current = (deps.run ?? runHazel)({ runId: run_id, loans: tape.loans, reference: tape.reference, anthropic, crs: defaultCrsClient(),
+  registry.current = (deps.run ?? runHazel)({ runId: run_id, loans: tape.loans, reference: tape.reference, anthropic, crs: defaultCrsClient(),
     rules: new FileRuleStore(deps.rules ?? rulesFile()), documentReader: modelStubExtractor(anthropic), sinks: sinks.map((s) => tapeTagged(s, tapeId)) })
     .then(() => { state.state = "finished"; })
     .catch((e: unknown) => { state.state = "failed"; state.error = e instanceof Error ? e.message : String(e); })
-    .finally(() => { current = null; });
+    .finally(() => { registry.current = null; });
   return { ok: true, run: state };
 }
 
