@@ -6,6 +6,8 @@ import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { EventSchema, type Event } from "@/lib/contracts/event";
 import { LoanSchema, type Loan } from "@/lib/contracts/loan";
+import { TAPE_ID } from "@/lib/ingest/intake";
+import { loadTape } from "@/lib/ingest/tapes";
 import { buybackDemands, documentRequests, type BuybackDemand, type DocumentRequest } from "./drafts";
 import { DispositionInputSchema, dispositionRow } from "./dispositions";
 import { defaultDispositionsDb, mirrorDisposition, type DispositionsTable, type Mirror } from "./dispositions-db";
@@ -15,7 +17,7 @@ import { buildReport, type DealReport } from "./report";
 import { whyLoan, type Why } from "./why";
 
 /** `spec` is whatever the run's writer recorded; this module never opens it (only data/ and eval/ read pattern specs). */
-export type RunMeta = { run_id: string; spec?: string; seed: number; crs?: string; crs_note?: string; model_note?: string; started_at?: string };
+export type RunMeta = { run_id: string; spec?: string; seed: number; tape_id?: string; crs?: string; crs_note?: string; model_note?: string; started_at?: string };
 export type RunSummary = { run_id: string; started_at: string | null; crs: string | null; note: string | null; events: number };
 
 const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/; // also keeps a run id from walking out of runs/
@@ -57,6 +59,10 @@ export function listRuns(root = runsRoot()): RunSummary[] {
 const loansCache = new Map<number, Loan[]>();
 /** The run's loans, from the tape `bun run data --no-db` writes (eval/sample-run.ts writes it when it is missing). */
 export async function loansFor(meta: RunMeta): Promise<Loan[]> {
+  if (meta.tape_id !== undefined) { // a run of an uploaded tape (lib/runs/tape-run.ts) reads that tape's accepted loans
+    if (!TAPE_ID.test(meta.tape_id)) throw new Error(`run ${meta.run_id} names no valid tape`);
+    return loadTape(join(process.cwd(), "data", "out", "uploads"), meta.tape_id).loans;
+  }
   if (!Number.isInteger(meta.seed)) throw new Error(`run ${meta.run_id} has no whole-number seed`); // the seed becomes part of a path
   const cached = loansCache.get(meta.seed);
   if (cached) return cached;

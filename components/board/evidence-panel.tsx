@@ -17,6 +17,7 @@ import {
 import type { Selection } from "./corkboard";
 import { SourceList } from "./source-list";
 import { StatusChip } from "./status-chip";
+import type { Portfolio } from "@/components/drawer/loan-source";
 import { portfolioSeed, TwinCompare } from "@/components/twin-compare/twin-compare";
 
 export function EvidencePanel({ board, selection, mode }: { board: BoardState; selection: Selection; mode: FeedMode }) {
@@ -144,7 +145,7 @@ function CardDetails({ card, board, mode }: { card: BoardCard; board: BoardState
   );
 }
 
-function ThreadDetails({ thread, mode, seed }: { thread: BoardThread; mode: FeedMode; seed: number | null }) {
+function ThreadDetails({ thread, mode, seed }: { thread: BoardThread; mode: FeedMode; seed: Portfolio | null }) {
   const a = loanName(thread.a), b = loanName(thread.b);
   const meaning = whereFrom(thread.sources);
   return (

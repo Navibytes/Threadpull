@@ -4,7 +4,7 @@
 // fetched once per page and shared by every comparison; a failed fetch is forgotten so the next one can retry.
 import { useEffect, useState } from "react";
 import type { Loan } from "@/lib/contracts/loan";
-import { apiLoanSource, type LoanSource } from "@/components/drawer/loan-source";
+import { apiLoanSource, type LoanSource, type Portfolio } from "@/components/drawer/loan-source";
 
 export type TwinLoans =
   | { phase: "loading" }
@@ -14,7 +14,7 @@ export type TwinLoans =
 
 const cache = new Map<string, Promise<Map<string, Loan>>>();
 
-export function portfolio(seed: number, source: LoanSource = apiLoanSource): Promise<Map<string, Loan>> {
+export function portfolio(seed: Portfolio, source: LoanSource = apiLoanSource): Promise<Map<string, Loan>> {
   const key = `${source.kind}:${seed}`;
   let p = cache.get(key);
   if (!p) {
@@ -26,7 +26,7 @@ export function portfolio(seed: number, source: LoanSource = apiLoanSource): Pro
 }
 
 /** seed null: the run names no generated portfolio, so there is nothing to fetch ("missing"). */
-export function useTwinLoans(a: string, b: string, seed: number | null, source: LoanSource = apiLoanSource): TwinLoans {
+export function useTwinLoans(a: string, b: string, seed: Portfolio | null, source: LoanSource = apiLoanSource): TwinLoans {
   const [state, setState] = useState<{ key: string; loans: TwinLoans }>({ key: "", loans: { phase: "loading" } });
   const key = `${seed}:${a}:${b}`;
   useEffect(() => {

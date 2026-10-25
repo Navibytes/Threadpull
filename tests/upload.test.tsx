@@ -106,14 +106,14 @@ describe("the report view", () => {
   };
   const render = (report: IntakeReport, saved = true) => renderToStaticMarkup(<IntakeReportView name="seller.json" report={report} saved={saved} />);
 
-  test("a clean tape: accepted stamp, numbers, the flagged document, and the next step marked as not built", () => {
+  test("a clean tape: accepted stamp, numbers, the flagged document; no placeholder for the investigation (the desk's actions start it)", () => {
     const html = render(intakeTape(json).report);
     expect(html).toContain("Tape received.");
     expect(html).toContain(">accepted<");
     expect(html).toContain("1,000 of 1,000");
     expect(html).toContain("L0445-PS");
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Open the case<\/button>/);
-    expect(html).toContain("isn&#x27;t built yet");
+    expect(html).not.toContain("isn&#x27;t built yet");
+    expect(html).not.toContain("Open the case");
     expect(html).not.toContain("rows were rejected");
   });
 
