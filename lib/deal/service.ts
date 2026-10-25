@@ -7,6 +7,7 @@ import { EventSchema, type Event } from "@/lib/contracts/event";
 import { LoanSchema, type Loan } from "@/lib/contracts/loan";
 import { buybackDemands, documentRequests, type BuybackDemand, type DocumentRequest } from "./drafts";
 import { DispositionInputSchema, dispositionRow } from "./dispositions";
+import { defaultDispositionsDb, mirrorDisposition, type DispositionsTable, type Mirror } from "./dispositions-db";
 import { type Assumptions, DEFAULT_ASSUMPTIONS, withInputs } from "./pricing";
 import { buildReport, type DealReport } from "./report";
 
@@ -77,7 +78,8 @@ export type ReportBundle = {
   run: RunMeta;
 };
 
-type Deps = { root?: string; loans?: Loan[] };
+/** `db`: the Supabase copy of decisions. Omit it for the hosted client (never under bun test), pass null to switch the copy off. */
+type Deps = { root?: string; loans?: Loan[]; db?: DispositionsTable | null };
 
 /** The report for a run, with the drafts, under the analyst's assumptions (defaults are the brief's). Null when there is no such run. */
 export async function loadReport(
@@ -96,9 +98,13 @@ export async function loadReport(
   return { report, buyback_demands: buybackDemands(report), document_requests: documentRequests(report), run: run.meta };
 }
 
-export type RecordResult = { ok: true; event: Event } | { ok: false; status: number; error: string };
+export type RecordResult = { ok: true; event: Event; mirror: Mirror } | { ok: false; status: number; error: string };
 
-/** Validate a decision, turn it into a disposition_recorded row, stamp it and append it to the run's event log. */
+/**
+ * Validate a decision, turn it into a disposition_recorded row, stamp it and append it to the run's event log (the record
+ * of truth). The row is then copied to the Supabase `dispositions` table; `mirror` says whether that worked, and a failed
+ * copy never undoes the decision.
+ */
 export async function recordDisposition(raw: unknown, deps: Deps = {}): Promise<RecordResult> {
   const parsed = DispositionInputSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, status: 400, error: parsed.error.issues.map((i) => `${i.path.join(".") || "input"}: ${i.message}`).join("; ") };
@@ -114,5 +120,5 @@ export async function recordDisposition(raw: unknown, deps: Deps = {}): Promise<
   if (!built.ok) return { ok: false, status: 422, error: built.error };
   const event = EventSchema.parse({ run_id: input.run_id, seq: (last?.seq ?? 0) + 1, ts: new Date().toISOString(), ...built.row });
   appendFileSync(/*turbopackIgnore: true*/ join(deps.root ?? runsRoot(), input.run_id, "events.jsonl"), `${JSON.stringify(event)}\n`);
-  return { ok: true, event };
+  return { ok: true, event, mirror: await mirrorDisposition(event, deps.db === undefined ? defaultDispositionsDb() : deps.db) };
 }

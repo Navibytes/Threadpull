@@ -3,12 +3,17 @@
 // Neutral on purpose: this is the page a risk officer signs from, separate from the cork board. All figures come from
 // GET /api/runs/{id}/report; a decision is POSTed to /api/dispositions and lands in the run's event log.
 import { useCallback, useEffect, useState } from "react";
+import type { Mirror } from "@/lib/deal/dispositions-db";
 import type { ReportBundle, RunSummary } from "@/lib/deal/service";
 import { Actions, type Decide } from "./actions";
 import { plural } from "./format";
 import { Concentration, LoansTable, Section, Spend, Totals } from "./sections";
 
 const DEFAULTS = { lgd: "0.55", margin: "0.04" };
+/** The decision is always in the run's event log; say plainly what happened to the Supabase copy. */
+const copyNote = (m?: Mirror) =>
+  m?.status === "saved" ? " Also saved to Supabase." : m?.status === "failed" ? ` It is saved in the run's event log, but the Supabase copy failed: ${m.error}.` : "";
+
 const isFraction = (s: string) => s.trim() !== "" && Number.isFinite(Number(s)) && Number(s) >= 0 && Number(s) <= 1;
 
 export function CroScreen() {
@@ -59,7 +64,7 @@ export function CroScreen() {
         body: JSON.stringify({ run_id: runId, decided_by: who.trim() || "CRO", ...d }) });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) return (body as { error?: string }).error ?? `The server answered HTTP ${res.status}.`;
-      setNotice(`Recorded: ${d.decision === "approve" ? "approved" : "overrode"} ${plural(d.loan_ids.length, "loan")} as ${who.trim() || "CRO"}.`);
+      setNotice(`Recorded: ${d.decision === "approve" ? "approved" : "overrode"} ${plural(d.loan_ids.length, "loan")} as ${who.trim() || "CRO"}.${copyNote((body as { mirror?: Mirror }).mirror)}`);
       await load(runId, applied);
       return null;
     } catch (e) {
