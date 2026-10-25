@@ -102,7 +102,9 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
 
           <Notices sample={sample} m={m.run} events={events} loans={loans} retry={retry} />
 
-          <section aria-label="Key figures" className="mt-6 grid grid-cols-1 gap-x-3 gap-y-6 min-[560px]:grid-cols-2 min-[900px]:grid-cols-3">
+          <CaseNotesSection notes={notes} run={m.run} events={events} boardHref={boardHref} sample={sample} />
+
+          <section aria-label="Key figures" className="mt-8 grid grid-cols-1 gap-x-3 gap-y-6 min-[560px]:grid-cols-2 min-[900px]:grid-cols-3">
             <Kpi scope="Portfolio" label="Loans loaded" value={m.loansLoaded === null ? "—" : nf(m.loansLoaded)} note={loans.state === "ok" ? (noLoanFiles ? `No loan files found for seed ${seed}. Load the portfolio (bun run data), then refresh.` : `Loan files for seed ${seed}. Each loan counted once.`) : loans.state === "loading" ? "Loading…" : "The loan files aren't available."} />
             <Kpi scope="This run" label="Cases investigated" value={m.run ? nf(m.run.casesInvestigated) : "—"} note={m.run ? "Distinct loans opened as leads." : noRun(events)} />
             <Kpi
@@ -129,8 +131,6 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
               note={m.run ? "Distinct loans with a recorded human decision." : noRun(events)}
             />
           </section>
-
-          <CaseNotesSection notes={notes} run={m.run} events={events} boardHref={boardHref} sample={sample} />
 
           <div className="mt-8 grid grid-cols-1 gap-x-3 gap-y-7 min-[900px]:grid-cols-2">
             <Breakdown b={m.statuses} loans={loans} run={m.run} seed={seed} />
@@ -260,7 +260,7 @@ function BudgetKpi({ run, fallback }: { run: RunMetrics | null; fallback: string
 // Hazel's desk: her illustration stands on the walnut edge at the bottom of her notes, so the notes read as hers.
 function CaseNotesSection({ notes, run, events, boardHref, sample }: { notes: CaseNotes | null; run: RunMetrics | null; events: Load<unknown>; boardHref: string; sample: boolean }) {
   return (
-    <section aria-labelledby="notes-title" className="mt-9">
+    <section aria-labelledby="notes-title" className="mt-9 mb-1">
       <div className="dossier overflow-visible rounded-b-none pb-0">
         <span className="dossier-tab dossier-tab-brass">Case notes</span>
         <div className="grid grid-cols-1 items-end gap-x-4 min-[640px]:grid-cols-[13.5rem_minmax(0,1fr)]">
