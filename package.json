@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "data": "bun run data/generate.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "hazel": "bun run eval/hazel-run.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0",
     "@faker-js/faker": "10.6.0",
     "graphology": "0.26.0",
     "graphology-components": "1.5.4",

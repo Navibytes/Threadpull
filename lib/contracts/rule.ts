@@ -63,7 +63,7 @@ export const QuestionSchema = z.object({
   confidence: z.number().int().min(0).max(100), // support for the innocent explanation, from confidence_basis
   reason: QuestionReasonSchema,
   confidence_basis: z.object({ for: z.array(EvidenceItemSchema), against: z.array(EvidenceItemSchema) }),
-  context: RuleContextSchema,
+  context: RuleContextSchema.nullable(), // the link asked about; null for a question that is not about a link
   proposed_rule: RuleWhenSchema.nullable(), // the scope a "yes" adopts unless the person edits it
   sources: z.array(SourceRefSchema),
   asked_at: z.string(),

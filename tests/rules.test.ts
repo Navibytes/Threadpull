@@ -123,7 +123,7 @@ describe("ask once, remember forever (seed 13)", () => {
   test("6. a 38-staff employer is outside R-001's scope: Hazel asks again", async () => {
     const out = await askAbout(store, room, dental[0], tenure(dental[0]));
     if (out.status !== "asked") throw new Error(out.status);
-    expect([out.question.id, out.question.context.group_size, out.question.proposed_rule?.min_group_size]).toEqual(["q-002", 38, 38]);
+    expect([out.question.id, out.question.context?.group_size, out.question.proposed_rule?.min_group_size]).toEqual(["q-002", 38, 38]);
   });
 
   test("7. a no saves no rule, and the links stay up", async () => {

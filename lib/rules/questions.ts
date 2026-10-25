@@ -33,7 +33,7 @@ export type AskInput = {
   loan_ids: string[];
   question: string; // Hazel's wording
   topic: QuestionTopic;
-  context: RuleContext;
+  context: RuleContext | null; // null: not about a shared link, so no rule can cover it
   evidence: { for: EvidenceItem[]; against: EvidenceItem[] };
   proposed_rule: RuleWhen | null;
   sources: SourceRef[];
@@ -52,11 +52,15 @@ const sameContext = (a: RuleContext, b: RuleContext) =>
   a.link_kind === b.link_kind && a.group_size === b.group_size && a.tenure_on_credit_file === b.tenure_on_credit_file;
 
 export async function askHuman(store: RuleStore, input: AskInput, now = new Date()): Promise<AskOutcome> {
-  const match = matchRule(await currentRules(store), input.context);
-  if (match.status === "match") return { status: "rule_applies", match };
-  if (match.status === "missing") return { status: "check_first", match };
+  if (input.context) {
+    const match = matchRule(await currentRules(store), input.context);
+    if (match.status === "match") return { status: "rule_applies", match };
+    if (match.status === "missing") return { status: "check_first", match };
+  }
 
-  const open = (await store.questions()).find((q) => q.status === "pending" && q.topic === input.topic && sameContext(q.context, input.context));
+  const same = (q: Question) => q.context && input.context ? sameContext(q.context, input.context)
+    : !q.context && !input.context && q.loan_ids.some((id) => input.loan_ids.includes(id));
+  const open = (await store.questions()).find((q) => q.status === "pending" && q.topic === input.topic && same(q));
   if (open) {
     const merged = { ...open, loan_ids: [...new Set([...open.loan_ids, ...input.loan_ids])].sort() };
     await store.saveQuestion(merged);
