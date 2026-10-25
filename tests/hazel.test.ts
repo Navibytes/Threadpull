@@ -76,8 +76,9 @@ describe("the first ring, end to end", () => {
     expect([b.model, b.output_config.effort, b.fallbacks]).toEqual(["claude-sonnet-5-5", "medium", "default"]);
     expect(requests[0].headers.get("anthropic-beta")).toContain("server-side-fallback-2026-07-01");
     expect(b.tools.map((t: { name: string }) => t.name).sort()).toEqual([
-      "ask_human", "check_address", "check_employer", "check_household", "close_lead", "compare_documents", "crs_identity_check",
-      "dealer_timeline", "find_connections", "inspect_dealer_loans", "inspect_loan"].sort());
+      "ask_human", "check_address", "check_employer", "check_household", "close_lead", "compare_documents", "crs_credit_report",
+      "crs_fraud_finder", "crs_identity_check", "crs_reverse_phone", "dealer_timeline", "find_connections", "inspect_dealer_loans",
+      "inspect_loan"].sort());
     expect(b.messages[0].content).toContain("L0037");
     expect(b.cache_control).toEqual({ type: "ephemeral" });
   });
@@ -248,5 +249,49 @@ describe("the code's guarantees hold whatever the model does", () => {
     const out = await done;
     expect(claude.requests[1].body.messages.at(-1).content[0].is_error).toBe(true);
     expect([out.spent, ofType(out.events, "check_run").length]).toEqual([0, 0]);
+  });
+});
+
+describe("the other CRS tools: credit report, Fraud Finder, reverse phone", () => {
+  const loanOf = (persona: string) => Object.entries(key.case_loans).find(([, p]) => p === persona)![0];
+
+  test("a frozen bureau or bureaus that disagree mean Insufficient evidence, decided by code from the report", async () => {
+    const frozen = loanOf("P15"), split = loanOf("P17");
+    const out = await run([
+      [{ name: "crs_credit_report", input: { loan_id: frozen } }, { name: "crs_credit_report", input: { loan_id: split } }],
+      [{ name: "close_lead", input: { loan_id: frozen } }, { name: "close_lead", input: { loan_id: split } }],
+      "done",
+    ]).done;
+    expect(out.spent).toBe(12); // two reports, 6 acorns each (3 bureau pulls under one charge)
+    const status = (id: string) => ofType(out.events, "status_changed").find((e) => e.loan_ids[0] === id)!;
+    expect([out.statuses.get(frozen), out.statuses.get(split)]).toEqual(["Insufficient evidence", "Insufficient evidence"]);
+    expect(status(frozen).result.reason).toContain("frozen");
+    expect(status(split).result.reason).toContain("disagree");
+    expect(status(frozen).sources.every((s) => s.kind === "crs")).toBe(true);
+  });
+
+  test("Fraud Finder and reverse phone are charged, logged with their RequestIDs, and change no status", async () => {
+    const lead = "L0037", phone = loans.find((l) => l.loan_id === lead)!.applicant_info.phone;
+    const { claude, done } = run([
+      [{ name: "crs_fraud_finder", input: { loan_id: lead } }],
+      [{ name: "crs_reverse_phone", input: { phone } }],
+      "done",
+    ]);
+    const out = await done;
+    expect(ofType(out.events, "budget_spent").map((e) => [e.tool, e.budget.spent])).toEqual([["crs_fraud_finder", 2], ["crs_reverse_phone", 3]]);
+    const [ff, rp] = ofType(out.events, "check_run");
+    expect(ff.sources).toEqual([expect.objectContaining({ kind: "crs", product: "fraud_finder" })]);
+    expect(rp.loan_ids.length).toBe(2); // the lead and the background loan sharing its phone
+    expect(JSON.parse(claude.requests[1].body.messages.at(-1).content[0].content).result.email_age_days).toBeNumber();
+    expect(out.statuses.size).toBe(0);
+  });
+
+  test("a CRS call that throws is a logged, uncharged refusal, not a broken run", async () => {
+    // the recordings have no credit report for this persona, so the replay sandbox throws
+    const hospital = loanOf("P02");
+    const out = await run([[{ name: "crs_credit_report", input: { loan_id: hospital } }], "done"]).done;
+    const [refused] = ofType(out.events, "check_run");
+    expect([refused.result.ok, out.spent, out.stop_reason]).toEqual([false, 0, "end_turn"]);
+    expect(String(refused.result.error)).toMatch(/unreachable|nothing charged/); // B's client catches it first; the loop is the backstop
   });
 });
