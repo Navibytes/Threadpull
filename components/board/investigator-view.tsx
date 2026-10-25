@@ -18,6 +18,7 @@ import { SidePanel } from "./side-panel";
 import { CaseSummary } from "./case-summary";
 import { StatusPlaque } from "./status-plaque";
 import { useRunEvents } from "./use-run-events";
+import { dashboardHref } from "@/lib/dashboard/links";
 
 // The investigator's room: dark wallpaper, a large framed corkboard in the middle, paper tabs above it, a
 // status plaque, and a desk ledge below where Hazel stands. The filing drawer opens from the left and the
@@ -71,6 +72,9 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
   const onCases = useCallback((list: BoardCase[], active: number | null) => setCases({ list, active }), []);
+  const activeLead = cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null;
+  // a case's detail page on the dashboard: the same run, with that case's lead loan
+  const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId }, leadId), [runId]);
 
   const selectFromBoard = useCallback((next: Selection) => {
     setSelection(next);
@@ -106,7 +110,12 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     <MotionConfig reducedMotion="user">
       <div className={`room ${styles.room} relative flex h-dvh flex-col overflow-hidden`}>
         <header className="relative z-30 flex flex-col items-center gap-0 px-[var(--wall)] pt-0">
-                    <CaseSummary showSample={feed.mode !== "preview"} board={board} leadId={cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null} />
+                    <CaseSummary
+                      showSample={feed.mode !== "preview"}
+                      board={board}
+                      leadId={activeLead}
+                      detailHref={activeLead ? caseHref(activeLead) : null}
+                    />
 {/* the wordmark is the visible brand; the status line is for screen readers only */}
           <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="-mt-2 h-[clamp(100px,18vh,190px)] w-auto select-none" />
           <div className="sr-only">
@@ -116,6 +125,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
             isOpen={isOpen}
             onToggle={toggle}
             onBoard={() => setOpen(null)}
+            dashboardHref={dashboardHref({ run: runId })}
             panelIds={panelIds}
             tabRefs={tabRefs}
           />
@@ -136,6 +146,7 @@ export function InvestigatorView({ runId }: { runId?: string }) {
                   keepClear={hazelCorner}
                   focusRequest={focusRequest}
                   onCases={onCases}
+                  caseHref={caseHref}
                 />
                 {/* lamp light and the frame's inner shadow: on top, never taking clicks */}
                 <div aria-hidden className="board-light pointer-events-none absolute inset-0 z-10" />

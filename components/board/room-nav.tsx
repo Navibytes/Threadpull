@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties, ReactNode, RefObject } from "react";
 
 export type PanelId = "drawer" | "evidence" | "notebook";
@@ -12,6 +13,7 @@ export const ROOM_TABS = [
   { id: "board", label: "Board", name: "Investigation board", kind: "page" },
   { id: "evidence", label: "Evidence", name: "Checks and evidence", kind: "panel" },
   { id: "notebook", label: "Notes", name: "Hazel's notebook", kind: "panel" },
+  { id: "dashboard", label: "Dashboard", name: "Portfolio dashboard", kind: "link" },
   { id: "cro", label: "Brief", name: "CRO brief, not built yet", kind: "unbuilt" },
 ] as const;
 
@@ -35,6 +37,7 @@ const ICONS: Record<RoomTab["id"], ReactNode> = {
     </>
   ),
   notebook: <path d="M6 4h11c1 0 1.5.5 1.5 1.5v13c0 1-.5 1.5-1.5 1.5H6zM9.2 4v16M12 9h4M12 12.5h4" />,
+  dashboard: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   cro: <path d="M7 3.6h7l4 4V19c0 1-.5 1.5-1.5 1.5H7c-1 0-1.5-.5-1.5-1.5V5c0-1 .5-1.5 1.5-1.4zM14 3.6v4h4M9 12h6M9 15.5h6" />,
 };
 
@@ -54,18 +57,21 @@ const SHEET = [
   { tilt: -0.4, kraft: true },
   { tilt: 0.8, kraft: false },
   { tilt: -0.6, kraft: true },
+  { tilt: 0.7, kraft: false },
 ] as const;
 
 export function RoomNav({
   isOpen,
   onToggle,
   onBoard,
+  dashboardHref,
   panelIds,
   tabRefs,
 }: {
   isOpen: (id: PanelId) => boolean;
   onToggle: (id: PanelId) => void;
   onBoard: () => void;
+  dashboardHref: string; // the dashboard tab: a page of its own, so it is a link, not a panel
   panelIds: Record<PanelId, string>;
   tabRefs: RefObject<Partial<Record<PanelId, HTMLButtonElement | null>>>;
 }) {
@@ -88,7 +94,11 @@ export function RoomNav({
         const cls = `paper-tab ${sheet.kraft ? "paper-tab-kraft" : ""} flex items-center gap-1.5 px-3 pb-3.5 pt-2 text-[13px] font-semibold tracking-[0.02em] max-[900px]:px-2.5 focus-visible:outline-2 focus-visible:outline-amber`;
         return (
           <div key={tab.id} className="paper-sheet" data-active={active || undefined} style={{ "--tilt": `${sheet.tilt}deg` } as CSSProperties}>
-            {tab.kind === "unbuilt" ? (
+            {tab.kind === "link" ? (
+              <Link href={dashboardHref} className={cls}>
+                {text}
+              </Link>
+            ) : tab.kind === "unbuilt" ? (
               // plain text, not a control: nothing to click yet
               <span data-unbuilt="" title="The CRO brief isn't built yet" className={cls}>
                 {text}

@@ -6,6 +6,7 @@ import { createPreviewLoans } from "@/components/drawer/preview-loan-source";
 import { computeDashboard, runMetrics, statusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
 import { caseNotes } from "@/lib/dashboard/notes";
+import { dashboardHref } from "@/lib/dashboard/links";
 import { PREVIEW_EVENTS, type RunEvent } from "@/lib/events";
 
 const loans = createPreviewLoans();
@@ -156,5 +157,14 @@ describe("Hazel's case notes", () => {
   test("never calls a connection fraud or proof of anything", () => {
     const n = caseNotes(m, { sample: false })!;
     for (const line of [...n.found, ...n.means, ...n.next]) expect(line).not.toMatch(/fraudster|guilty|criminal|proves?/i);
+  });
+});
+
+describe("board and dashboard links", () => {
+  test("a run opens its own dashboard, the sample run opens the sample, and a case names its lead loan", () => {
+    expect(dashboardHref({ run: "run-7" })).toBe("/dashboard?run=run-7");
+    expect(dashboardHref({ run: null })).toBe("/dashboard?sample=1");
+    expect(dashboardHref({ run: "run 7/a" }, "L0001")).toBe("/dashboard?run=run+7%2Fa&case=L0001");
+    expect(dashboardHref({ run: null }, "PV-01")).toBe("/dashboard?sample=1&case=PV-01");
   });
 });

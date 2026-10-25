@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { summarizeCase, type BoardState } from "@/lib/events";
 
 // The active case in five short lines, so a first-time visitor can tell who is being looked at, what was found,
 // why it matters, what the evidence said and what comes next. Read from the board's rows; the original ids and
 // weights are in the "Technical details" pop-over.
-export function CaseSummary({ board, leadId, showSample }: { board: BoardState; leadId: string | null; showSample: boolean }) {
+export function CaseSummary({ board, leadId, showSample, detailHref }: { board: BoardState; leadId: string | null; showSample: boolean; detailHref: string | null }) {
   const sum = summarizeCase(board, leadId);
   if (!sum) return null;
   const rows: [string, string][] = [
@@ -31,6 +32,11 @@ export function CaseSummary({ board, leadId, showSample }: { board: BoardState; 
         ))}
       </dl>
       {sum.sample && showSample && <p className="mt-0.5 font-medium text-terracotta">Sample data: made up for demonstration.</p>}
+      {detailHref && (
+        <Link href={detailHref} className="mt-0.5 inline-block font-semibold text-terracotta underline underline-offset-2">
+          Open this case on the dashboard
+        </Link>
+      )}
       <details className="absolute right-1.5 top-1">
         <summary className="cursor-pointer list-none rounded-sm bg-walnut/5 px-1.5 text-[11px] leading-4 text-walnut/80 hover:bg-walnut/10">
           Details

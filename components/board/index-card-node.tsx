@@ -2,6 +2,7 @@
 
 import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { memo } from "react";
 import { cardFinding, loanName, loanShortName, type BoardCard, type CardFinding, type SourceRef } from "@/lib/events";
 
@@ -15,7 +16,7 @@ import { StatusChip } from "./status-chip";
 // `showSeq`: the board's "event numbers" debug option.
 // `finding`: why the card is on the board, from its recorded threads (cardFinding).
 export type IndexCardNodeType = Node<
-  { card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean; finding: CardFinding | null },
+  { card: BoardCard; animate: boolean; lead: boolean; showSeq: boolean; finding: CardFinding | null; detailHref: string | null },
   "indexCard"
 >;
 
@@ -71,7 +72,7 @@ function Stamp({ kind, px, detail }: { kind: "simulated" | "crs"; px: number; de
 }
 
 function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
-  const { card, animate, lead, showSeq, finding } = data;
+  const { card, animate, lead, showSeq, finding, detailHref } = data;
   const reduce = useReducedMotion();
   const zoom = useStore((s) => Math.round(s.transform[2] * 40) / 40); // quantized: re-render only on real zoom steps
   const full = zoom >= FULL_ZOOM;
@@ -154,6 +155,17 @@ function IndexCard({ data, selected }: NodeProps<IndexCardNodeType>) {
 
           <div className="mt-auto flex flex-wrap items-end gap-x-2.5 gap-y-1.5">
             {crs.length > 0 && <Stamp kind="crs" px={label} detail={full ? crsDetail : undefined} />}
+            {/* a lead's case on the dashboard. nodrag/nopan: pressing it must not start moving the card */}
+            {detailHref && (
+              <Link
+                href={detailHref}
+                aria-label={`Case details for ${loanName(card.id)} on the dashboard`}
+                className="nodrag nopan ml-auto rounded-sm border border-walnut/40 bg-[#f4ead8] px-2 font-semibold leading-6 text-walnut shadow-[0_2px_3px_rgb(0_0_0/0.25)] hover:bg-white focus-visible:outline-2 focus-visible:outline-amber"
+                style={{ fontSize: label }}
+              >
+                Case details &rarr;
+              </Link>
+            )}
             {showSeq && (
               <span
                 className="ml-auto rounded-sm bg-walnut/10 px-1 font-medium tabular-nums text-walnut"

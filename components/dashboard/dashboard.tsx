@@ -9,7 +9,8 @@ import type { LoanStatus } from "@/lib/contracts/loan";
 import { computeDashboard, OFFICIAL_STATUSES, type RunMetrics, type StatusBreakdown } from "@/lib/dashboard/metrics";
 import { describeEvent } from "@/lib/dashboard/describe";
 import { caseNotes, type CaseNotes } from "@/lib/dashboard/notes";
-import { describeSource, type RunEvent } from "@/lib/events";
+import { describeSource, loanName, reduceEvents, summarizeCase, type CaseSummary, type RunEvent } from "@/lib/events";
+import { dashboardHref } from "@/lib/dashboard/links";
 import { useDashboardData, type Load } from "./use-dashboard-data";
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -45,7 +46,7 @@ const DOT: Partial<Record<RunEvent["type"], string>> = {
   question_asked: "bg-dusty",
 };
 
-export function Dashboard({ run, seed, sample }: { run?: string; seed: number; sample: boolean }) {
+export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: number; sample: boolean; caseId?: string }) {
   const router = useRouter();
   const { loans, events, runs, retry } = useDashboardData({ run, seed, sample });
   const loanRows = loans.state === "ok" && loans.data.length > 0 ? loans.data : null;
@@ -55,6 +56,9 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
   const notes = useMemo(() => caseNotes(m.run, { sample }), [m.run, sample]);
   const runId = runs.selected;
   const boardHref = sample || !runId ? "/" : `/?run=${encodeURIComponent(runId)}`;
+  // one case: its summary from the run's rows, and every row that names its loan (newest first)
+  const caseSum = useMemo(() => (caseId && eventRows ? summarizeCase(reduceEvents(eventRows), caseId) : null), [caseId, eventRows]);
+  const caseRows = useMemo(() => (caseId && eventRows ? eventRows.filter((e) => e.loan_ids.includes(caseId)).reverse() : []), [caseId, eventRows]);
 
   return (
     <div className="dash-bg min-h-dvh p-3 text-walnut sm:p-5">
@@ -71,8 +75,8 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
                 </h1>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Link href={boardHref} className="dash-pill dash-pill-dark min-[1100px]:hidden">
-                  Investigation board
+                <Link href={boardHref} className="dash-pill dash-pill-dark">
+                  &larr; Back to the board
                 </Link>
                 {!sample && runs.runs.length > 0 && (
                   <label className="flex items-center gap-2 text-[13px]">
@@ -101,6 +105,17 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
           </header>
 
           <Notices sample={sample} m={m.run} events={events} loans={loans} retry={retry} />
+
+          {caseId && (
+            <CaseDetail
+              caseId={caseId}
+              sum={caseSum}
+              rows={caseRows}
+              state={events.state}
+              overviewHref={dashboardHref({ run: sample ? null : runId })}
+              sample={sample}
+            />
+          )}
 
           <CaseNotesSection notes={notes} run={m.run} events={events} boardHref={boardHref} sample={sample} />
 
@@ -146,6 +161,62 @@ export function Dashboard({ run, seed, sample }: { run?: string; seed: number; s
 
 const noRun = (events: Load<unknown>) =>
   events.state === "loading" ? "Loading…" : events.state === "ok" ? "No run recorded yet." : "The event log isn't available.";
+
+// One case, opened from a board card's "Case details" button. The same plain summary the board shows, then the
+// recorded rows that name this loan. A case the run doesn't contain says so; nothing is filled in.
+function CaseDetail({ caseId, sum, rows, state, overviewHref, sample }: { caseId: string; sum: CaseSummary | null; rows: RunEvent[]; state: Load<unknown>["state"]; overviewHref: string; sample: boolean }) {
+  const lines: [string, string][] = sum ? [["Looking at", sum.who], ["Found", sum.found], ["Why it matters", sum.why], ["Evidence", sum.evidence], ["Next", sum.next]] : [];
+  return (
+    <section aria-labelledby="case-title" className="mt-9">
+      <div className="dossier px-4 pb-4 pt-4">
+        <span className="dossier-tab">Case</span>
+        <div className="dossier-head flex flex-wrap items-baseline justify-between gap-2 pb-1.5">
+          <h2 id="case-title" className="font-display text-xl font-semibold">{loanName(caseId)}</h2>
+          <Link href={overviewHref} className="dash-pill">&larr; All of this run</Link>
+        </div>
+        {state === "loading" ? (
+          <p className="mt-3 text-sm">Loading this case…</p>
+        ) : state !== "ok" ? (
+          <p className="mt-3 text-sm">The run&rsquo;s rows aren&rsquo;t available, so this case can&rsquo;t be shown.</p>
+        ) : !sum ? (
+          <p className="mt-3 text-sm">Loan {caseId} isn&rsquo;t on this run&rsquo;s board, so there is no case to show.</p>
+        ) : (
+          <>
+            <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 text-sm min-[640px]:grid-cols-[8rem_minmax(0,1fr)]">
+              {lines.map(([k, v]) => (
+                <div key={k} className="contents">
+                  <dt className="font-semibold text-walnut/80">{k}</dt>
+                  <dd className="leading-relaxed">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            {sum.sample && sample && <p className="mt-3 text-sm font-medium text-terracotta">Sample data: made up for demonstration.</p>}
+            <h3 className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-walnut/80">Recorded rows about this loan</h3>
+            {rows.length === 0 ? (
+              <p className="mt-2 text-sm">No recorded row names this loan.</p>
+            ) : (
+              <ol className="mt-2 divide-y divide-walnut/15 text-sm">
+                {rows.slice(0, 30).map((e) => {
+                  const { title, detail } = describeEvent(e);
+                  return (
+                    <li key={e.seq} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 py-1.5">
+                      <span className="tabular-nums text-walnut/70">{when(e.ts)}</span>
+                      <span>
+                        {title}
+                        {detail && <span className="block text-walnut/75">{detail}</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {rows.length > 30 && <p className="mt-2 text-xs text-walnut/70">Showing the newest 30 of {nf(rows.length)} rows.</p>}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
 
 function Sidebar({ boardHref }: { boardHref: string }) {
   const item = "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm";
@@ -267,8 +338,8 @@ function CaseNotesSection({ notes, run, events, boardHref, sample }: { notes: Ca
           <div className="relative order-2 -mt-2 flex flex-col min-[640px]:order-1 min-[640px]:-mt-9 min-[640px]:h-full min-[640px]:justify-between">
             <p className="brass-plate mx-auto mt-12 hidden w-fit rounded-[3px] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] min-[640px]:block">Hazel · Investigator</p>
             <Image
-              src="/hazel/hazel-office.png"
-              alt="Hazel at her desk, studying a photograph through a magnifying glass, with a lamp, case files and a small evidence board"
+              src="/hazel/hazel-icon-logo.png"
+              alt="Hazel, the squirrel investigator, holding a magnifying glass"
               width={1254}
               height={1254}
               sizes="216px"
