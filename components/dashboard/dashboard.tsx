@@ -54,6 +54,8 @@ export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: n
   const m = useMemo(() => computeDashboard(loanRows, eventRows), [loanRows, eventRows]);
   const notes = useMemo(() => caseNotes(m.run, { sample }), [m.run, sample]);
   const runId = runs.selected;
+  // the cases on this run's board, so the viewer can switch between them without going back to the board
+  const leads = useMemo(() => (eventRows ? reduceEvents(eventRows).cards.filter((c) => c.pinnedBy === "lead_opened").map((c) => c.id) : []), [eventRows]);
   const boardHref = sample || !runId ? "/" : `/?run=${encodeURIComponent(runId)}`;
   // one case: its summary from the run's rows, and every row that names its loan (newest first)
   const caseSum = useMemo(() => (caseId && eventRows ? summarizeCase(reduceEvents(eventRows), caseId) : null), [caseId, eventRows]);
@@ -88,6 +90,23 @@ export function Dashboard({ run, seed, sample, caseId }: { run?: string; seed: n
                       {runs.runs.slice(0, 25).map((r) => (
                         <option key={r} value={r}>
                           {r}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {leads.length > 0 && (
+                  <label className="flex items-center gap-2 text-[13px]">
+                    <span className="font-medium">Case</span>
+                    <select
+                      value={caseId ?? ""}
+                      onChange={(e) => router.push(dashboardHref({ run: sample ? null : runId }, e.target.value || undefined))}
+                      className="dash-pill max-w-[13rem] truncate bg-paper"
+                    >
+                      <option value="">Whole run</option>
+                      {leads.map((l) => (
+                        <option key={l} value={l}>
+                          {loanName(l)}
                         </option>
                       ))}
                     </select>

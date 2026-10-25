@@ -72,7 +72,15 @@ export function InvestigatorView({ runId }: { runId?: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
   const onCases = useCallback((list: BoardCase[], active: number | null) => setCases({ list, active }), []);
-  const activeLead = cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null;
+  // a case the viewer picked from the panel's list; null follows the latest activity on the board
+  const [picked, setPicked] = useState<string | null>(null);
+  useEffect(() => setPicked(null), [runId]);
+  const derivedLead = cases.active !== null ? (cases.list[cases.active]?.lead ?? null) : null;
+  const activeLead = picked && cases.list.some((c) => c.lead === picked) ? picked : derivedLead;
+  const pickCase = useCallback((lead: string | null) => {
+    setPicked(lead);
+    if (lead) setFocusRequest({ cardId: lead }); // move the camera to the case as well
+  }, []);
   // a case's detail page on the dashboard: the same run, with that case's lead loan
   const caseHref = useCallback((leadId: string) => dashboardHref({ run: runId }, leadId), [runId]);
 
@@ -115,6 +123,9 @@ export function InvestigatorView({ runId }: { runId?: string }) {
                       board={board}
                       leadId={activeLead}
                       detailHref={activeLead ? caseHref(activeLead) : null}
+                      leads={cases.list.map((c) => c.lead)}
+                      picked={picked}
+                      onPick={pickCase}
                     />
 {/* the wordmark is the visible brand; the status line is for screen readers only */}
           <img src="/brand/threadpull-wordmark.png" alt="Threadpull" draggable={false} className="-mt-2 h-[clamp(100px,18vh,190px)] w-auto select-none" />
