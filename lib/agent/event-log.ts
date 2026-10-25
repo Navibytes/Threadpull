@@ -11,8 +11,9 @@ export type NewEvent = Omit<EventRow, "budget"> & { budget?: Budget };
 
 /** Hazel's notes stay short: at most two sentences, at most 280 characters (code enforces it, not the prompt). */
 export function clampNote(note: string): string {
-  const sentences = note.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) ?? [];
-  const two = sentences.slice(0, 2).join("").trim();
+  // a sentence ends at . ! or ? followed by a space or the end, so a number like 3.4352 or 0.25 is never cut in two
+  const sentences = note.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  const two = sentences.slice(0, 2).join(" ");
   return two.length > 280 ? `${two.slice(0, 279).trimEnd()}…` : two;
 }
 

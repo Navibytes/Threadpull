@@ -27,6 +27,13 @@ describe("event log", () => {
     expect(clampNote("One. Two! Three? Four.")).toBe("One. Two!");
   });
 
+  test("a number with a decimal point is never cut in two (seed 13's lead note was stored as \"4352).\")", () => {
+    expect(clampNote("Top lead by rank (score 3.4352).")).toBe("Top lead by rank (score 3.4352).");
+    expect(clampNote("Weight 0.25 on the employer. IP 198.51.100.13 is shared. Third.")).toBe("Weight 0.25 on the employer. IP 198.51.100.13 is shared.");
+    expect(clampNote("  no  full stop  at the end ")).toBe("no full stop at the end");
+    expect(clampNote("")).toBe("");
+  });
+
   test("the Supabase sink inserts every row, in order", async () => {
     const { table, inserted } = fakeTable();
     const errors: string[] = [];
